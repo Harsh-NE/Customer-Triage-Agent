@@ -1,4 +1,4 @@
-# Customer Support Agentic RAG System
+# Customer-Triage-Agent
 
 An intelligent customer support triage and resolution assistant, built around a curated
 knowledge base, hybrid retrieval, and (in progress) LLM-based query understanding and
