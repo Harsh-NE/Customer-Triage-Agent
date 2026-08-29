@@ -1,0 +1,30 @@
+# --- Secrets ---
+.env
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+
+# --- Virtual environments ---
+csvenv/
+.venv/
+venv/
+env/
+
+# --- Data (large / regenerable by the pipeline scripts, never hand-edited) ---
+data/raw/
+data/processed/
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Stray scratch files ---
+char_check.txt
