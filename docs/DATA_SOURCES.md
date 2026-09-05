@@ -27,12 +27,14 @@ The blueprint (§14) says to *"select a small initial product/category scope rat
 
 ### Option A — Microsoft 365 / Windows / Azure endpoint & productivity support ✅ **Recommended**
 
-The problem statement comes from Microsoft, and the blueprint's worked example is OneDrive sync. Choosing this domain gives an unusually strong alignment:
+The project's problem statement is a generic enterprise IT/productivity-support triage
+scenario, and the blueprint's worked example is file-sync troubleshooting (e.g. OneDrive-
+style sync errors). Choosing this domain gives an unusually strong alignment:
 
 - Tier 1 is **exceptional** — Microsoft publishes tens of thousands of *dedicated troubleshooting articles* (not just reference docs) under CC-BY-4.0, already in the symptom→cause→resolution shape, dense with real error codes (`0x80070005`, `Event ID 4105`).
 - Tier 2 is **real and abundant** — Microsoft Community forum dialogs (MSDialog), Super User / ServerFault Q&A on Microsoft products, and closed GitHub issues on Microsoft's own OSS products.
 - Tier 1 and Tier 2 talk about **the same products**, so cross-tier evidence and the promote-to-KB loop actually make sense.
-- The demo story writes itself for a Microsoft-set problem statement.
+- The demo story writes itself when the KB and the target support domain are drawn from the same ecosystem.
 
 ### Option B — Cloud-native / DevOps platform support (Kubernetes + GitLab + PostgreSQL)
 

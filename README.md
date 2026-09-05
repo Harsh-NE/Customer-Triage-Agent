@@ -2,23 +2,26 @@
 
 An intelligent customer support triage and resolution assistant, built around a curated
 knowledge base, hybrid retrieval, and (in progress) LLM-based query understanding and
-agentic resolution. Built for the Microsoft problem statement *"Intelligent Customer
-Support Triage and Resolution Assistant."*
+agentic resolution. Given a technical support query, understand it, retrieve grounded evidence from a knowledge base, attempt a resolution conversationally, and escalate to a human engineer when automated resolution isn't possible.
 
 ## Architecture
 
 The system is designed around a two-tier knowledge model:
 
-- **Tier 1 — Curated Knowledge Base** (built): official Microsoft support documentation,
-  processed into a hybrid-searchable index. See [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md)
-  for sourcing rationale.
+- **Tier 1 — Curated Knowledge Base** (built): official product troubleshooting
+  documentation, processed into a hybrid-searchable index. See
+  [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) for the specific open-source corpus used,
+  its licence, and sourcing rationale.
 - **Tier 2 — Historical Resolved Tickets** (not yet started): deferred until a real ticket
   dataset is available; will be added via a summarization agent.
 
 Retrieval combines **BM25 (sparse)** and **dense vector search**, fused with **Reciprocal
 Rank Fusion**, softly boosted by metadata consensus, and reranked with a **cross-encoder** —
 see [docs/customer_support_rag_overview.pptx](docs/customer_support_rag_overview.pptx) for
-the full write-up of goals, workflow, and theory.
+the full write-up of goals, workflow, and theory, and
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture document
+(built pipeline, retrieval design, evaluation results, and the designed-but-not-yet-built
+agent layer).
 
 ## Pipeline
 
