@@ -14,11 +14,17 @@ Config is read from EMBEDDING_MODEL, VECTOR_DB_PATH, BM25_PATH, EMBEDDING_BATCH_
 in this order of precedence: real environment variable > .env file (if present) >
 the defaults documented in .env.example.
 
-Read-only against data/raw/ and chunks.jsonl. Writes only under data/processed/store/.
+Read-only against data/raw/ and the input chunk file. Writes only under the configured store paths.
+
+NOTE: point --input at chunks_metadata.jsonl (05_metadata.py's output), not the bare
+chunks.jsonl from 04_chunk.py -- otherwise product_area/component/tags/error_signals
+never reach the vector store, since those fields only exist after 05_metadata.py runs.
+(The original Microsoft-docs run used bare chunks.jsonl, which is why that store's
+Chroma metadata is limited to what 04_chunk.py alone produces.)
 
 Usage:
-    python scripts/06_store.py --input data/processed/chunks.jsonl
-    python scripts/06_store.py --input data/processed/chunks.jsonl --limit 100
+    python scripts/06_store.py --input data/processed/docker/chunks_metadata.jsonl
+    python scripts/06_store.py --input data/processed/docker/chunks_metadata.jsonl --limit 100
 """
 
 from __future__ import annotations
@@ -36,12 +42,15 @@ from rank_bm25 import BM25Okapi
 from sentence_transformers import SentenceTransformer
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT = PROJECT_ROOT / "data" / "processed" / "chunks.jsonl"
+DEFAULT_INPUT = PROJECT_ROOT / "data" / "processed" / "docker" / "chunks_metadata.jsonl"
 
 DEFAULTS = {
     "EMBEDDING_MODEL": "BAAI/bge-base-en-v1.5",
-    "VECTOR_DB_PATH": "data/processed/store/vector",
-    "BM25_PATH": "data/processed/store/bm25",
+    # Deliberately under data/processed/docker/, not data/processed/store/ -- that path
+    # already holds the Microsoft-docs collection, and get_or_create_collection() would
+    # silently ADD Docker chunks into the same collection if pointed at the same directory.
+    "VECTOR_DB_PATH": "data/processed/docker/store/vector",
+    "BM25_PATH": "data/processed/docker/store/bm25",
     "EMBEDDING_BATCH_SIZE": "64",
 }
 
@@ -126,7 +135,12 @@ def chunk_metadata(chunk: dict) -> dict:
         "section": chunk.get("section_title") or "",
         "subsection": chunk.get("subsection_title") or "",
         "heading_path": " > ".join(chunk.get("heading_path") or []),
-        "ms_topic": md.get("ms_topic") or "",
+        "tags": ", ".join(md.get("tags") or []),
+        "is_troubleshooting": bool(md.get("is_troubleshooting")),
+        "product_area": md.get("product_area") or "",
+        "component": md.get("component") or "",
+        "doc_kind": md.get("doc_kind") or "",
+        "error_signals": ", ".join(md.get("error_signals") or []),
     }
 
 
@@ -161,7 +175,8 @@ def build_vector_store(chunks: list[dict], model_name: str, batch_size: int,
 
     print(f"Loading embedding model: {model_name} ...")
     model = SentenceTransformer(model_name)
-    embedding_dim = model.get_sentence_embedding_dimension()
+    get_dim = getattr(model, "get_embedding_dimension", model.get_sentence_embedding_dimension)
+    embedding_dim = get_dim()
 
     client = chromadb.PersistentClient(path=str(vector_db_path))
     collection = client.get_or_create_collection(name=collection_name_for_model(model_name))
@@ -188,16 +203,35 @@ def build_vector_store(chunks: list[dict], model_name: str, batch_size: int,
     return embedded, errors, embedding_dim
 
 
+def refresh_vector_metadata(chunks: list[dict], model_name: str, vector_db_path: Path,
+                             batch_size: int = 500) -> int:
+    """Rewrite metadata on an EXISTING collection without touching embeddings or documents.
+    For metadata-only fixes (e.g. a corrected product_area): minutes instead of re-embedding."""
+    client = chromadb.PersistentClient(path=str(vector_db_path))
+    collection = client.get_collection(name=collection_name_for_model(model_name))
+    updated = 0
+    for start in range(0, len(chunks), batch_size):
+        batch = chunks[start:start + batch_size]
+        collection.update(ids=[c["chunk_id"] for c in batch],
+                          metadatas=[chunk_metadata(c) for c in batch])
+        updated += len(batch)
+        print(f"  updated metadata {updated}/{len(chunks)}")
+    return updated
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build BM25 and vector indexes over chunks.jsonl.")
+    parser = argparse.ArgumentParser(description="Build BM25 and vector indexes over enriched chunks.")
     parser.add_argument("--input", "-i", type=Path, default=DEFAULT_INPUT,
-                         help=f"chunks.jsonl from 04_chunk.py (default: {DEFAULT_INPUT})")
+                         help=f"chunks_metadata.jsonl from 05_metadata.py (default: {DEFAULT_INPUT})")
     parser.add_argument("--limit", "-n", type=int, default=None,
                          help="Only process the first N valid chunks (smoke test)")
+    parser.add_argument("--metadata-only", action="store_true",
+                         help="Only rewrite metadata on the existing vector collection; "
+                              "no re-embedding, BM25 untouched (it indexes text, not metadata)")
     return parser.parse_args()
 
 
@@ -205,12 +239,14 @@ def main() -> None:
     args = parse_args()
     input_path: Path = args.input.resolve()
     if not input_path.exists():
-        raise SystemExit(f"Input not found: {input_path} (run 04_chunk.py first)")
+        raise SystemExit(f"Input not found: {input_path} (run 05_metadata.py first)")
 
     config = get_config()
     vector_db_path = PROJECT_ROOT / config["VECTOR_DB_PATH"]
     bm25_path = PROJECT_ROOT / config["BM25_PATH"]
-    store_root = PROJECT_ROOT / "data" / "processed" / "store"
+    # Manifest lives next to the configured stores, not a hardcoded path -- otherwise a
+    # Docker run here would overwrite the existing Microsoft-docs store_manifest.json.
+    store_root = vector_db_path.parent
     store_root.mkdir(parents=True, exist_ok=True)
 
     print(f"Loading chunks from {input_path} (limit={args.limit}) ...")
@@ -219,6 +255,12 @@ def main() -> None:
 
     if not chunks:
         raise SystemExit("No valid chunks to store.")
+
+    if args.metadata_only:
+        print("Refreshing metadata on the existing vector collection (no re-embedding) ...")
+        updated = refresh_vector_metadata(chunks, config["EMBEDDING_MODEL"], vector_db_path)
+        print(f"Metadata refreshed on {updated} chunks. BM25 and embeddings untouched.")
+        return
 
     print("Building BM25 index ...")
     build_bm25_index(chunks, bm25_path)

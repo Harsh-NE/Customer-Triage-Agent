@@ -12,9 +12,9 @@ Read-only against data/raw/. Writes a single JSONL file of cleaned documents.
 
 Usage:
     python scripts/03_clean.py
-    python scripts/03_clean.py --input data/raw/MicrosoftDocs-SupportArticles \
-                                --manifest data/processed/filter_manifest.jsonl \
-                                --output data/processed
+    python scripts/03_clean.py --input data/raw/docker-docs \
+                                --manifest data/processed/docker/filter_manifest.jsonl \
+                                --output data/processed/docker
 """
 
 from __future__ import annotations
@@ -28,9 +28,9 @@ from pathlib import Path
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT = PROJECT_ROOT / "data" / "raw" / "MicrosoftDocs-SupportArticles"
-DEFAULT_MANIFEST = PROJECT_ROOT / "data" / "processed" / "filter_manifest.jsonl"
-DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed"
+DEFAULT_INPUT = PROJECT_ROOT / "data" / "raw" / "docker-docs"
+DEFAULT_MANIFEST = PROJECT_ROOT / "data" / "processed" / "docker" / "filter_manifest.jsonl"
+DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed" / "docker"
 
 FRONT_MATTER_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
 TITLE_RE = re.compile(r"^title:\s*(.+?)\s*$", re.MULTILINE)
@@ -220,7 +220,13 @@ def main() -> None:
             fm_block, raw_body = split_front_matter(raw_text)
             fm_dict = parse_front_matter(fm_block)
             title = extract_title(fm_block, raw_body, fm_dict)
-            ms_topic = fm_dict.get("ms.topic") if isinstance(fm_dict.get("ms.topic"), str) else None
+            raw_tags = fm_dict.get("tags")
+            if isinstance(raw_tags, list):
+                tags = [str(t).strip() for t in raw_tags if str(t).strip()]
+            elif isinstance(raw_tags, str) and raw_tags.strip():
+                tags = [raw_tags.strip()]
+            else:
+                tags = []
 
             body, resolved, unresolved = clean_body(raw_body, full_path, input_dir)
             if resolved or unresolved:
@@ -231,7 +237,7 @@ def main() -> None:
             record = {
                 "rel_path": rel_path,
                 "title": title,
-                "ms_topic": ms_topic,
+                "tags": tags,
                 "front_matter": fm_dict,
                 "cleaned_markdown": body,
                 "word_count": count_words(body),

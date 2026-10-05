@@ -1,5 +1,13 @@
 # --- Secrets ---
 .env
+*.pem
+*.key
+
+# --- AWS run scratch (one-off EC2 batch-job helper files) ---
+userdata.sh
+trust-policy.json
+block-device.json
+local-run.log
 
 # --- Python ---
 __pycache__/

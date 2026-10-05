@@ -2,27 +2,34 @@
 05_metadata.py -- Enrich chunks with retrieval/citation metadata.
 
 For every chunk from 04_chunk.py, derives and attaches:
-  - product_area / component   -- from the repo path (e.g. "Exchange/ExchangeHybrid/...",
-                                   "support/windows-client/...")
-  - category / subcategory     -- from the doc's "sap:<category>\\<subcategory>" tag in
-                                   ms.custom (front matter). This is a bottom-up taxonomy:
-                                   values are whatever the docs actually use, nothing hardcoded.
-  - error_codes                -- hex error codes / Event IDs found in the chunk text
-  - kb_number                  -- the "Original KB number" line, if the article has one
+  - product_area / component   -- from the repo path under content/manuals/ (e.g.
+                                   "engine/daemon", "desktop/troubleshoot-and-support")
+  - tags                       -- carried over from front matter (e.g. ["Troubleshooting"]);
+                                   docker/docs has no ms.custom sap:<category>\\<subcategory>
+                                   equivalent, so tags are the whole taxonomy here, not a
+                                   category/subcategory split
+  - error_signals               -- HTTP/response codes and exit codes found in the chunk text.
+                                   NOTE: unlike Microsoft's hex error codes / Event IDs (a
+                                   near-universal convention there), docker/docs has no
+                                   consistent structured error-code convention -- a check
+                                   across ~12 real troubleshoot pages found the "NNN response
+                                   code" phrasing in only one of them. Expect this field to be
+                                   sparse; the verbatim error text in the chunk body (already
+                                   preserved by 03_clean.py) is the more reliable retrieval
+                                   signal, not this field.
   - source_url                 -- canonical GitHub URL to the source file (citable evidence link)
-  - license                    -- CC-BY-4.0 (per the repo's LICENSE)
-  - ms_topic / ms_date / appliesto -- carried over from 04_chunk.py's metadata
+  - license                    -- Apache-2.0 (the docker/docs repo's LICENSE, verified 2026-10-05)
 
-Also writes taxonomy.json: frequency-counted product_area / component / category values,
+Also writes taxonomy.json: frequency-counted product_area / component / tag values,
 so the taxonomy can be reviewed rather than trusted blindly.
 
 Read-only against chunks.jsonl and cleaned_docs.jsonl. Writes chunks_metadata.jsonl + taxonomy.json.
 
 Usage:
     python scripts/05_metadata.py
-    python scripts/05_metadata.py --chunks data/processed/chunks.jsonl \
-                                   --cleaned data/processed/cleaned_docs.jsonl \
-                                   --output data/processed
+    python scripts/05_metadata.py --chunks data/processed/docker/chunks.jsonl \
+                                   --cleaned data/processed/docker/cleaned_docs.jsonl \
+                                   --output data/processed/docker
 """
 
 from __future__ import annotations
@@ -34,17 +41,19 @@ from collections import Counter
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_CHUNKS = PROJECT_ROOT / "data" / "processed" / "chunks.jsonl"
-DEFAULT_CLEANED = PROJECT_ROOT / "data" / "processed" / "cleaned_docs.jsonl"
-DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed"
+DEFAULT_CHUNKS = PROJECT_ROOT / "data" / "processed" / "docker" / "chunks.jsonl"
+DEFAULT_CLEANED = PROJECT_ROOT / "data" / "processed" / "docker" / "cleaned_docs.jsonl"
+DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed" / "docker"
 
-GITHUB_BASE_URL = "https://github.com/MicrosoftDocs/SupportArticles-docs/blob/main/"
-LICENSE = "CC-BY-4.0"
+GITHUB_BASE_URL = "https://github.com/docker/docs/blob/main/"
+LICENSE = "Apache-2.0"   # the docker/docs repo LICENSE is Apache License 2.0 (read 2026-10-05); applies to the repo, not to _vendor/ (excluded)
+CONTENT_PREFIX = "content/manuals/"
 
-ERROR_CODE_RE = re.compile(r"0x[0-9A-Fa-f]{6,8}")
-EVENT_ID_RE = re.compile(r"[Ee]vent\s?ID\s*[:#]?\s*(\d{2,6})")
-KB_NUMBER_RE = re.compile(r"Original KB number:.*?(\d{4,7})")
-SAP_TAG_RE = re.compile(r"^sap:\s*(.+)$", re.IGNORECASE)
+# Confirmed against live docker/docs pages: "(429 response code)" is real phrasing;
+# "exit code N" is standard Docker/container vocabulary but unconfirmed in the troubleshoot
+# pages sampled -- kept as a best-effort pattern, not a verified-high-yield one.
+RESPONSE_CODE_RE = re.compile(r"\b(\d{3})\s*response code\b", re.IGNORECASE)
+EXIT_CODE_RE = re.compile(r"\bexit code\s*:?\s*(\d{1,3})\b", re.IGNORECASE)
 
 
 # ---------------------------------------------------------------------------
@@ -52,45 +61,49 @@ SAP_TAG_RE = re.compile(r"^sap:\s*(.+)$", re.IGNORECASE)
 # ---------------------------------------------------------------------------
 
 def product_area_and_component(rel_path: str) -> tuple[str | None, str | None]:
+    """content/manuals/<product>/<component>/... -> (product, component).
+    content/<guides|reference|get-started>/<x>/... -> (section, x): those sections aren't
+    products, but a stable label beats the old "content" bucket that swallowed ~1.9k chunks.
+    A single-file segment like "retired.md" has its extension stripped, never used raw."""
+    if rel_path.startswith("content/"):
+        rel_path = rel_path[len("content/"):]
     parts = rel_path.split("/")
-    if parts and parts[0] == "support" and len(parts) > 1:
+    if parts and parts[0] == "manuals":
         parts = parts[1:]
+    parts = [p[:-3] if p.endswith(".md") else p for p in parts]
     product_area = parts[0] if parts else None
     component = parts[1] if len(parts) > 1 else None
     return product_area, component
 
 
-def category_and_subcategory(ms_custom: list | None) -> tuple[str | None, str | None]:
-    if not isinstance(ms_custom, list):
-        return None, None
-    for tag in ms_custom:
-        if not isinstance(tag, str):
-            continue
-        m = SAP_TAG_RE.match(tag.strip())
-        if m:
-            value = m.group(1)
-            if "\\" in value:
-                category, subcategory = value.split("\\", 1)
-                return category.strip(), subcategory.strip()
-            return value.strip(), None
-    return None, None
-
-
-def extract_kb_number(full_markdown: str) -> str | None:
-    m = KB_NUMBER_RE.search(full_markdown)
-    return m.group(1) if m else None
+def doc_kind_for(rel_path: str, tags: list[str]) -> str:
+    """Coarse page type, so retrieval/clarification can weight release notes and archived
+    versions (~25% of this KB) differently from troubleshooting pages. First match wins."""
+    lowered_tags = {t.lower() for t in tags}
+    parts = rel_path.lower().split("/")
+    if "troubleshooting" in lowered_tags or any("troubleshoot" in p for p in parts):
+        return "troubleshooting"
+    if "faq" in lowered_tags or "faqs" in parts:
+        return "faq"
+    if "previous-versions" in parts:
+        return "archive"
+    if "release-notes" in lowered_tags or any(p.startswith("release-notes") for p in parts):
+        return "release_notes"
+    if "guides" in parts:
+        return "guide"
+    if "reference" in parts:
+        return "reference"
+    return "docs"
 
 
 def build_doc_metadata(doc: dict) -> dict:
-    front_matter = doc.get("front_matter") or {}
     product_area, component = product_area_and_component(doc["rel_path"])
-    category, subcategory = category_and_subcategory(front_matter.get("ms.custom"))
+    tags = doc.get("tags") or []
     return {
         "product_area": product_area,
         "component": component,
-        "category": category,
-        "subcategory": subcategory,
-        "kb_number": extract_kb_number(doc["cleaned_markdown"]),
+        "doc_kind": doc_kind_for(doc["rel_path"], tags),
+        "tags": tags,
         "source_url": GITHUB_BASE_URL + doc["rel_path"],
         "license": LICENSE,
     }
@@ -100,10 +113,14 @@ def build_doc_metadata(doc: dict) -> dict:
 # Per-chunk derivation
 # ---------------------------------------------------------------------------
 
-def extract_error_codes(text: str) -> list[str]:
-    codes = set(ERROR_CODE_RE.findall(text))
-    codes.update(f"Event ID {n}" for n in EVENT_ID_RE.findall(text))
-    return sorted(codes)
+def extract_error_signals(chunk: dict) -> list[str]:
+    """Scans the chunk body AND its heading path -- confirmed against real docker/docs
+    pages that the response-code callout is often the heading text itself (e.g.
+    "## You have reached your pull rate limit (429 response code)"), not the body."""
+    searchable = chunk.get("text", "") + " " + " ".join(chunk.get("heading_path") or [])
+    signals = {f"HTTP {code} response code" for code in RESPONSE_CODE_RE.findall(searchable)}
+    signals.update(f"exit code {code}" for code in EXIT_CODE_RE.findall(searchable))
+    return sorted(signals)
 
 
 # ---------------------------------------------------------------------------
@@ -143,10 +160,9 @@ def main() -> None:
 
     product_counter: Counter[str] = Counter()
     component_counter: Counter[str] = Counter()
-    category_counter: Counter[str] = Counter()
-    chunks_with_error_codes = 0
-    chunks_with_kb_number = 0
-    chunks_missing_category = 0
+    tag_counter: Counter[str] = Counter()
+    chunks_with_error_signals = 0
+    chunks_missing_tags = 0
     total = 0
 
     out_path = output_dir / "chunks_metadata.jsonl"
@@ -158,31 +174,30 @@ def main() -> None:
             total += 1
 
             doc_meta = doc_metadata_by_path.get(chunk["source_path"], {})
-            error_codes = extract_error_codes(chunk["text"])
+            error_signals = extract_error_signals(chunk)
 
             chunk["metadata"] = {
                 **chunk.get("metadata", {}),
                 **doc_meta,
-                "error_codes": error_codes,
+                "error_signals": error_signals,
             }
 
-            if error_codes:
-                chunks_with_error_codes += 1
-            if doc_meta.get("kb_number"):
-                chunks_with_kb_number += 1
-            if not doc_meta.get("category"):
-                chunks_missing_category += 1
+            if error_signals:
+                chunks_with_error_signals += 1
+            if not doc_meta.get("tags"):
+                chunks_missing_tags += 1
 
             product_counter[doc_meta.get("product_area") or "(none)"] += 1
             component_counter[doc_meta.get("component") or "(none)"] += 1
-            category_counter[doc_meta.get("category") or "(none)"] += 1
+            for tag in doc_meta.get("tags") or ["(none)"]:
+                tag_counter[tag] += 1
 
             out_f.write(json.dumps(chunk, ensure_ascii=False, default=str) + "\n")
 
     taxonomy = {
         "product_area": product_counter.most_common(),
         "component": component_counter.most_common(50),
-        "category": category_counter.most_common(50),
+        "tags": tag_counter.most_common(50),
     }
     taxonomy_path = output_dir / "taxonomy.json"
     taxonomy_path.write_text(json.dumps(taxonomy, indent=2), encoding="utf-8")
@@ -190,19 +205,18 @@ def main() -> None:
     print()
     print("=== Metadata summary ===")
     print(f"Total chunks              : {total}")
-    print(f"Chunks with error codes   : {chunks_with_error_codes}")
-    print(f"Chunks with kb_number     : {chunks_with_kb_number}")
-    print(f"Chunks missing category   : {chunks_missing_category}")
+    print(f"Chunks with error signals : {chunks_with_error_signals}")
+    print(f"Chunks missing tags       : {chunks_missing_tags}")
     print(f"Distinct product_area     : {len(product_counter)}")
     print(f"Distinct component        : {len(component_counter)}")
-    print(f"Distinct category         : {len(category_counter)}")
+    print(f"Distinct tags             : {len(tag_counter)}")
     print()
     print("Top product areas:")
     for name, count in product_counter.most_common(10):
         print(f"  {name:30s} {count}")
     print()
-    print("Top categories:")
-    for name, count in category_counter.most_common(10):
+    print("Top tags:")
+    for name, count in tag_counter.most_common(10):
         print(f"  {name:30s} {count}")
     print()
     print(f"Enriched chunks written to: {out_path}")

@@ -1,57 +1,52 @@
 # Customer-Triage-Agent
 
-An intelligent customer support triage and resolution assistant, built around a curated
-knowledge base, hybrid retrieval, and (in progress) LLM-based query understanding and
-agentic resolution. Given a technical support query, understand it, retrieve grounded evidence from a knowledge base, attempt a resolution conversationally, and escalate to a human engineer when automated resolution isn't possible.
+An evidence-first customer-support triage assistant for **Docker**. Given a customer's free-text problem, it asks only
+the clarifying questions that actually separate the possible causes, finds grounded evidence in a curated knowledge base,
+and (by design) attempts a resolution conversationally and escalates to a human when it cannot.
 
-## Architecture
+Two principles: **evidence-first, never fabricated** (answers trace to retrieved documentation; weak evidence escalates
+instead of guessing) and **soft signals, never hard filters** (metadata re-weights candidates, it never excludes them).
 
-The system is designed around a two-tier knowledge model:
+## Status at a glance
 
-- **Tier 1 — Curated Knowledge Base** (built): official product troubleshooting
-  documentation, processed into a hybrid-searchable index. See
-  [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) for the specific open-source corpus used,
-  its licence, and sourcing rationale.
-- **Tier 2 — Historical Resolved Tickets** (not yet started): deferred until a real ticket
-  dataset is available; will be added via a summarization agent.
+| Area | State |
+|---|---|
+| Tier 1 knowledge base (`docker/docs`) — pipeline + vector/BM25 store | **Built**: 961 docs → 10,031 chunks |
+| Clarifier agent (understanding, differential diagnosis, session memory, reflection, tools) | **Built, verified**: 152 tests, offline evaluation |
+| Hybrid retrieval (BM25 + vector + RRF + rerank) | Built for the earlier corpus; **not yet adapted/run on Docker** |
+| Resolver agent, semantic cache, escalation, router, integrated graph | Designed, not built |
+| Tier 2 historical tickets (13,899 rows) | **Dataset only** — no code uses it yet |
+| Live LLM runs | **Never executed** — everything verified so far is offline/free |
 
-Retrieval combines **BM25 (sparse)** and **dense vector search**, fused with **Reciprocal
-Rank Fusion**, softly boosted by metadata consensus, and reranked with a **cross-encoder** —
-see [docs/customer_support_rag_overview.pptx](docs/customer_support_rag_overview.pptx) for
-the full write-up of goals, workflow, and theory, and
-[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture document
-(built pipeline, retrieval design, evaluation results, and the designed-but-not-yet-built
-agent layer).
+Numbers from the offline Clarifier evaluation (29 scenarios, vector-only retriever; small and same-author, so optimistic):
+right issue ranked first **0.85**, confident-and-correct **0.94**, out-of-scope questions answered confidently **0 of 6**,
+mean **1.34** questions per ticket. See [reports/clarifier_eval_report.md](reports/clarifier_eval_report.md) and its caveats.
 
-## Pipeline
+## How it works
 
-Each stage reads the previous stage's output and writes only to `data/processed/`.
-`data/raw/` is never modified.
+```
+customer message → Clarifier ──READY / UNRESOLVED──▶ Resolver (designed) → answer, or escalate with context
+                       ▲  │ ASK                          │
+                       └──┘ reply            NeedClarification (shared question budget)
+```
 
-| # | Script | Purpose |
-|---|--------|---------|
-| 01 | `scripts/01_profile.py` | Profiles the raw corpus (file counts, structure, front matter) |
-| 02 | `scripts/02_filter.py` | Builds an inclusion/exclusion manifest (drops templates, stubs, landing pages) |
-| 03 | `scripts/03_clean.py` | Cleans Markdown, resolves `[!INCLUDE]` directives, normalizes callouts |
-| 04 | `scripts/04_chunk.py` | Hierarchical chunking (Article → Section → Subsection → Chunk) |
-| 05 | `scripts/05_metadata.py` | Enriches chunks with `product_area`, `category`, `kb_number`, error codes, etc. |
-| 06 | `scripts/06_store.py` | Builds the BM25 index and the Chroma vector store |
-| 07 | `scripts/07_retrieve.py` | Hybrid retrieval: BM25 + vector, RRF fusion, metadata boosting, cross-encoder rerank |
-| 08 | `scripts/08_evaluate.py` | Recall@5 / Recall@10 benchmark over a hand-built query set |
-| 09 | `scripts/09_understand.py` | LLM-based query understanding, missing-context detection, problem-signature normalization |
+The Clarifier retrieves candidate causes, groups them into one hypothesis per KB issue, and either declares one cause
+clearly ahead (and grounded in the customer's own words) or asks the single question that would eliminate the most
+competing causes — a platform, the exact error text, or "which of these sounds like yours". An LLM is used for one thing by
+default (field extraction); everything else is deterministic and auditable. Full detail:
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/MEMBER_A_HANDBOOK.md](docs/MEMBER_A_HANDBOOK.md).
 
-Run them in order from the project root:
+## Repository layout
 
-```bash
-python scripts/01_profile.py
-python scripts/02_filter.py
-python scripts/03_clean.py
-python scripts/04_chunk.py
-python scripts/05_metadata.py
-python scripts/06_store.py
-python scripts/07_retrieve.py
-python scripts/08_evaluate.py
-python scripts/09_understand.py --query "your test query here"
+```
+scripts/      numbered data pipeline 01–09 (profile → filter → clean → chunk → metadata → store → retrieve → evaluate → understand)
+triage/       the agent layer: state (shared contracts), understand, clarifier, differential, session memory, reflection,
+              tools, retrieval interface, simulated customer (sim/), evaluation + guardrails (eval/), cli
+tests/        152 tests (140 offline + 12 against the real store, auto-skipped if the store is absent)
+notebooks/    Colab notebooks 01–09 that build the Tier 2 ticket dataset
+reports/      generated evaluation report
+docs/         ARCHITECTURE, MEMBER_A_HANDBOOK, DOCKER_KB_BUILD, DATA_SOURCES, DATASET_QUALITY_REPORT
+data/         git-ignored: raw/ and processed/ (regenerable)
 ```
 
 ## Setup
@@ -60,37 +55,91 @@ python scripts/09_understand.py --query "your test query here"
 python -m venv csvenv
 csvenv\Scripts\activate          # Windows
 pip install -r requirements.txt
-copy .env.example .env           # then fill in the values you need
+copy .env.example .env           # then fill in only what you need
 ```
 
-`requirements.txt` installs the core pipeline dependencies plus `google-genai` (the
-default LLM provider for `09_understand.py`). If you switch `LLM_PROVIDER` in `.env` to
-`anthropic` or `openai`, uncomment the matching line in `requirements.txt` and reinstall.
+`requirements.txt` covers the pipeline, LangGraph, pytest, and `google-genai` (the default LLM provider). To use
+`anthropic` or `openai`, set `LLM_PROVIDER` in `.env`, uncomment the matching line in `requirements.txt` and reinstall.
 
-### Environment variables (`.env`)
+## Quick start
 
-See [.env.example](.env.example) for the full, commented list. Key ones:
+**1. Build the knowledge base** (about an hour of CPU for the embedding step; or run it on EC2 — see
+[docs/DOCKER_KB_BUILD.md](docs/DOCKER_KB_BUILD.md)):
 
-- `EMBEDDING_MODEL`, `RERANKER_MODEL` — local sentence-transformers models, no API key needed
-- `VECTOR_DB_PATH`, `BM25_PATH` — where the indexes are written (under `data/processed/store/`)
-- `LLM_PROVIDER`, `LLM_MODEL` — which LLM backs `09_understand.py` (`gemini` | `anthropic` | `openai`)
-- `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` — set only the one matching `LLM_PROVIDER`
+```bash
+git clone --depth 1 https://github.com/docker/docs.git data/raw/docker-docs
+python scripts/02_filter.py
+python scripts/03_clean.py
+python scripts/04_chunk.py
+python scripts/05_metadata.py
+python scripts/06_store.py
+```
 
-**Never commit `.env`** — it's already excluded via `.gitignore`. Only `.env.example`
-(with empty key values) is tracked.
+**2. Test and try the Clarifier** (free: heuristic extraction, no API key):
 
-## Data
+```bash
+python -m pytest                                   # add `-m real_store -s` for only the real-store tests
+python -m triage.cli chat -v                       # you play the customer
+python -m triage.cli replay --id S02 -v            # replay a labeled scenario with a simulated customer
+python -m triage.eval.clarifier_eval               # offline evaluation → reports/
+python -m triage.eval.clarifier_eval --sweep       # threshold calibration grid (~2.5 min)
+```
 
-`data/raw/` and `data/processed/` are excluded from version control (large, and fully
-regenerable by running the pipeline above against the raw corpus). To reproduce:
+Live-LLM variants (`--extractor llm`, `--customer llm`) make API calls and have **never been run** by the authors of this
+code; run them yourself and check `extraction_source` in the output for any `heuristic_fallback`.
 
-1. Clone the source corpus into `data/raw/MicrosoftDocs-SupportArticles/` — see
-   [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) for the exact source and license (CC-BY-4.0).
-2. Run the pipeline scripts in order (above).
+## The data pipeline
 
-## Status
+Each stage reads the previous stage's output; `data/raw/` is never modified.
 
-Milestones M1–M6 (data pipeline through query understanding/normalization) are implemented.
-Caching (M7), grounded generation + agent orchestration (M8), and confidence-gated
-escalation (M9) are not yet started. See the roadmap slide in
-[docs/customer_support_rag_overview.pptx](docs/customer_support_rag_overview.pptx).
+| # | Script | Purpose | Docker status |
+|---|--------|---------|---------------|
+| 01 | `01_profile.py` | Profile the raw corpus | not adapted (reports `ms.topic`) |
+| 02 | `02_filter.py` | Inclusion manifest (allowlist of content dirs; "troubleshooting" from the `tags` front matter) | adapted |
+| 03 | `03_clean.py` | Clean Markdown, callouts, links | adapted |
+| 04 | `04_chunk.py` | Hierarchical chunking (Article → Section → Subsection → Chunk) | adapted |
+| 05 | `05_metadata.py` | `product_area`, `component`, `doc_kind`, `tags`, `error_signals`, `source_url`, `license` | rewritten |
+| 06 | `06_store.py` | BM25 index + Chroma vector store (`--metadata-only` refreshes metadata without re-embedding) | adapted |
+| 07 | `07_retrieve.py` | Hybrid retrieval: BM25 + vector, RRF, soft metadata boost, cross-encoder rerank | **not yet adapted** — still reads the earlier corpus's chunk file |
+| 08 | `08_evaluate.py` | Recall@5/@10 benchmark | **not yet adapted** |
+| 09 | `09_understand.py` | Query understanding | **superseded** by `triage/understand.py` |
+
+## Tier 2: historical resolved tickets (not yet used)
+
+`notebooks/01–09` (run in Colab) collect and clean ~13.9k resolved Docker problems from Stack Overflow and other Stack
+Exchange sites, GitHub issues, the Docker community forum, official FAQ entries, and two Hugging Face datasets, with
+PII masking, trust scoring, de-duplication and topic classification. The corrected output is `docker_tickets_v5_fixed.csv`
+(13,899 rows; 655 synthetic rows are flagged). Audit: [docs/DATASET_QUALITY_REPORT.md](docs/DATASET_QUALITY_REPORT.md).
+**The files are not in this repository and no code reads them.** Integrating them is the next data task.
+
+## Configuration
+
+See [.env.example](.env.example). Key variables: `EMBEDDING_MODEL`, `RERANKER_MODEL` (local models, no key needed);
+`VECTOR_DB_PATH`, `BM25_PATH` (default `data/processed/docker/store/...`); `LLM_PROVIDER`, `LLM_MODEL`; and exactly one of
+`GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`. Agent-layer thresholds are in `triage/config.py`.
+
+**Never commit `.env`, `*.pem` or `*.key`** — all are git-ignored. Treat any API key that has been printed into a terminal or
+shared transcript as exposed and rotate it.
+
+## Team and ownership
+
+Two-person split by agent, not by layer (plan: Team Workplan v2). **Member A** — understanding and the Clarifier
+(this README's agent layer; hand-over document: [docs/MEMBER_A_HANDBOOK.md](docs/MEMBER_A_HANDBOOK.md)). **Member B** —
+Tier 1 data, hybrid retrieval, memory/cache, and the Resolver. The contract between them is `triage/state.py`
+(`SCHEMA_VERSION`), and the Retriever interface in `triage/retrieval.py`.
+
+## Documentation index
+
+| Document | What it covers |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture, status of each part, known gaps |
+| [docs/MEMBER_A_HANDBOOK.md](docs/MEMBER_A_HANDBOOK.md) | Clarifier hand-over: contracts, assumptions, what is and is not verified, integration guide |
+| [docs/DOCKER_KB_BUILD.md](docs/DOCKER_KB_BUILD.md) | Building and verifying the Docker KB, including the EC2 batch runbook and pitfalls |
+| [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) | Where data comes from, licences (opens with the current Docker sources) |
+| [docs/DATASET_QUALITY_REPORT.md](docs/DATASET_QUALITY_REPORT.md) | Audit of the Tier 2 ticket dataset |
+| `docs/customer_support_rag_overview.pptx` | Original write-up — **predates the Docker pivot and the agent layer** |
+
+## Known gaps
+
+No live LLM run; no hybrid-retriever run on Docker; Resolver, cache, router and the integrated graph not built; Tier 2
+not integrated; the pre-pivot slide deck is out of date; the adapted scripts and `triage/` are not yet committed.

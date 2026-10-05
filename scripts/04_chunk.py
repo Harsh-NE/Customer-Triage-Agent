@@ -20,7 +20,7 @@ Read-only against 03_clean.py's output. Writes a single JSONL file of chunks.
 
 Usage:
     python scripts/04_chunk.py
-    python scripts/04_chunk.py --input data/processed/cleaned_docs.jsonl --output data/processed
+    python scripts/04_chunk.py --input data/processed/docker/cleaned_docs.jsonl --output data/processed/docker
     python scripts/04_chunk.py --max-words 400
 """
 
@@ -34,8 +34,8 @@ from pathlib import Path
 from statistics import mean, median
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT = PROJECT_ROOT / "data" / "processed" / "cleaned_docs.jsonl"
-DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed"
+DEFAULT_INPUT = PROJECT_ROOT / "data" / "processed" / "docker" / "cleaned_docs.jsonl"
+DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed" / "docker"
 
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 CODE_FENCE_RE = re.compile(r"^```")
@@ -205,6 +205,7 @@ def chunk_document(doc: dict, max_words: int) -> list[dict]:
 
     front_matter = doc.get("front_matter") or {}
     doc_id = doc_id_from_rel_path(doc["rel_path"])
+    tags = doc.get("tags") or []
 
     chunks: list[dict] = []
     seq = 0
@@ -222,9 +223,9 @@ def chunk_document(doc: dict, max_words: int) -> list[dict]:
                 "text": piece,
                 "word_count": count_words(piece),
                 "metadata": {
-                    "ms_topic": doc.get("ms_topic"),
-                    "ms_date": front_matter.get("ms.date"),
-                    "appliesto": front_matter.get("appliesto"),
+                    "tags": tags,
+                    "is_troubleshooting": "troubleshooting" in [t.lower() for t in tags],
+                    "weight": front_matter.get("weight"),
                 },
             })
             seq += 1

@@ -1,27 +1,32 @@
 """
-02_filter.py -- Build a filtering manifest for the MicrosoftDocs-SupportArticles corpus.
+02_filter.py -- Build a filtering manifest for the docker/docs corpus.
 
 Decides, per Markdown file, whether it should enter the KB pipeline, and records why.
 Read-only against the input directory; writes only the manifest under the output directory.
 
+docker/docs is a full Hugo site repo, not a flat docs tree, so filtering here is an
+*allowlist* of content directories rather than an excludelist of noise directories
+(verified against the real repo tree: content/manuals, content/reference, content/guides,
+and content/get-started are real docs -- 1,115 files; content/includes/ is Hugo partial
+snippets (36 files, same role as Microsoft's includes/); _vendor/, layouts/, .agents/,
+.github/, hack/, archetypes/, and root-level files (README.md, CONTRIBUTING.md, ...) are
+repo tooling/boilerplate, not docs).
+
 Rules (first match wins for exclusion):
-  1. Path-based exclusion: files under includes/, templates/, .github/, or sitting at the
-     repo root (README.md, SECURITY.md, ThirdPartyNotices.md, ...) are repository/boilerplate
-     files, not support articles.
-  2. Tiny files (word count below --min-words) are boilerplate/include fragments.
-  3. Structural ms.topic values (landing-page, include) are navigation pages, not articles.
-  4. Otherwise the file is included:
-       - "troubleshooting_topic" if ms.topic is a troubleshooting-family value
-       - "how_to_topic"          if ms.topic is how-to
+  1. Path-based inclusion: only files under one of ALLOWED_CONTENT_DIRS enter the pipeline.
+     Everything else (repo tooling, vendored docs, Hugo partials) is excluded.
+  2. Tiny files (word count below --min-words) are boilerplate/partial fragments.
+  3. Otherwise the file is included:
+       - "troubleshooting_topic" if the front-matter "tags" list contains "Troubleshooting"
+         (docker/docs' real convention, e.g. `tags: [Troubleshooting]` -- confirmed against
+         live troubleshoot.md pages; there is no ms.topic equivalent)
        - "other_substantive_content" for everything else that survived the filters above
-         (including files with no ms.topic at all -- profiling showed ~2,900 such files
-         that may still contain real support knowledge)
 
 Nothing is deleted or modified. Every file gets a manifest record, included or not.
 
 Usage:
     python scripts/02_filter.py
-    python scripts/02_filter.py --input data/raw/MicrosoftDocs-SupportArticles --output data/processed
+    python scripts/02_filter.py --input data/raw/docker-docs --output data/processed/docker
     python scripts/02_filter.py --min-words 20
 """
 
@@ -33,33 +38,33 @@ import re
 from collections import Counter
 from pathlib import Path
 
+import yaml
+
 # ---------------------------------------------------------------------------
 # Paths / defaults
 # ---------------------------------------------------------------------------
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INPUT = PROJECT_ROOT / "data" / "raw" / "MicrosoftDocs-SupportArticles"
-DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed"
+DEFAULT_INPUT = PROJECT_ROOT / "data" / "raw" / "docker-docs"
+DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "processed" / "docker"
 
 FRONT_MATTER_RE = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n?", re.DOTALL)
-MS_TOPIC_RE = re.compile(r"^ms\.topic:\s*(.+?)\s*$", re.MULTILINE)
 TITLE_RE = re.compile(r"^title:\s*(.+?)\s*$", re.MULTILINE)
 H1_RE = re.compile(r"^#\s+(.+?)\s*$", re.MULTILINE)
 WORD_RE = re.compile(r"\S+")
 
-EXCLUDE_DIR_PREFIXES = {"includes", "templates", ".github"}
-EXCLUDE_TOPICS = {"landing-page", "include"}
-TROUBLESHOOTING_TOPICS = {
-    "troubleshooting",
-    "troubleshooting-problem-resolution",
-    "troubleshooting-general",
-    "troubleshooting-known-issue",
+# Allowlist, not excludelist -- see module docstring for why.
+ALLOWED_CONTENT_DIRS = {
+    "content/manuals",
+    "content/reference",
+    "content/guides",
+    "content/get-started",
 }
-HOWTO_TOPICS = {"how-to"}
+TROUBLESHOOTING_TAG = "troubleshooting"
 
 
 # ---------------------------------------------------------------------------
-# Extraction helpers (self-contained; mirrors 01_profile.py's approach)
+# Extraction helpers
 # ---------------------------------------------------------------------------
 
 def split_front_matter(text: str) -> tuple[str | None, str]:
@@ -69,13 +74,25 @@ def split_front_matter(text: str) -> tuple[str | None, str]:
     return m.group(1), text[m.end():]
 
 
-def extract_ms_topic(fm_block: str) -> str | None:
-    m = MS_TOPIC_RE.search(fm_block)
-    if not m:
-        return None
-    value = m.group(1).strip().strip("'\"")
-    value = value.split("#", 1)[0].strip()  # drop trailing "#Required"-style comments
-    return value or None
+def parse_front_matter(fm_block: str | None) -> dict:
+    """Real YAML parse -- needed because 'tags' is a list (flow or block style),
+    not a single-line scalar like ms.topic was, so regex extraction is unreliable here."""
+    if not fm_block:
+        return {}
+    try:
+        data = yaml.safe_load(fm_block)
+        return data if isinstance(data, dict) else {}
+    except yaml.YAMLError:
+        return {}
+
+
+def extract_tags(fm_dict: dict) -> list[str]:
+    tags = fm_dict.get("tags")
+    if isinstance(tags, list):
+        return [str(t).strip() for t in tags if str(t).strip()]
+    if isinstance(tags, str) and tags.strip():
+        return [tags.strip()]
+    return []
 
 
 def extract_title(fm_block: str, body: str) -> str | None:
@@ -92,62 +109,44 @@ def count_words(body: str) -> int:
     return len(WORD_RE.findall(body))
 
 
-def normalize_topic_for_rules(topic: str | None) -> str:
-    return (topic or "").strip().lower()
-
-
 # ---------------------------------------------------------------------------
 # Filtering decision
 # ---------------------------------------------------------------------------
 
-def top_level_dir(rel_path: str) -> str:
-    return rel_path.split("/", 1)[0] if "/" in rel_path else "(root)"
+def is_allowed_dir(rel_path: str) -> bool:
+    return any(rel_path == d or rel_path.startswith(d + "/") for d in ALLOWED_CONTENT_DIRS)
 
 
 def process_file(full_path: Path, rel_path: str, min_words: int) -> dict:
-    top_dir = top_level_dir(rel_path)
-
     record_base = {"rel_path": rel_path}
 
-    if top_dir in EXCLUDE_DIR_PREFIXES:
-        return {**record_base, "included": False, "reason": f"excluded_directory:{top_dir}",
-                "ms_topic": None, "title": None, "word_count": 0}
-    if top_dir == "(root)":
-        return {**record_base, "included": False, "reason": "repo_root_file",
-                "ms_topic": None, "title": None, "word_count": 0}
+    if not is_allowed_dir(rel_path):
+        return {**record_base, "included": False, "reason": "not_in_allowed_content_dir",
+                "tags": [], "title": None, "word_count": 0}
 
     try:
         text = full_path.read_text(encoding="utf-8", errors="replace")
     except OSError as exc:
         return {**record_base, "included": False, "reason": f"read_error:{exc}",
-                "ms_topic": None, "title": None, "word_count": 0}
+                "tags": [], "title": None, "word_count": 0}
 
     fm_block, body = split_front_matter(text)
-    ms_topic = extract_ms_topic(fm_block) if fm_block else None
+    fm_dict = parse_front_matter(fm_block)
+    tags = extract_tags(fm_dict)
     title = extract_title(fm_block or "", body)
     word_count = count_words(body)
 
     # Rule 2: tiny files
     if word_count < min_words:
         return {**record_base, "included": False, "reason": f"too_small:{word_count}w",
-                "ms_topic": ms_topic, "title": title, "word_count": word_count}
+                "tags": tags, "title": title, "word_count": word_count}
 
-    # Rule 3: structural topics
-    normalized_topic = normalize_topic_for_rules(ms_topic)
-    if normalized_topic in EXCLUDE_TOPICS:
-        return {**record_base, "included": False, "reason": f"excluded_topic:{normalized_topic}",
-                "ms_topic": ms_topic, "title": title, "word_count": word_count}
-
-    # Rule 4: include, with a reason describing why
-    if normalized_topic in TROUBLESHOOTING_TOPICS:
-        reason = "troubleshooting_topic"
-    elif normalized_topic in HOWTO_TOPICS:
-        reason = "how_to_topic"
-    else:
-        reason = "other_substantive_content"
+    # Rule 3: include, with a reason describing why
+    normalized_tags = {t.strip().lower() for t in tags}
+    reason = "troubleshooting_topic" if TROUBLESHOOTING_TAG in normalized_tags else "other_substantive_content"
 
     return {**record_base, "included": True, "reason": reason,
-            "ms_topic": ms_topic, "title": title, "word_count": word_count}
+            "tags": tags, "title": title, "word_count": word_count}
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +194,7 @@ def main() -> None:
 
     exclusion_reason_counts = Counter(r["reason"] for r in excluded)
     inclusion_reason_counts = Counter(r["reason"] for r in included)
-    topic_counts = Counter((r["ms_topic"] or "(missing)") for r in records)
+    tag_counts = Counter(tag for r in records for tag in r["tags"]) or Counter({"(none)": 0})
 
     print()
     print("=== Filter summary ===")
@@ -214,9 +213,9 @@ def main() -> None:
         print(f"  {reason:30s} {count}")
 
     print()
-    print("Counts by ms.topic (top 20):")
-    for topic, count in topic_counts.most_common(20):
-        print(f"  {topic:40s} {count}")
+    print("Counts by tag (top 20):")
+    for tag, count in tag_counts.most_common(20):
+        print(f"  {tag:40s} {count}")
 
     print()
     print(f"Manifest written to: {manifest_path}")

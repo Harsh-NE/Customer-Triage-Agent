@@ -2,7 +2,54 @@
 
 **Status:** Sourcing plan for Milestones M1–M3 (dataset foundation → historical ingestion → Tier 1 KB).
 **Scope of this document:** *where the data comes from*, under what licence, in what shape, and why it fits. No ingestion code, no schemas — those follow once sources are approved.
-**Last verified:** 2026-08-28.
+**Last verified:** 2026-08-28 (sections 1–9, the Microsoft-era plan). Section 0 below was added 2026-10-05.
+
+---
+
+## 0. Status update (2026-10-05) — the project moved to Docker
+
+Sections 1–9 are the **original Microsoft-era sourcing plan, kept as history**. On 2026-09-24 the target application
+changed to **Docker**, so the "recommended Option A" below is **no longer what the system uses**. The principles (Tier 1 vs
+Tier 2 quality bars, PII stripping, attribution, "don't commit raw corpora") still apply. What is actually in use:
+
+### 0.1 Tier 1 — curated knowledge base (in use)
+
+| Source | Licence | Status |
+|---|---|---|
+| **`docker/docs`** (GitHub, shallow clone) | Apache License 2.0 — the repo `LICENSE`, read 2026-10-05 | **Used.** 1,434 Markdown files → 961 kept → 10,031 chunks. Excluded: `_vendor/` (vendored third-party docs), `layouts/`, `content/includes/`, files under 20 words. Every chunk carries `source_url` and `license` |
+
+Attribution: Apache-2.0 requires retaining the licence and notices when redistributing; the chunk-level `source_url` covers
+citation. The licence applies to the repository as a whole; vendored content under `_vendor/` and fonts under `static/`
+carry their own terms and are **not** ingested. Docker's trademarks are not licensed by Apache-2.0.
+
+### 0.2 Tier 2 — historical resolved tickets (dataset built, **not yet used by any code**)
+
+Collected by `notebooks/02–05` (Colab), consolidated to `docker_tickets_v5_fixed.csv` — 13,899 rows, each with a `license`
+and `url` column. Per-source terms as far as they were checked:
+
+| Source | Rows (v5) | Terms | Verified? |
+|---|---:|---|---|
+| Stack Overflow, accepted answers | 6,352 | CC BY-SA 4.0 (Stack Exchange network content) | standard network licence, **not re-checked per post** |
+| Stack Exchange: serverfault, superuser, askubuntu, unix, devops | 763 | CC BY-SA 4.0 | as above |
+| GitHub issues (`moby/moby`, `docker/for-win`, `compose`, `for-mac`, `hub-feedback`, `buildx`, `cli`, `for-linux`): maintainer-resolved / community-resolved | 4,593 / 499 | Issue text is user content under GitHub's terms; cite by URL | **not reviewed in detail** |
+| Docker community forum (Discourse JSON): solved / inferred-resolved | 752 / 32 | **Forum content terms were not reviewed** | **no** |
+| Official docs FAQ entries (`docker/docs`) | 152 | Apache-2.0 (as §0.1) | yes; flagged `overlaps_kb` |
+| Hugging Face `pavanmantha/devops-v1` and `sequelbox/Titanium` | 756 (101 `hf_qa_unspecified` + 655 `hf_synthetic_qa`; which dataset produced which was not re-derived here) | both dataset cards state `apache-2.0` (read via the Hub API 2026-10-05). `Titanium` is LLM-generated, so synthetic rows are flagged `is_synthetic` and sit at the lowest trust | card only; provenance of the underlying generated text was not audited |
+
+Collector settings (from the notebooks): Stack Exchange 2014 onward, question score ≥ 2, problem-shaped questions only; GitHub
+repos capped per repo; forum categories `docker-desktop`, `docker-engine`, `docker-hub`, `general-discussions`,
+`image-builds`, `support`. An optional Reddit collector exists, is off by default, and was never run.
+
+**Treat the mixed CC BY-SA content as a share-alike obligation** if any Tier 2 text is ever promoted into a curated KB article
+or redistributed — keep it attributed and separate, as §5 and §7 below already advise. Raw ticket text must not be committed.
+
+### 0.3 Considered and not used
+
+* **Book extraction** (using Docker books as KB content or to synthesise tickets) was discussed and deliberately **not done**:
+  most Docker books are commercially licensed, and synthesising tickets from them would also stack synthetic data on synthetic data.
+* **Version/release-notes feeds, a live incident/status feed, and sentiment-based inference of unmarked resolutions** were
+  brainstormed only. Note that `docker/docs` already contains release notes and archived-version pages (~25% of the chunks).
+* The Kaggle `suraj520` ticket dataset stays rejected (§6) — it is domain-wrong and synthetic.
 
 ---
 
