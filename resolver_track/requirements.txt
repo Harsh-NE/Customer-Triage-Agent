@@ -1,0 +1,7 @@
+langgraph>=1.0
+rank_bm25>=0.2.2
+pytest>=8
+# optional, enable as needed:
+# anthropic>=0.40            # LLM_PROVIDER=anthropic
+# openai>=1.40               # LLM_PROVIDER=openai (also Groq / Ollama / vLLM via OPENAI_BASE_URL)
+# sentence-transformers>=3   # real cache embeddings (SentenceTransformerEmbedder)

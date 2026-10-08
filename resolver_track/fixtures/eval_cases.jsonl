@@ -1,0 +1,9 @@
+{"case_id": "C1", "signature": "port_conflict", "replies": ["that worked, thanks"], "expected_outcome": "resolved", "expected_doc": "docs/engine/network/ports.md#1"}
+{"case_id": "C2", "signature": "permission_denied", "replies": ["fixed it, thank you"], "expected_outcome": "resolved", "expected_doc": "docs/engine/install/linux-postinstall.md#1"}
+{"case_id": "C3", "signature": "desktop_wsl", "replies": ["still stuck", "still the same error"], "expected_outcome": "escalated", "expected_doc": "docs/desktop/troubleshoot/wsl.md#2"}
+{"case_id": "C4", "signature": "dns_vpn", "replies": ["works now"], "expected_outcome": "resolved", "expected_doc": "T-0001"}
+{"case_id": "C5", "signature": "data_loss", "replies": [], "expected_outcome": "escalated", "expected_reason": "SECURITY_OR_DATA_LOSS"}
+{"case_id": "C6", "signature": "out_of_scope", "replies": [], "expected_outcome": "rejected", "expected_reason": "OUT_OF_SCOPE"}
+{"case_id": "C7", "signature": "injection", "replies": [], "expected_outcome": "rejected", "expected_reason": "OUT_OF_SCOPE"}
+{"case_id": "C8", "signature": "unknown_issue", "replies": [], "expected_outcome": "escalated", "expected_reason": "LOW_EVIDENCE"}
+{"case_id": "C9", "signature": "vague", "replies": [], "expected_outcome": "needs_clarification"}

@@ -1,0 +1,8 @@
+{"ts": "2026-10-06T04:46:02.192778+00:00", "event": "cache_lookup", "ticket_id": "TRY-fc1934", "status": "miss", "similarity": 0.0, "rejected_by_gate": 1}
+{"ts": "2026-10-06T04:46:02.295414+00:00", "event": "retrieval", "ticket_id": "TRY-fc1934", "tier": "kb", "n": 8, "top_score": 0.9444, "status": "ok", "latency_ms": 100.54}
+{"ts": "2026-10-06T04:46:02.297814+00:00", "event": "gate", "ticket_id": "TRY-fc1934", "tier": "kb", "decision": "resolve", "confidence": 0.8381, "strong": true, "top": 0.9444, "margin": 0.0708, "agreement": 1.0, "completeness": 0.8, "reasons": ["ok"]}
+{"ts": "2026-10-06T04:46:02.300653+00:00", "event": "llm_call", "ticket_id": "TRY-fc1934", "node": "draft", "model": "fake", "cost_usd": 0.0, "status": "ok", "latency_ms": 0.81}
+{"ts": "2026-10-06T04:46:02.319053+00:00", "event": "verify", "ticket_id": "TRY-fc1934", "ok": true, "kept": 4, "dropped": []}
+{"ts": "2026-10-06T04:48:44.489458+00:00", "event": "llm_call", "ticket_id": "TRY-fc1934", "node": "classify", "model": "fake", "cost_usd": 0.0, "status": "ok", "latency_ms": 0.87}
+{"ts": "2026-10-06T04:48:58.525794+00:00", "event": "llm_call", "ticket_id": "TRY-fc1934", "node": "classify", "model": "fake", "cost_usd": 0.0, "status": "ok", "latency_ms": 0.04}
+{"ts": "2026-10-06T04:48:58.530681+00:00", "event": "outcome", "ticket_id": "TRY-fc1934", "outcome": "resolved", "attempts": 1}

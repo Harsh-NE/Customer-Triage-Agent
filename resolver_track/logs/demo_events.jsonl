@@ -1,0 +1,7 @@
+{"ts": "2026-10-06T04:38:04.652641+00:00", "event": "cache_lookup", "ticket_id": "DEMO-358828", "status": "miss", "similarity": 0.0, "rejected_by_gate": 0}
+{"ts": "2026-10-06T04:38:04.656247+00:00", "event": "retrieval", "ticket_id": "DEMO-358828", "tier": "kb", "n": 8, "top_score": 0.8791, "status": "ok", "latency_ms": 0.84}
+{"ts": "2026-10-06T04:38:04.658466+00:00", "event": "gate", "ticket_id": "DEMO-358828", "tier": "kb", "decision": "resolve", "confidence": 0.7296, "strong": true, "top": 0.8791, "margin": 0.3636, "agreement": 0.25, "completeness": 0.67, "reasons": ["ok"]}
+{"ts": "2026-10-06T04:38:04.661265+00:00", "event": "llm_call", "ticket_id": "DEMO-358828", "node": "draft", "model": "fake", "cost_usd": 0.0, "status": "ok", "latency_ms": 0.63}
+{"ts": "2026-10-06T04:38:04.681890+00:00", "event": "verify", "ticket_id": "DEMO-358828", "ok": true, "kept": 4, "dropped": []}
+{"ts": "2026-10-06T04:38:42.554081+00:00", "event": "llm_call", "ticket_id": "DEMO-358828", "node": "classify", "model": "fake", "cost_usd": 0.0, "status": "ok", "latency_ms": 0.46}
+{"ts": "2026-10-06T04:38:42.559260+00:00", "event": "outcome", "ticket_id": "DEMO-358828", "outcome": "resolved", "attempts": 1}

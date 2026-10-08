@@ -1,0 +1,25 @@
+{
+  "k": 8,
+  "max_attempts": 2,
+  "max_clarify_returns": 2,
+  "use_ticket_fallback": true,
+  "gate": {
+    "min_top_score": 0.55,
+    "min_margin": 0.05,
+    "min_agreement": 0.4,
+    "min_completeness": 0.5,
+    "resolve_confidence": 0.6,
+    "weights": {
+      "top": 0.45,
+      "margin": 0.15,
+      "agreement": 0.2,
+      "completeness": 0.2
+    },
+    "agreement_k": 5
+  },
+  "cache": {
+    "upper": 0.92,
+    "lower": 0.85,
+    "require_confirmed": true
+  }
+}
