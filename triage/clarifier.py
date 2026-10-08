@@ -31,7 +31,7 @@ from triage import understand as U
 from triage.answers import match_option
 from triage.config import ClarifierConfig
 from triage.context_session import SessionMemory
-from triage.differential import AmbiguityResult, Discriminator, ambiguity_check
+from triage.differential import AmbiguityResult, Discriminator, ambiguity_check, waive_uncovered_terms
 from triage.llm import LLM
 from triage.reflect import ReflectionVerdict, reflect_question
 from triage.retrieval import Retriever
@@ -248,7 +248,7 @@ class Clarifier:
     def _diagnose(self, ctx: TurnContext) -> None:
         s = ctx.session
         exclude = self._excluded_features(s)
-        ctx.ambiguity = ambiguity_check(s.fields, self.registry, s.answered, exclude, self.cfg)
+        ctx.ambiguity = self._check(s, exclude)
 
     def _decide(self, ctx: TurnContext) -> None:
         if ctx.result is not None:
@@ -272,7 +272,7 @@ class Clarifier:
                 if verdict.filled_value:
                     self._apply_answer_to_fields(s, disc.feature, verdict.filled_value, ctx.turn_idx)
                     s.answered.setdefault(disc.feature, verdict.filled_value)
-                    amb = ambiguity_check(s.fields, self.registry, s.answered, self._excluded_features(s), self.cfg)
+                    amb = self._check(s, self._excluded_features(s))
                     ctx.ambiguity = amb
                     if not amb.confidence.ambiguous:
                         ctx.result = self._signature_result(s, amb, ClarifierStatus.READY, "clear_after_recall")
@@ -290,8 +290,17 @@ class Clarifier:
                 ctx.result = self._emit_question(s, plan, {"reflection": verdict.reason, "last_resort": True,
                                                            "p_top": amb.confidence.p_top})
                 return
+        if amb.confidence.reason == "uncovered_term":
+            # The doubt could not be resolved by asking (nothing to ask). Keep the old behaviour -- the leader is still the
+            # clear one -- but say so: meta["uncovered_terms"] lets the Resolver hedge.
+            ctx.result = self._signature_result(s, amb, ClarifierStatus.READY, "clear_with_uncovered_term")
+            return
         reason = ("no_discriminating_question" if amb.confidence.reason == "split" else amb.confidence.reason)
         ctx.result = self._signature_result(s, amb, ClarifierStatus.UNRESOLVED, reason)
+
+    def _check(self, session: SessionMemory, exclude: set[str]):
+        amb = ambiguity_check(session.fields, self.registry, session.answered, exclude, self.cfg)
+        return waive_uncovered_terms(amb, self.cfg) if session.questions_asked > 0 else amb
 
     def _finish(self, ctx: TurnContext) -> ClarifierResult:
         r = ctx.result
@@ -307,6 +316,8 @@ class Clarifier:
             r.meta["confidence"] = {"p_top": round(amb.confidence.p_top, 3), "margin": round(amb.confidence.margin, 3),
                                     "top_score": round(amb.confidence.top_score, 3), "reason": amb.confidence.reason}
             r.meta["hypotheses"] = [{"label": h.label, "weight": round(h.weight, 3)} for h in amb.hypotheses[:5]]
+            if amb.hypotheses and amb.hypotheses[0].missing_terms:
+                r.meta["uncovered_terms"] = amb.hypotheses[0].missing_terms
         return r
 
     # -- planning questions ------------------------------------------------------------

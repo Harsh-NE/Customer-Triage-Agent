@@ -22,6 +22,8 @@ ENV_DEFAULTS = {
     "LLM_MODEL": "gemini-3.5-flash-lite",
     "EMBEDDING_MODEL": "BAAI/bge-base-en-v1.5",
     "VECTOR_DB_PATH": "data/processed/docker/store/vector",
+    "BM25_PATH": "data/processed/docker/store/bm25",
+    "TICKETS_STORE_PATH": "data/processed/docker/store/tickets",
     "TAXONOMY_PATH": "data/processed/docker/taxonomy.json",
 }
 
@@ -97,6 +99,11 @@ class ClarifierConfig:
     # (observed: an irrelevant hit scored the same as a correct one). So the top hypothesis must also be
     # lexically grounded: at least this share of the customer's content words appear in its text.
     min_grounding: float = 0.34
+    # Overall grounding can pass while the one word that matters is missing ("docker pull fails on ROOTLESS Docker": 2 of 3
+    # words match a generic pull-troubleshooting page that never mentions rootless). A customer term that appears in at most
+    # this share of the retrieved issues (never in all of them: that tells nothing) is DISCRIMINATING; if the top issue lacks it, we are not confident. 0 disables.
+    rare_term_max_share: float = 0.7    # S17: 'rootless' is in 6 of 10 pooled issues (the query pulls rootless pages in)
+    rare_term_min_hypotheses: int = 4   # with fewer issues in the pool, "rare" is meaningless
 
     # --- question phrasing -----------------------------------------------------
     llm_phrase_questions: bool = False  # True = +1 LLM call per question; default templates (cheaper, auditable)

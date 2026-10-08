@@ -49,3 +49,12 @@ def test_real_store_product_taxonomy_is_clean():
     assert "content" not in areas, "regression: guides/reference chunks mislabelled product_area='content'"
     assert not any(a.endswith(".md") for a in areas), "regression: file extension leaked into product_area"
     assert {"engine", "desktop", "docker-hub"} <= areas
+
+
+def test_real_store_does_not_answer_s17_confidently_while_ignoring_rootless(retriever):
+    """Regression (found after the token-aware re-chunk): a generic Docker Hub pull-troubleshooting section won with no
+    question although the customer said 'rootless' and that section never mentions it."""
+    s = next(x for x in load_scenarios() if x.id == "S17")
+    d = run_dialogue(Clarifier(None, retriever), RuleBasedCustomer(s), s)
+    assert d.first_result.status.value != "ready", "S17 answered confidently on the opening message"
+    assert not (d.status == "ready" and d.gold_rank != 1), "S17 ended in a wrong READY"

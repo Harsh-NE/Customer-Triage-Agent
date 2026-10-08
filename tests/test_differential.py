@@ -148,3 +148,63 @@ def test_ambiguity_check_separates_the_demo_429_pair(retriever):
     labels = " ".join(h.label for h in res.hypotheses[:2])
     assert "pull rate limit" in labels and "Too many requests" in labels
     assert res.discriminators and res.discriminators[0].feature == "error_message"
+
+
+# ---- rare-term grounding: a leader that lacks the one word that tells the issues apart ------------------------------
+from triage.differential import rare_pool_terms, waive_uncovered_terms, AmbiguityResult  # noqa: E402
+
+
+def _pool(leader_text, other_texts, leader_score=0.7, other_score=0.55):
+    cands = [_cand("lead", ["T", "Issue lead"], leader_score, text=leader_text)]
+    cands += [_cand(f"o{i}", ["T", f"Issue {i}"], other_score - 0.01 * i, text=t) for i, t in enumerate(other_texts)]
+    return cands
+
+
+ROOTLESS_FIELDS = ExtractedFields(symptoms=["docker pull fails for me on rootless Docker"])
+OTHERS = ["rootless mode user namespaces", "rootless networking slirp4netns", "daemon socket permission", "disk space full"]
+
+
+def test_leader_missing_a_discriminating_customer_term_is_flagged_and_not_clear():
+    hyps = build_hypotheses(_pool("docker pull fails: registry unreachable", OTHERS), CFG, ROOTLESS_FIELDS)
+    lead = next(h for h in hyps if h.chunk_ids == ["lead"])
+    assert lead.missing_terms == ["rootless"] and hyps[0] is lead
+    assert decide(hyps, CFG).reason == "uncovered_term" and decide(hyps, CFG).ambiguous
+    assert decide(build_hypotheses(_pool("docker pull fails: registry unreachable", OTHERS), CFG), CFG).reason == "clear"  # no fields -> no check
+
+
+def test_leader_that_covers_the_term_is_not_flagged():
+    hyps = build_hypotheses(_pool("rootless docker pull fails", OTHERS), CFG, ROOTLESS_FIELDS)
+    assert hyps[0].missing_terms == [] and decide(hyps, CFG).reason == "clear"
+
+
+def test_terms_present_in_every_issue_or_in_none_are_not_discriminating():
+    hays = ["docker pull rootless", "docker pull", "docker pull", "docker pull"]
+    f = ExtractedFields(symptoms=["docker pull fails on rootless with zzzunknown"])
+    assert set(rare_pool_terms(f, hays, CFG)) == {"rootless"}          # 'pull' is in all four, 'zzzunknown' in none
+
+
+def test_function_words_and_stems_are_handled():
+    f = ExtractedFields(symptoms=["they pulls images from our private registry"])
+    hays = ["pull image registry", "pull image", "registry", "private tokens"]
+    assert "from" not in rare_pool_terms(f, hays, CFG) and "they" not in rare_pool_terms(f, hays, CFG)
+    hyps = build_hypotheses([_cand("a", ["T", "A"], 0.7, text="pull image"), _cand("b", ["T", "B"], 0.55, text="private x"),
+                             _cand("c", ["T", "C"], 0.54, text="y"), _cand("d", ["T", "D"], 0.53, text="z")], CFG, f)
+    assert "pulls" not in hyps[0].missing_terms and "images" not in hyps[0].missing_terms   # 'pull'/'image' found via stems
+
+
+def test_rule_is_off_for_small_pools_and_when_disabled():
+    cands = _pool("docker pull fails", ["rootless mode"])                   # 2 issues: 'rare' is meaningless
+    assert build_hypotheses(cands, CFG, ROOTLESS_FIELDS)[0].missing_terms == []
+    off = ClarifierConfig(rare_term_max_share=0.0)
+    hyps = build_hypotheses(_pool("docker pull fails", OTHERS), off, ROOTLESS_FIELDS)
+    assert hyps[0].missing_terms == [] and decide(hyps, off).reason == "clear"
+
+
+def test_waiving_the_doubt_restores_the_ordinary_decision():
+    hyps = build_hypotheses(_pool("docker pull fails: registry unreachable", OTHERS), CFG, ROOTLESS_FIELDS)
+    amb = AmbiguityResult(hyps, decide(hyps, CFG), [])
+    assert amb.confidence.reason == "uncovered_term"
+    waived = waive_uncovered_terms(amb, CFG)
+    assert waived.confidence.reason == "clear" and all(h.missing_terms == [] for h in waived.hypotheses)
+    other = AmbiguityResult(hyps, decide([_h("a", 0.5), _h("b", 0.5)], CFG), [])
+    assert waive_uncovered_terms(other, CFG).confidence.reason == "split"       # only this doubt is waived

@@ -199,3 +199,52 @@ def test_as_node_plugs_into_an_outer_graph_state(make_clarifier):
     node = cl.as_node()
     out = node({"session": cl.start(), "customer_message": "it doesn't work"})
     assert out["clarifier_result"].status is ClarifierStatus.ASK
+
+
+# ---------------- S17 regression: do not answer confidently while ignoring the customer's distinguishing word ----------------
+class _FixedRetriever:
+    def __init__(self, cands):
+        self.cands = cands
+
+    def search(self, query, top_k=8):
+        return list(self.cands)
+
+
+def _s17_pool():
+    from triage.state import Candidate
+
+    def c(cid, issue, score, text):
+        return Candidate(cid, text, score, "content/x.md", "Docs", ["Docs", issue], {"doc_kind": "troubleshooting"})
+    return [c("lead", "Troubleshooting failed pulls", 0.70, "docker pull fails: the registry is unreachable"),
+            c("o1", "Rootless mode", 0.55, "rootless mode user namespaces"),
+            c("o2", "Rootless networking", 0.54, "rootless networking slirp4netns"),
+            c("o3", "Daemon socket", 0.53, "daemon socket permission"),
+            c("o4", "Disk space", 0.52, "disk space full")]
+
+
+def test_leader_missing_the_customers_distinguishing_word_triggers_a_question_then_is_waived():
+    cl = Clarifier(None, _FixedRetriever(_s17_pool()))
+    s = cl.start()
+    res = cl.turn(s, "docker pull fails for me on rootless Docker")
+    assert res.status is ClarifierStatus.ASK and res.question.feature == "issue"
+    assert res.meta["confidence"]["reason"] == "uncovered_term" and res.meta["uncovered_terms"] == ["rootless"]
+    res = cl.turn(s, "1")                          # the customer picks the leader: the doubt must not veto READY again
+    assert res.status is ClarifierStatus.READY and res.reason == "clear" and "failed pulls" in _top(res)
+
+
+def test_without_the_rare_term_check_the_same_pool_is_answered_confidently_with_no_question():
+    # negative control: this is the S17 failure -- confident READY on an issue that never mentions "rootless"
+    cl = Clarifier(None, _FixedRetriever(_s17_pool()), ClarifierConfig(rare_term_max_share=0.0))
+    res = cl.turn(cl.start(), "docker pull fails for me on rootless Docker")
+    assert res.status is ClarifierStatus.READY and res.questions_asked == 0 and "failed pulls" in _top(res)
+
+
+def test_uncovered_term_with_nothing_to_ask_keeps_the_leader_but_says_so():
+    pool = _s17_pool()[:1] + [p for p in _s17_pool()[1:]]
+    for p in pool[1:]:
+        p.score = 0.05                              # others are implausible: no question can separate anything
+    cl = Clarifier(None, _FixedRetriever(pool))
+    s = cl.start()
+    res = cl.turn(s, "docker pull fails for me on rootless Docker, error: 'pull access denied for registry'")
+    assert res.status is ClarifierStatus.READY and res.questions_asked == 0
+    assert res.reason == "clear_with_uncovered_term" and res.meta["uncovered_terms"] == ["rootless"]

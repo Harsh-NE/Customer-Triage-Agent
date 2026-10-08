@@ -76,7 +76,12 @@ def build_retriever(name: str, factory: str | None) -> Retriever:
     if factory:
         module, _, attr = factory.partition(":")
         return getattr(importlib.import_module(module), attr)()
-    return keyword_retriever() if name == "keyword" else ChromaRetriever()
+    if name == "keyword":
+        return keyword_retriever()
+    if name == "chroma":
+        return ChromaRetriever()
+    from triage.hybrid import HybridKBRetriever
+    return HybridKBRetriever()
 
 
 # ---------------------------------------------------------------------------
@@ -245,7 +250,7 @@ def write_report(path: Path, meta: dict, gap_metrics: dict, summary: dict, resul
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Evaluate the Clarifier on labeled scenarios.")
-    ap.add_argument("--retriever", choices=["chroma", "keyword"], default="chroma")
+    ap.add_argument("--retriever", choices=["hybrid", "chroma", "keyword"], default="hybrid")
     ap.add_argument("--retriever-factory", default=None, help="module:function returning a Retriever (e.g. Member B's)")
     ap.add_argument("--extractor", choices=["heuristic", "llm"], default="heuristic")
     ap.add_argument("--customer", choices=["rule", "llm"], default="rule")

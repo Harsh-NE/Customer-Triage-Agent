@@ -28,9 +28,9 @@ cache hit; the system should always try cheap-and-safe before expensive-and-risk
 
 - **Tier 1 — Curated Knowledge Base [Built, verified]**: the `docker/docs` repository (Apache License 2.0 — repo
   `LICENSE`, checked 2026-10-05; `_vendor/` content is excluded). 1,434 Markdown files scanned → **961** included →
-  **10,031 chunks**, embedded and stored. Composition by page type (`doc_kind`): docs 5,417 · release notes 1,852 ·
-  guides 1,338 · archived versions 708 · reference 449 · **troubleshooting 171 · FAQ 96**. Only ~2.7% of the KB is
-  troubleshooting/FAQ and ~25% is release notes or archive — the retrieval and clarification design accounts for this
+  **11,440 chunks** (token-capped, rebuilt 2026-10-07), embedded and stored. Composition by page type (`doc_kind`): docs 6,029 ·
+  release notes 2,185 · guides 1,694 · archived versions 763 · reference 486 · **troubleshooting 187 · FAQ 96**. Only ~2.5% of
+  the KB is troubleshooting/FAQ and ~26% is release notes or archive — the retrieval and clarification design accounts for this
   (page-type weights, §6.1).
 - **Tier 2 — Historical Resolved Tickets [Dataset only]**: `docker_tickets_v5_fixed.csv` — **13,899 rows, 28 columns**,
   built by the Colab notebooks in `notebooks/` (01–09). Sources: Stack Overflow accepted (6,352), GitHub maintainer-resolved
@@ -38,9 +38,33 @@ cache hit; the system should always try cheap-and-safe before expensive-and-risk
   `is_synthetic`), GitHub community-resolved (499), official docs FAQ entries (152, flagged `overlaps_kb`), HF Q&A
   unspecified (101), forum inferred-resolved (32, lowest trust). Trust tiers: high 8,573 · medium 4,506 · low 820.
   Quality audit: [DATASET_QUALITY_REPORT.md](DATASET_QUALITY_REPORT.md).
-  **No code in this repository reads, embeds, retrieves from, or evaluates against this dataset.** The files live outside
-  the repo (`data/` is git-ignored). Integrating it (embedding it as a second collection, using it as fallback evidence,
-  seeding evaluation scenarios from it) is not started.
+  Put the CSV in `data/raw/tickets/`. **`scripts/10_tickets.py` turns it into a separate store** (built 2026-10-08);
+  **no retriever, router or Resolver reads that store yet.**
+
+  **How tickets are processed (decided and built).** A ticket is one problem + one resolution, so the KB's heading-based
+  chunker does not apply: **one vector per ticket**. The embedded text is `title` + up to 3 cleaned error lines + the head of
+  `problem`, capped at **256 tokens** (45% of `title + problem` exceed the model's 512; at 500 tokens embedding ran ~0.6
+  tickets/s on a laptop CPU vs ~3.6/s at 256, i.e. ~6 h vs ~1 h, and the symptom is in the head anyway; `--max-tokens`
+  changes it). The **resolution is not embedded**: it is stored whole and trimmed when context is built.
+  - **Separate store** (`data/processed/docker/store/tickets/`): Chroma collection `tickets__baai-bge-base-en-v1-5`, a BM25
+    index over title + errors + the *full* problem (+ tags for non-GitHub sources), and `tickets.db` (SQLite, one row per
+    ticket incl. non-indexed ones, lists as JSON). Same embedding model as the KB, so one query embedding serves both.
+    Kept apart because the unit, trust, voice and licences differ and 13k ticket vectors would crowd 11k KB chunks.
+  - **Indexed: 13,092.** Not indexed (kept in the docstore with `exclude_reason`): 655 `is_synthetic`, 152 `overlaps_kb`.
+    Low-trust tickets (165 remain) are indexed and meant to be filtered at query time.
+  - **Chroma metadata is flat scalars only:** `trust_tier`, `trust_score`, `resolution_kind`, `kind_guess`, `source`,
+    `source_type`, `age_years` (-1 = unknown), `has_code`, `n_errors`, `has_exit_code`, `url`, `license`, and one boolean per
+    topic (`topic_networking`, ...) because Chroma cannot filter on lists.
+  - **`error_strings` is unreliable in the source CSV**: it holds any quoted span (paths, commands) and ~19% prose cut at
+    apostrophes ("ve got going..."). The script keeps only multi-word, error-looking lines without first-person prose;
+    ~3.2k indexed tickets keep a real error line. Exit codes and versions are stored, not embedded.
+  - **Intended use (not built):** hard filters on `kind_guess`, trust floor and `is_synthetic`; ranking = RRF(vector, BM25) x
+    trust x resolution-kind x recency, with large boosts for exact error-line / exit-code matches and a soft topic boost;
+    KB passages stay the primary evidence, tickets are labelled community-sourced context with URL + licence (CC BY-SA needs
+    attribution); tickets lead only when the KB is weak, with lower confidence.
+  - **Verified so far:** counts and token caps (tests), and one smoke query ("container exits with code 137"): the top vector
+    and BM25 hits are the right ticket, but vector search also returns exit codes 139/125 and a low-trust ticket, which is what
+    the exact-match boost and trust floor are for. No recall/precision measurement exists.
 
 A side effect of the Resolver design (§6.2): every successfully-resolved conversation is already a ready-made Tier-2
 record (query + steps taken + confirmation it worked).
@@ -55,7 +79,7 @@ Each stage reads the previous stage's output; `data/raw/` is never modified. For
 | 01 | `scripts/01_profile.py` | Profiles the raw corpus | **Not adapted** — still reports `ms.topic`; harmless, not on the build path |
 | 02 | `scripts/02_filter.py` | Inclusion manifest | **Adapted**: allowlist of `content/{manuals,reference,guides,get-started}`; "troubleshooting" read from the front-matter `tags` list. 961 included / 473 excluded |
 | 03 | `scripts/03_clean.py` | Cleans Markdown, callouts, links, whitespace | **Adapted** (carries `tags`). `> [!NOTE]` callouts use the same syntax as before; `[!INCLUDE]` resolution is a no-op on Docker |
-| 04 | `scripts/04_chunk.py` | Hierarchical chunking | **Adapted** (metadata: `tags`, `is_troubleshooting`, `weight`). 10,031 chunks |
+| 04 | `scripts/04_chunk.py` | Hierarchical chunking | **Adapted**, token-aware (metadata: `tags`, `is_troubleshooting`, `weight`). 11,440 chunks |
 | 05 | `scripts/05_metadata.py` | Enrichment | **Rewritten**: `product_area`, `component`, `doc_kind`, `tags`, `error_signals`, `source_url`, `license` |
 | 06 | `scripts/06_store.py` | BM25 index + Chroma vector store | **Adapted**: Docker store paths, richer Chroma metadata, `--metadata-only` refresh |
 | 07 | `scripts/07_retrieve.py` | Hybrid retrieval | **Not yet adapted** — see §4.1 |
@@ -71,13 +95,30 @@ directories rather than an excludelist of noise. Excluded: `_vendor/` (267 vendo
 ### 3.2 Hierarchical chunking
 
 Chunking follows the document's own structure: `Article → Section (H2) → Subsection (H3) → Chunk`. H1 is the article
-title; H4+ fold into bold inline text; fenced code blocks are atomic; each chunk carries its full heading path.
+title; H4+ fold into bold inline text; fenced code blocks stay whole whenever they fit; each chunk carries its full heading path.
 
 **The real KB is inconsistent about heading depth**, and this matters downstream. `docker-hub/troubleshoot.md` makes the
 *issue* an H2 with "Error message / Possible causes / Solution" as H3 — so each of those becomes its own chunk. The Desktop
 `topics.md` makes the issue an H3 under a platform group with those fields as H4 — so they fold into **one** chunk. The
 chunks are left as produced; the agent layer handles both by treating those field-like sub-headings as belonging to their
 parent issue (`triage/issues.py`).
+
+**Token-aware length cap.** `bge-base-en-v1.5` reads at most **512 tokens**; anything beyond is silently dropped from the
+embedding. The first build capped by *words* (400), which does not bound tokens: **1,098 of 10,031 chunks (10.9%) exceeded
+512 tokens** (median 140, p95 727, max 9,590), so vector search only saw their first 512 tokens. `04_chunk.py` now counts
+with the embedding model's own fast tokenizer (`--max-tokens`, default 500; `--tokenizer` overrides the model name) and
+splits an oversized leaf at the most natural boundary that fits: paragraph → line → sentence → exact token-offset window.
+A fenced code block that must be split is re-wrapped in its opener on every part, so each chunk stays valid Markdown (the
+opener's language tag/attributes therefore repeat). Text is sliced from the original, never decoded from ids. The script
+exits non-zero if any chunk is over the limit.
+Measured on the real corpus (2026-10-06): 961 docs → **11,440 chunks**, tokens median 148 / p95 485 / max 500, **0 over 500**.
+Compared with the old chunks, every document keeps all its text (ignoring repeated fence openers, table-delimiter runs and
+whitespace), and one doc recovers a paragraph the old chunker had dropped. **Status: fixed and the store rebuilt**
+(2026-10-07: 11,440 chunks embedded, no errors). Effect on the Clarifier eval (29 scenarios): gold-first unchanged at 0.85;
+READY precision 0.94 → 0.89 and wrong-READY 1 → 2 of 20, the new one being S17 ("docker pull fails
+on rootless Docker"): a generic Docker Hub "Troubleshooting failed pulls" section won with no question asked even though the
+customer's "rootless" is not covered by it. Cause: overall grounding only checks word overlap. **Fixed 2026-10-08 by the
+rare-term check (§6.1)**; the eval is back to 0.94 / 0.05.
 
 Retrieval is meant to use **"index small, return whole"**: match at the fine chunk level, then expand to the parent group.
 
@@ -95,7 +136,49 @@ patched with `06_store.py --metadata-only` (no re-embedding). **Any copy built b
 
 ## 4. Retrieval Architecture
 
-### 4.1 Hybrid retrieval design [Built; not yet re-pointed at the Docker store]
+### 4.1 Hybrid retrieval [Built: `triage/hybrid.py`; the original `scripts/07_retrieve.py` is still not adapted]
+
+Two retrievers, both in `triage/hybrid.py`, both lazily loading the stores and able to share one embedding model
+(`TicketRetriever(model=kb._model)`):
+
+**`HybridKBRetriever`** (Tier 1; satisfies the `Retriever` protocol, so it replaced the vector-only `ChromaRetriever` as the
+default of the CLI and the eval; `--retriever chroma` still selects the old one). Dense top-30 and BM25 top-30 are fused with
+RRF; the `top_k` best fused chunks are returned, then siblings of the same issue are appended exactly as before.
+*Scoring is deliberately not the RRF score*: the Clarifier's thresholds were calibrated on vector similarity
+(`1/(1+distance)`, ~0.5-0.8) and RRF values (0.01-0.03) are on another scale, so every returned chunk, including ones only BM25
+found, is scored by its exact vector similarity. BM25 therefore changes *which* issues are in the pool (recall for rare terms
+such as "rootless" or "429"), not their weights. No metadata boost and no cross-encoder rerank yet (the rerank model's score is
+uncalibrated; add it only if an evaluation shows the fused order needs it).
+
+**Headings are indexed in BM25.** A chunk's text does not contain its own heading, which is the issue's name
+("`docker pull` errors"). `06_store.py` now indexes `heading_path + text` (rebuild just BM25 in seconds with
+`python scripts/06_store.py --bm25-only`). Measured on the 29 scenarios: hybrid with text-only BM25 lost a gold issue (SCIM) and
+left READY at 0.55; with headings gold-first returned to 0.85. **The dense side still embeds text only**, so putting the heading
+path into the embedded text is the obvious next experiment (needs the ~1 h re-embedding).
+
+| Clarifier eval (29 scenarios) | vector only | hybrid (headings in BM25) |
+|---|---|---|
+| right issue ranked first | 0.85 | 0.85 |
+| READY precision / wrong-READY | 0.94 / 0.05 (S07) | **1.00 / 0.00** |
+| READY rate | 0.62 | 0.59 |
+| questions per ticket | 1.45 | 1.52 |
+| out-of-scope false-READY | 0/6 | 0/6 |
+
+Hybrid trades a little speed (0.07 more questions per ticket) for safety, and fixes the last known wrong-READY (S07). Same caveat as
+every number here: 29 same-author scenarios. S17 ("rootless") is still unresolved: the gold issue sits under the heading
+"`docker pull` errors" in a long page and does not reach the top results with either retriever.
+
+**`TicketRetriever`** (Tier 2). Dense and BM25 top-30 over the ticket store, RRF, then a re-rank in `rank_tickets()` (pure, unit
+tested): fused rank x trust (0.6 + 0.4 x trust_score) x resolution-kind weight x recency (mild, floored at 0.6, unknown age 0.9)
+x exact matches (exit code in the query that the ticket also has: x1.5; ticket has only other codes: x0.85; a ticket error line
+overlapping the query by >= 0.6: x1.4; shared inferred topic: x1.1). Hard filters: `kind`, `exclude_ids` (for evaluation) and
+one result per URL. The trust floor is soft: tickets below `min_trust` (default `medium`) only fill the list when too few eligible
+ones exist. Returns `TicketHit` (`triage/state.py`), whose `matched` field explains the ranking; `render_ticket_card()` turns a
+hit into a labelled "community ticket, not official documentation" block with URL and licence for an LLM. Exit codes are read from the query
+text ("exit code 137"); HTTP codes (> 255) are ignored. Verified by unit tests and spot checks only; there is **no recall or
+precision measurement** for ticket retrieval.
+
+**Original design (`scripts/07_retrieve.py`)** - kept for reference; still reads the earlier corpus's chunk file:
 
 `scripts/07_retrieve.py::hybrid_search()` combines three signals in sequence:
 
@@ -186,8 +269,9 @@ ranked differential are still attached so the Resolver or a human can use them).
 matches several KB issues; instead of a generic "give more detail", the Clarifier:
 1. retrieves (three queries merged by best score: everything known; the same prefixed with `troubleshoot`; the customer's verbatim error) and groups chunks into **hypotheses**, one per KB *issue*;
 2. weights them: `softmax(score × page-type weight × generic-title weight / T)`; release notes ×0.6, archive ×0.4, "Overview" sections ×0.5; a pasted error that matches a hypothesis's documented error text boosts it (up to ×4);
-3. decides **READY** only if `p_top ≥ 0.5`, `margin ≥ 0.25` **and** the top hypothesis is *lexically grounded* (≥ 34% of the customer's content words appear in its text) — dense retrieval always returns something and its absolute scores do not separate junk from signal, so this check is what stops confident answers to out-of-scope questions;
+3. decides **READY** only if `p_top ≥ 0.5`, `margin ≥ 0.25`, the top hypothesis is *lexically grounded* (≥ 34% of the customer's content words appear in its text) **and** it covers every *discriminating* customer term (below) — dense retrieval always returns something and its absolute scores do not separate junk from signal, so this check is what stops confident answers to out-of-scope questions;
 4. otherwise ranks questions by *expected elimination × answerability* (platform 1.0, error text 0.9, product 0.8, "which of these sounds like yours" 0.6; `component` is never asked — it is an internal doc-path label); only plausible causes (≥ 5%) appear in a menu;
+   **Rare-term check (`uncovered_term`).** Overall grounding can pass while the one word that matters is missing: "docker pull fails on *rootless* Docker" matched a generic pull page on 2 of 3 words. A customer word (function words ignored, crude stemming) is *discriminating* when it appears in at least one but at most 70% of the retrieved issues (`rare_term_max_share`; "rootless" was in 6 of 10, "pull" in all 10) and the pool has ≥ 4 issues. If the leader lacks such a word the decision is `uncovered_term` (ambiguous): the Clarifier asks the usual question (usually the issue menu). It is a trigger for *one* clarification, not a veto: once the customer has answered anything it is waived; and if there is nothing to ask the leader is still returned as READY with reason `clear_with_uncovered_term` and `meta["uncovered_terms"]` so the Resolver can hedge. `Hypothesis.missing_terms` carries the words (added with a default; no schema version bump). Measured on the 29 scenarios: S17 now ends unresolved after 2 questions instead of a wrong READY, S06 asks 1 extra question (still correct), nothing else changes; 0.34–0.7 behave the same, and 0.9 would also turn the other known wrong-READY (S07) into a question. The 0.7 default is a judgement from a small same-author eval, not a calibrated value.
 5. re-weights **softly** after an answer (contradicting hypotheses ×0.15, never removed) and decides again; if nothing separates the causes it asks for the exact error text once.
 
 **Reflection is a step, not an agent** (`triage/reflect.py`): before sending a question it checks the field isn't already known,
@@ -235,16 +319,18 @@ records), with a JSON round-trip and `validate_signature()` for each side's test
 
 ## 7. Evaluation & Testing [Built for the Clarifier]
 
-- **152 tests** (`python -m pytest`): contracts, extractors, redaction, merging, session compaction under hard token caps,
+- **213 tests** (`python -m pytest`): contracts, extractors, redaction, merging, session compaction under hard token caps,
   reflection rules, clustering for both heading layouts, discriminator ranking, full turns on an offline demo corpus,
-  LangGraph ≡ plain call, the simulator, and 12 tests against the **real** Docker store.
+  LangGraph ≡ plain call, the simulator, the 06_store rebuild guard and heading-aware BM25 (4), the token-aware chunker (16), the ticket pipeline (15), the two retrievers (17: fusion, ticket ranking, card
+  rendering, and both retrievers on the real stores), and 12 tests against the **real** Docker store. Tests that need the
+  cached tokenizer, the built store or the ticket CSV skip themselves when absent.
 - **Guardrail checks** (`triage/eval/guardrails.py`): vague input must ask for symptoms; prompt-injection text is data; a
   hostile LLM response cannot corrupt fields or run tools; PII never reaches storage; the tool registry enforces its
   allowlist and budgets; an LLM failure degrades to heuristic extraction. Each has a **negative control** — break the
   protection and the check must fail.
 - **Offline evaluation** (`python -m triage.eval.clarifier_eval`, ~50 s, free): 29 labeled scenarios authored from real KB
-  entries, replayed through a simulated customer. Latest: right issue ranked first **0.85** (17/20), READY precision **0.94**,
-  wrong-READY **0.05**, out-of-scope false-READY **0/6**, mean **1.34** questions, 0 redundant/duplicate questions.
+  entries, replayed through a simulated customer. Latest: right issue ranked first **0.85** (17/20), with the default hybrid retriever: READY precision **1.00**,
+  wrong-READY **0.00**, out-of-scope false-READY **0/6**, mean **1.52** questions (vector-only: 0.94 / 0.05 / 1.45), 0 redundant/duplicate questions.
   Report: [`reports/clarifier_eval_report.md`](../reports/clarifier_eval_report.md).
 - **Read these numbers with care**: 29 scenarios; labels, hidden facts and wording share one author; the simulated customer
   answers menus perfectly; the retriever was vector-only. Thresholds come from a sweep over this same small set.
@@ -262,13 +348,16 @@ every chunk plus new graph infrastructure. **Could fit later** for Tier-2 trend 
 | Milestone | Status |
 |---|---|
 | M1–M5: Data pipeline (filter → clean → chunk → metadata) on Docker | Built |
-| M6: Storage (BM25 + Chroma, 10,031 chunks), query understanding | Built (understanding in `triage/`) |
-| Hybrid retrieval + Docker retrieval benchmark | Built for the earlier corpus; **not yet adapted/run on Docker** |
+| M6: Storage (BM25 + Chroma, 11,440 chunks), query understanding | Built (understanding in `triage/`) |
+| Hybrid KB retrieval (`HybridKBRetriever`) | **Built**, default for the Clarifier; evaluated through the Clarifier eval only |
+| Docker retrieval benchmark (Recall@k, `08_evaluate.py`) | Not adapted; no direct retrieval benchmark on Docker |
 | M8a: Clarifier (extraction, differential diagnosis, reflection, session memory, tools) | **Built, verified** |
 | M8b: Resolver (grounded generation, groundedness + confidence gates, retry, escalation) | Designed |
 | M7: Semantic cache keyed on the problem signature | Designed |
 | Router + integrated LangGraph; end-to-end simulated-customer evaluation | Not started |
-| Tier 2: ticket dataset integration | Dataset built; **no integration** |
+| Tier 2: ticket store (clean, embed, docstore, BM25) | **Built** (`scripts/10_tickets.py`, 13,092 tickets) |
+| Tier 2: ticket retriever (`TicketRetriever`) | **Built**, spot-checked only |
+| KB+ticket routing, ticket use by the Resolver | Designed (§2), not built |
 | Self-improving loop (promote confirmed fixes, grow eval set) | Designed |
 | Human-in-the-loop review / feedback flagging | Designed |
 | Version-notes feed, live status/incident feed, book-derived content | Brainstormed only — **not** in the design |
@@ -294,4 +383,7 @@ pipeline scripts. Agent-layer thresholds live in `triage/config.py::ClarifierCon
 - `docs/customer_support_rag_overview.pptx` predates the Docker pivot and the agent layer; it is not updated.
 - Scripts 01, 07, 08 are not adapted to Docker (§3, §4.1). 09 is superseded.
 - No live LLM run, no hybrid-retriever run, no Tier-2 integration, no Docker retrieval benchmark.
+- `TicketRetriever` exists but no router or Resolver calls it yet. Ticket retrieval quality is unmeasured beyond unit tests and spot checks. The CSV's `error_strings` column is noisy (prose fragments, quoted paths/commands); `10_tickets.py` filters it
+  down to ~3.2k tickets with real error lines.
+- Clarifier: the rare-term check (§6.1) is lexical, so a customer's paraphrase of what the docs call something else can cost one extra question (S06); its 0.7 threshold is not calibrated on a large set.
 - Clarifier thresholds are from a small same-author sweep and should be re-calibrated when the retriever changes.

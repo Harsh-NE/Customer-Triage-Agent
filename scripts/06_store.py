@@ -152,10 +152,17 @@ def tokenize(text: str) -> list[str]:
 # BM25
 # ---------------------------------------------------------------------------
 
+def bm25_text(chunk: dict) -> str:
+    """Heading path + text. A chunk's text does not contain its own heading, but the heading is the issue's name
+    ("`docker pull` errors"), the most informative words the chunk has. Measured: without it the hybrid retriever
+    lost a gold issue (SCIM) and left a wrong confident answer; with it both went away."""
+    return " ".join(chunk.get("heading_path") or []) + "\n" + chunk["text"]
+
+
 def build_bm25_index(chunks: list[dict], out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     chunk_ids = [c["chunk_id"] for c in chunks]
-    tokenized_corpus = [tokenize(c["text"]) for c in chunks]
+    tokenized_corpus = [tokenize(bm25_text(c)) for c in chunks]
     bm25 = BM25Okapi(tokenized_corpus)
 
     with (out_dir / "bm25_index.pkl").open("wb") as f:
@@ -203,6 +210,25 @@ def build_vector_store(chunks: list[dict], model_name: str, batch_size: int,
     return embedded, errors, embedding_dim
 
 
+def prepare_collection_for_build(model_name: str, vector_db_path: Path, rebuild: bool) -> None:
+    """A full build must start from an empty collection. Chroma's add() skips ids that already exist, so
+    building new chunks over an old store would silently keep stale text and vectors (and any ids the new
+    chunking no longer produces). Refuse unless --rebuild, which drops the old collection first."""
+    if not vector_db_path.exists():
+        return
+    client = chromadb.PersistentClient(path=str(vector_db_path))
+    name = collection_name_for_model(model_name)
+    if name not in [c.name for c in client.list_collections()]:
+        return
+    existing = client.get_collection(name=name).count()
+    if existing and not rebuild:
+        raise SystemExit(f"Collection '{name}' in {vector_db_path} already holds {existing} chunks. Building over it "
+                         "would mix old and new chunks. Re-run with --rebuild to drop it and embed from scratch "
+                         "(or point VECTOR_DB_PATH somewhere new).")
+    client.delete_collection(name)
+    print(f"Dropped existing collection '{name}' ({existing} chunks).")
+
+
 def refresh_vector_metadata(chunks: list[dict], model_name: str, vector_db_path: Path,
                              batch_size: int = 500) -> int:
     """Rewrite metadata on an EXISTING collection without touching embeddings or documents.
@@ -232,6 +258,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--metadata-only", action="store_true",
                          help="Only rewrite metadata on the existing vector collection; "
                               "no re-embedding, BM25 untouched (it indexes text, not metadata)")
+    parser.add_argument("--bm25-only", action="store_true",
+                         help="Rebuild only the BM25 index (seconds); the vector collection is not touched")
+    parser.add_argument("--rebuild", action="store_true",
+                         help="Drop the existing vector collection and embed from scratch (required when one exists)")
     return parser.parse_args()
 
 
@@ -261,6 +291,14 @@ def main() -> None:
         updated = refresh_vector_metadata(chunks, config["EMBEDDING_MODEL"], vector_db_path)
         print(f"Metadata refreshed on {updated} chunks. BM25 and embeddings untouched.")
         return
+
+    if args.bm25_only:
+        print("Rebuilding the BM25 index only (vector collection untouched) ...")
+        build_bm25_index(chunks, bm25_path)
+        print(f"BM25 index rebuilt over {len(chunks)} chunks: {bm25_path}")
+        return
+
+    prepare_collection_for_build(config["EMBEDDING_MODEL"], vector_db_path, args.rebuild)
 
     print("Building BM25 index ...")
     build_bm25_index(chunks, bm25_path)

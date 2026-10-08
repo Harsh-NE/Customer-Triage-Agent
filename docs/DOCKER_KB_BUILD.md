@@ -9,7 +9,7 @@ built on a one-shot AWS EC2 batch job. Everything here was run for real unless m
 |---|---|---|
 | Filter manifest | `filter_manifest.jsonl` | one record per Markdown file, with the reason it was kept or dropped |
 | Cleaned docs | `cleaned_docs.jsonl` | 961 documents |
-| Chunks | `chunks.jsonl`, `chunks_metadata.jsonl` | 10,031 chunks; the second adds `product_area`, `component`, `doc_kind`, `tags`, `error_signals`, `source_url`, `license` |
+| Chunks | `chunks.jsonl`, `chunks_metadata.jsonl` | 11,440 chunks (token-capped); the second adds `product_area`, `component`, `doc_kind`, `tags`, `error_signals`, `source_url`, `license` |
 | Taxonomy | `taxonomy.json` | frequency-counted `product_area` / `component` / `tags` |
 | Vector store | `store/vector/` | Chroma, collection `kb_chunks__baai-bge-base-en-v1-5`, 768-dim |
 | BM25 index | `store/bm25/` | `bm25_index.pkl` + `chunk_ids.json` |
@@ -23,9 +23,22 @@ built on a one-shot AWS EC2 batch job. Everything here was run for real unless m
 git clone --depth 1 https://github.com/docker/docs.git data/raw/docker-docs
 python scripts/02_filter.py
 python scripts/03_clean.py
-python scripts/04_chunk.py
+python scripts/04_chunk.py          # token-aware: caps chunks at 500 tokens of the embedding model's tokenizer
 python scripts/05_metadata.py
 python scripts/06_store.py          # downloads BAAI/bge-base-en-v1.5 once (~440 MB), then embeds every chunk
+```
+
+`04_chunk.py` loads the embedding model's tokenizer (from `EMBEDDING_MODEL`; `--tokenizer` overrides, `--max-tokens` changes
+the cap, default 500 to leave room under the model's 512). It needs the `transformers` package (installed with
+`sentence-transformers`), prints token min/median/p95/max and **exits non-zero if any chunk is over the cap**. Expect about
+**11,440 chunks** rather than the first build's 10,031.
+
+**Rebuilding an existing store.** Chunk ids change with the new chunking, and Chroma's `add()` silently skips ids it
+already has, so building over the old collection would leave stale text and vectors behind. `06_store.py` therefore refuses
+when the collection is non-empty; pass `--rebuild` to drop it and embed from scratch (about 55+ minutes of CPU):
+
+```bash
+python scripts/04_chunk.py && python scripts/05_metadata.py && python scripts/06_store.py --rebuild
 ```
 
 The defaults in scripts 02–06 already point at `data/raw/docker-docs` and `data/processed/docker/`, so no flags are
@@ -35,6 +48,11 @@ using about two of its four vCPUs; derived from the instance's boot time and the
 **Do not point Docker output at an older store directory.** `06_store.py` would `get_or_create_collection` by *model*
 name, silently adding Docker chunks into any existing collection built with the same model. Docker uses its own
 directory (`data/processed/docker/store/`) for that reason.
+
+### Rebuild only the BM25 index
+
+BM25 indexes `heading_path + text` (the chunk text alone lacks the issue's name). After changing how BM25 text is built, or to repair
+the index, `python scripts/06_store.py --bm25-only` rebuilds just that index in seconds and does not touch the vector collection.
 
 ### Refresh metadata without re-embedding
 

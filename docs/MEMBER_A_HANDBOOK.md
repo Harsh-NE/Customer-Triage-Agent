@@ -28,12 +28,12 @@ what was and was not verified, and how to plug your work in. Written against the
 
 | Metric | Value |
 |---|---|
-| Tests | **152 pass** (140 offline + 12 against the real Docker store) |
+| Tests | **213 pass** (incl. chunker, store-guard and ticket-pipeline tests, and 12 against the real Docker store) |
 | Gold issue is the Clarifier's #1 hypothesis | **0.85** (17 of 20 labeled scenarios) |
-| READY precision (READY *and* correct) | **0.94** (16 of 17) |
-| Wrong-READY rate | **0.05** (1 of 20: S07) |
+| READY precision (READY *and* correct) | **1.00** (hybrid retriever; 0.94 vector-only) |
+| Wrong-READY rate | **0.00** (hybrid; vector-only 0.05 = S07) |
 | Out-of-scope false-READY | **0.0** (0 of 6) |
-| Mean questions per ticket | 1.34 |
+| Mean questions per ticket | 1.52 (vector-only 1.45) |
 | Redundant / duplicate questions | 0.0 / 0.0 |
 | Guardrail checks | 6 of 6 pass, each with a negative control |
 
@@ -43,7 +43,7 @@ what was and was not verified, and how to plug your work in. Written against the
 
 ```bash
 pip install -r requirements.txt          # adds langgraph + pytest to the existing deps
-python -m pytest                          # 152 tests; the 12 real-store tests skip if the store is absent
+python -m pytest                          # 213 tests; those needing the store/tokenizer/CSV skip if absent
 python -m pytest -m real_store -s         # only the real-store tests (~1.5 min: each runs full dialogues on the real store)
 ```
 
@@ -149,8 +149,8 @@ keys and defaults missing ones, so an older reader can load a newer record.
 | `canonical_string` | `product\|component\|symptom; symptom` — **the cache key** (see below) |
 | `nl_text` | text form of the key (`"docker-hub ?: pull fails"`), what gets embedded |
 | `fields` | `ExtractedFields`: product_area, component, symptoms, error_messages, error_codes, platform, environment, versions, category, severity, frustration, impact_scope |
-| `confidence` | `p_top`, `margin`, `top_score`, `ambiguous`, `reason` ∈ {`clear`, `split`, `ungrounded`, `no_candidates`, `no_evidence`, + the `unresolved` reasons below} |
-| `hypotheses` | top 3 ranked candidate causes: `key` (`source_path::issue`), `label`, `weight`, `chunk_ids`, `features`, `grounding` |
+| `confidence` | `p_top`, `margin`, `top_score`, `ambiguous`, `reason` ∈ {`clear`, `clear_after_recall`, `clear_with_uncovered_term`, `split`, `ungrounded`, `uncovered_term`, `no_candidates`, `no_evidence`, + the `unresolved` reasons below} |
+| `hypotheses` | top 3 ranked candidate causes: `key` (`source_path::issue`), `label`, `weight`, `chunk_ids`, `features`, `grounding`, `missing_terms` (customer words that tell the retrieved issues apart but are absent from this one) |
 | `embedding` | **`None` unless you pass an `embedder` to `Clarifier(...)`** — see assumption 6 |
 
 * **Cache-key rule (agreed in the design):** only `product|component|symptoms`. Tone (`frustration`) and blast radius
@@ -317,13 +317,13 @@ Each is something I decided without being able to confirm it. "If wrong" says wh
 ## 8. What is verified, and what is not
 
 **Verified (by tests or a measured run):**
-* 152 tests: contract round-trips, extractors, redaction, merging, session compaction under hard token caps,
+* 213 tests: contract round-trips, extractors, redaction, merging, session compaction under hard token caps,
   reflection rules, clustering for both heading layouts, discriminator ranking and soft re-weighting, the full
   turn on a demo corpus, LangGraph ≡ plain call, simulator behaviour, and 12 tests on the **real** store.
 * **Negative controls** for the guardrail checks: break redaction → PII check fails; break vagueness detection →
   vague-query check fails; remove product validation → hostile-LLM check fails; etc. A green guardrail result
   therefore means something.
-* Offline eval (§1 table) on the real 10,031-chunk Docker store.
+* Offline eval (§1 table) on the real 11,440-chunk Docker store.
 
 **Not verified:**
 * Any live LLM behaviour (assumption 11). Latency and cost per ticket (only tool-call counts are measured: ~6.2 per
@@ -347,14 +347,26 @@ Each is something I decided without being able to confirm it. "If wrong" says wh
 |---|---|---|
 | S07 "Docker Desktop won't start on my Windows laptop" | READY at 0 questions on an FAQ about Windows Server | The KB has one Windows start-up entry (anti-virus); the symptom is genuinely under-specified, and an FAQ outscored it. The only wrong-READY. |
 | S08 "Docker isn't starting" | unresolved after 3 questions | Inherently vague; gold never reaches the top 3. |
-| S17 "docker pull fails … rootless" | unresolved | Vector retrieval misses "rootless" (a keyword hybrid should fix it). |
+| S17 "docker pull fails … rootless" | unresolved after 2 questions (no wrong READY) | Vector retrieval misses the rootless troubleshooting page; the rare-term check stops a generic pull page being declared the cause (a keyword hybrid should find the right page). |
 | S14 "users can't sign in with SSO" | unresolved but gold is rank 1 | Correct differential, below the READY thresholds; the Resolver still receives it. |
 | S29 Kubernetes CrashLoopBackOff | unresolved | The KB does contain a Docker Desktop Kubernetes page; labelled out-of-scope on purpose as the hard case. |
 | Borderline wording | `"…from Docker Hub"` → READY, `"…on Docker Hub"` → asks | A usage page quotes the same error as the troubleshooting page, so `p_top` lands at 0.487 vs the 0.5 threshold. Expected for threshold decisions; watch it in eval. |
 
+**Chunk length (B1/B2):** `bge-base-en-v1.5` reads 512 tokens and silently drops the rest. The first KB build capped chunks by
+*words* and 10.9% exceeded the limit; `04_chunk.py` is now token-aware (`--max-tokens 500`) and the store was **rebuilt on
+2026-10-07: 11,440 chunks, none over 500 tokens**. Effect on my eval: gold-first unchanged (0.85), READY precision 0.94 → 0.89
+(one new wrong READY, S17 "rootless": a generic Hub pull-troubleshooting section won although "rootless" was not covered).
+I fixed that with the rare-term check (ARCHITECTURE.md §6.1): back to 0.94 / 0.05. **If you rely on `meta["uncovered_terms"]`:** READY with
+reason `clear_with_uncovered_term` means the leader lacks a discriminating customer word and there was nothing left to ask; hedge or
+verify. The sweep grid in `reports/` was re-run on the new chunks.
+
+**Tickets (B-track).** `scripts/10_tickets.py` built a separate ticket store (13,092 tickets; see ARCHITECTURE.md §2). Nothing
+reads it yet: a ticket retriever, the KB+ticket routing and the Resolver's use of tickets are yours. Read the `error_strings`
+caveat in ARCHITECTURE.md before relying on that column.
+
 **Retrieval observations that matter for you (B2):** vector search is weak on numbers ("429") and rare terms
-("rootless"); a BM25 half should help the Clarifier directly. Only **171 troubleshooting + 96 FAQ chunks (~2.7%)**
-exist in a 10,031-chunk store; **~25%** is release notes/archive.
+("rootless"); a BM25 half should help the Clarifier directly. Only **187 troubleshooting + 96 FAQ chunks (~2.5%)**
+exist in the 11,440-chunk store; **~26%** is release notes/archive.
 
 ---
 

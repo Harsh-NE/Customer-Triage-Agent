@@ -11,16 +11,16 @@ instead of guessing) and **soft signals, never hard filters** (metadata re-weigh
 
 | Area | State |
 |---|---|
-| Tier 1 knowledge base (`docker/docs`) — pipeline + vector/BM25 store | **Built**: 961 docs → 10,031 chunks |
-| Clarifier agent (understanding, differential diagnosis, session memory, reflection, tools) | **Built, verified**: 152 tests, offline evaluation |
-| Hybrid retrieval (BM25 + vector + RRF + rerank) | Built for the earlier corpus; **not yet adapted/run on Docker** |
+| Tier 1 knowledge base (`docker/docs`) — pipeline + vector/BM25 store | **Built**: 961 docs → 11,440 token-capped chunks (rebuilt 2026-10-07) |
+| Clarifier agent (understanding, differential diagnosis, session memory, reflection, tools) | **Built, verified**: 213 tests, offline evaluation |
+| Hybrid KB retrieval (`triage/hybrid.py`: BM25 + vector + RRF) and ticket retrieval (`TicketRetriever`) | **Built**; the KB one is the Clarifier's default. No cross-encoder rerank; ticket retrieval unmeasured |
 | Resolver agent, semantic cache, escalation, router, integrated graph | Designed, not built |
-| Tier 2 historical tickets (13,899 rows) | **Dataset only** — no code uses it yet |
+| Tier 2 historical tickets (13,899 rows) | **Built**: 13,092 indexed in a separate store (`scripts/10_tickets.py`) with a `TicketRetriever`; **no router or Resolver uses it yet** |
 | Live LLM runs | **Never executed** — everything verified so far is offline/free |
 
-Numbers from the offline Clarifier evaluation (29 scenarios, vector-only retriever; small and same-author, so optimistic):
-right issue ranked first **0.85**, confident-and-correct **0.94**, out-of-scope questions answered confidently **0 of 6**,
-mean **1.34** questions per ticket. See [reports/clarifier_eval_report.md](reports/clarifier_eval_report.md) and its caveats.
+Numbers from the offline Clarifier evaluation (29 scenarios, hybrid retriever; small and same-author, so optimistic):
+right issue ranked first **0.85**, confident-and-correct **1.00** (hybrid retriever; 0.94 vector-only), out-of-scope questions answered confidently **0 of 6**,
+mean **1.52** questions per ticket. See [reports/clarifier_eval_report.md](reports/clarifier_eval_report.md) and its caveats.
 
 ## How it works
 
@@ -42,7 +42,7 @@ default (field extraction); everything else is deterministic and auditable. Full
 scripts/      numbered data pipeline 01–09 (profile → filter → clean → chunk → metadata → store → retrieve → evaluate → understand)
 triage/       the agent layer: state (shared contracts), understand, clarifier, differential, session memory, reflection,
               tools, retrieval interface, simulated customer (sim/), evaluation + guardrails (eval/), cli
-tests/        152 tests (140 offline + 12 against the real store, auto-skipped if the store is absent)
+tests/        213 tests (those needing the real tokenizer, KB store or ticket CSV auto-skip if absent)
 notebooks/    Colab notebooks 01–09 that build the Tier 2 ticket dataset
 reports/      generated evaluation report
 docs/         ARCHITECTURE, MEMBER_A_HANDBOOK, DOCKER_KB_BUILD, DATA_SOURCES, DATASET_QUALITY_REPORT
@@ -97,20 +97,31 @@ Each stage reads the previous stage's output; `data/raw/` is never modified.
 | 01 | `01_profile.py` | Profile the raw corpus | not adapted (reports `ms.topic`) |
 | 02 | `02_filter.py` | Inclusion manifest (allowlist of content dirs; "troubleshooting" from the `tags` front matter) | adapted |
 | 03 | `03_clean.py` | Clean Markdown, callouts, links | adapted |
-| 04 | `04_chunk.py` | Hierarchical chunking (Article → Section → Subsection → Chunk) | adapted |
+| 04 | `04_chunk.py` | Hierarchical chunking (Article → Section → Subsection → Chunk), **token-capped** with the embedding model's tokenizer (`--max-tokens`, default 500) | adapted; **store rebuilt** (11,440 chunks, none over the limit) |
 | 05 | `05_metadata.py` | `product_area`, `component`, `doc_kind`, `tags`, `error_signals`, `source_url`, `license` | rewritten |
 | 06 | `06_store.py` | BM25 index + Chroma vector store (`--metadata-only` refreshes metadata without re-embedding) | adapted |
 | 07 | `07_retrieve.py` | Hybrid retrieval: BM25 + vector, RRF, soft metadata boost, cross-encoder rerank | **not yet adapted** — still reads the earlier corpus's chunk file |
 | 08 | `08_evaluate.py` | Recall@5/@10 benchmark | **not yet adapted** |
 | 09 | `09_understand.py` | Query understanding | **superseded** by `triage/understand.py` |
+| 10 | `10_tickets.py` | Tier 2 tickets: clean, build symptom text, SQLite docstore + BM25 + Chroma in a separate store (`--dry-run`, `--sample`, `--max-tokens`, `--rebuild`, `--query`) | built and run |
 
-## Tier 2: historical resolved tickets (not yet used)
+## Tier 2: historical resolved tickets
 
 `notebooks/01–09` (run in Colab) collect and clean ~13.9k resolved Docker problems from Stack Overflow and other Stack
 Exchange sites, GitHub issues, the Docker community forum, official FAQ entries, and two Hugging Face datasets, with
 PII masking, trust scoring, de-duplication and topic classification. The corrected output is `docker_tickets_v5_fixed.csv`
-(13,899 rows; 655 synthetic rows are flagged). Audit: [docs/DATASET_QUALITY_REPORT.md](docs/DATASET_QUALITY_REPORT.md).
-**The files are not in this repository and no code reads them.** Integrating them is the next data task.
+(13,899 rows, 28 columns; audit: [docs/DATASET_QUALITY_REPORT.md](docs/DATASET_QUALITY_REPORT.md)). Put it in `data/raw/tickets/`.
+
+```bash
+python scripts/10_tickets.py --dry-run            # prepare + report, writes nothing (seconds)
+python scripts/10_tickets.py --rebuild            # full build, ~1 h of CPU embedding at the 256-token default
+python scripts/10_tickets.py --query "container exits with code 137"   # smoke-test the built store
+```
+
+One vector per ticket (title + cleaned error lines + head of the problem, capped at 256 tokens); the resolution is stored
+whole in a SQLite docstore and not embedded. 13,092 tickets are indexed; the 655 synthetic and 152 KB-duplicate rows are
+kept but not indexed. The store is **separate from the KB** (`data/processed/docker/store/tickets/`). Design and field-by-field
+rationale: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §2; retrieval: `triage.hybrid.TicketRetriever` (§4.1). **No router or Resolver calls it yet.**
 
 ## Configuration
 
@@ -141,5 +152,6 @@ Tier 1 data, hybrid retrieval, memory/cache, and the Resolver. The contract betw
 
 ## Known gaps
 
-No live LLM run; no hybrid-retriever run on Docker; Resolver, cache, router and the integrated graph not built; Tier 2
-not integrated; the pre-pivot slide deck is out of date; the adapted scripts and `triage/` are not yet committed.
+No live LLM run; no hybrid-retriever run on Docker; Resolver, cache, router and the integrated graph not built; the ticket store is built but no router
+or Resolver uses it yet; ticket retrieval quality is unmeasured; no cross-encoder rerank; the dense index embeds chunk text without its heading; the pre-pivot
+slide deck is out of date; the new scripts, tests and docs are not yet committed.

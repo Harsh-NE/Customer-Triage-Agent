@@ -79,6 +79,31 @@ class Gap:
 # ---------------------------------------------------------------------------
 
 @dataclass
+class TicketHit:
+    """One historical resolved ticket (Tier 2) -- COMMUNITY evidence, never official documentation. Returned by
+    triage.hybrid.TicketRetriever. `score` is in (0, 1], higher is better, and already folds in trust, resolution kind,
+    recency and exact error / exit-code matches; `matched` says why it ranked where it did."""
+    ticket_id: str
+    title: str
+    problem_excerpt: str              # first ~400 chars of the problem
+    resolution: str                   # FULL resolution; trim with triage.hybrid.render_ticket_card
+    score: float
+    url: str = ""
+    license: str = ""
+    source: str = ""                  # stackoverflow | github/docker/compose | forums.docker.com | ...
+    source_type: str = ""
+    trust_tier: str = ""              # high | medium | low
+    trust_score: float = 0.0
+    resolution_kind: str = ""
+    kind_guess: str = ""              # troubleshooting | how_to | concept
+    age_years: float | None = None
+    topics: list[str] = field(default_factory=list)
+    error_lines: list[str] = field(default_factory=list)     # cleaned, error-looking lines only
+    exit_codes: list[str] = field(default_factory=list)
+    docker_versions: list[str] = field(default_factory=list)
+    matched: list[str] = field(default_factory=list)         # "vector", "bm25", "exit_code:137", "error_line", "topic:build"
+
+@dataclass
 class Candidate:
     chunk_id: str
     text: str
@@ -100,6 +125,9 @@ class Hypothesis:
     chunk_ids: list[str] = field(default_factory=list)
     features: dict[str, str] = field(default_factory=dict)  # platform, product_area, component, error_message, ...
     grounding: float = 1.0   # share of the customer's content words found in this issue's text (1.0 = n/a)
+    missing_terms: list[str] = field(default_factory=list)  # customer terms that are RARE in the retrieved pool (so they
+                                                            # discriminate) yet absent from this issue's text. Added after
+                                                            # 1.0.0 with a default: non-breaking, no version bump.
 
 
 # ---------------------------------------------------------------------------

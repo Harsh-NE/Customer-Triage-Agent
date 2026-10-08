@@ -85,12 +85,12 @@ class ChromaRetriever:
     NO_EXPAND = {"release_notes", "archive"}
 
     def __init__(self, vector_db_path: str | None = None, model_name: str | None = None,
-                 expand_siblings: bool = True) -> None:
+                 expand_siblings: bool = True, model=None) -> None:
         env = config.get_env()
         self._path = vector_db_path or str(config.PROJECT_ROOT / env["VECTOR_DB_PATH"])
         self._model_name = model_name or env["EMBEDDING_MODEL"]
         self._expand = expand_siblings
-        self._model = None
+        self._model = model            # a SentenceTransformer shared with other retrievers, to load the model once
         self._collection = None
 
     def _ensure(self) -> None:
@@ -100,10 +100,11 @@ class ChromaRetriever:
         from sentence_transformers import SentenceTransformer
         slug = re.sub(r"[^a-zA-Z0-9]+", "-", self._model_name).strip("-").lower()
         self._collection = chromadb.PersistentClient(path=self._path).get_collection(f"kb_chunks__{slug}")
-        try:   # prefer the local cache: no network round-trip, and a flaky connection can't fail a run
-            self._model = SentenceTransformer(self._model_name, local_files_only=True)
-        except Exception:  # noqa: BLE001 -- not cached yet: download once
-            self._model = SentenceTransformer(self._model_name)
+        if self._model is None:
+            try:   # prefer the local cache: no network round-trip, and a flaky connection can't fail a run
+                self._model = SentenceTransformer(self._model_name, local_files_only=True)
+            except Exception:  # noqa: BLE001 -- not cached yet: download once
+                self._model = SentenceTransformer(self._model_name)
 
     @staticmethod
     def _to_candidate(cid: str, doc: str, meta: dict, score: float) -> Candidate:
