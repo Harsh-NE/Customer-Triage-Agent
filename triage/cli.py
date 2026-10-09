@@ -72,6 +72,35 @@ def cmd_chat(args) -> None:
             print("(conversation handed to the Resolver; /record shows what it would receive, /quit to stop)")
 
 
+def cmd_joint(args) -> None:
+    """Talk to the WHOLE system: Clarifier -> Resolver, on the real stores. You play the customer."""
+    import uuid
+
+    from langgraph.types import Command
+
+    from triage.joint import build_default_app
+    from triage.resolver.llm import get_llm
+    app = build_default_app(get_llm(args.llm))
+    tid = f"CLI-{uuid.uuid4().hex[:6]}"
+    cfg = {"configurable": {"thread_id": tid}}
+    print(f"Resolver LLM: {args.llm}. Describe a Docker problem (/quit to stop).")
+    try:
+        out = app.invoke({"ticket_id": tid, "customer_message": input("customer> ").strip(), "transcript": []}, cfg)
+        while "__interrupt__" in out:
+            payload = out["__interrupt__"][0].value
+            print(f"\n[{payload['type']}]\n{payload['message']}\n")
+            reply = input("customer> ").strip()
+            if reply == "/quit":
+                return
+            out = app.invoke(Command(resume=reply), cfg)
+    except (EOFError, KeyboardInterrupt):
+        return
+    st = app.get_state(cfg).values
+    print(f"\n[{st.get('outcome')}] {st['transcript'][-1]['content'] if st.get('transcript') else ''}")
+    if st.get("outcome") == "escalated" and st.get("escalation_payload"):
+        print(st["escalation_payload"]["summary_md"])
+
+
 def cmd_replay(args) -> None:
     scenarios = load_scenarios()
     if not args.all:
@@ -100,6 +129,9 @@ def main() -> None:
     chat.add_argument("--retriever", choices=["hybrid", "chroma", "keyword"], default="hybrid")
     chat.add_argument("--verbose", "-v", action="store_true")
     chat.set_defaults(fn=cmd_chat)
+    joint = sub.add_parser("joint", help="the whole system: Clarifier + Resolver on the real stores")
+    joint.add_argument("--llm", default="fake", help="Resolver LLM: fake (offline) | gemini | anthropic | openai")
+    joint.set_defaults(fn=cmd_joint)
     rep = sub.add_parser("replay")
     rep.add_argument("--id", default="S02")
     rep.add_argument("--all", action="store_true")

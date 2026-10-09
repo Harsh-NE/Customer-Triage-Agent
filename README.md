@@ -12,10 +12,13 @@ instead of guessing) and **soft signals, never hard filters** (metadata re-weigh
 | Area | State |
 |---|---|
 | Tier 1 knowledge base (`docker/docs`) — pipeline + vector/BM25 store | **Built**: 961 docs → 11,440 token-capped chunks (rebuilt 2026-10-07) |
-| Clarifier agent (understanding, differential diagnosis, session memory, reflection, tools) | **Built, verified**: 213 tests, offline evaluation |
+| Clarifier agent (understanding, differential diagnosis, session memory, reflection, tools) | **Built, verified**: 281 tests, offline evaluation |
 | Hybrid KB retrieval (`triage/hybrid.py`: BM25 + vector + RRF) and ticket retrieval (`TicketRetriever`) | **Built**; the KB one is the Clarifier's default. No cross-encoder rerank; ticket retrieval unmeasured |
-| Resolver agent, semantic cache, escalation, router, integrated graph | Designed, not built |
-| Tier 2 historical tickets (13,899 rows) | **Built**: 13,092 indexed in a separate store (`scripts/10_tickets.py`) with a `TicketRetriever`; **no router or Resolver uses it yet** |
+| Resolver (Member B: guard, cache, gate, draft, verify, retry, escalation) merged with the Clarifier into one graph | **Integrated** (`triage/resolver/`, `triage/joint.py`); first end-to-end run with the offline FakeLLM only. See [docs/INTEGRATION.md](docs/INTEGRATION.md) |
+| Backend API (FastAPI + SQLite: conversations, engineer cases, analytics, token cost) | **Built** (`triage/api/`, [docs/BACKEND.md](docs/BACKEND.md)) |
+| Web UI: customer chat + engineer console (React) | **Built** (`frontend/`, [frontend/README.md](frontend/README.md)); checked by hand against the running backend, no browser E2E tests |
+| Router, real-LLM runs, calibrated Resolver thresholds | Not done |
+| Tier 2 historical tickets (13,899 rows) | **Built**: 13,092 indexed in a separate store (`scripts/10_tickets.py`) with a `TicketRetriever`; used by the Resolver only as a fallback after weak KB evidence |
 | Live LLM runs | **Never executed** — everything verified so far is offline/free |
 
 Numbers from the offline Clarifier evaluation (29 scenarios, hybrid retriever; small and same-author, so optimistic):
@@ -25,7 +28,7 @@ mean **1.52** questions per ticket. See [reports/clarifier_eval_report.md](repor
 ## How it works
 
 ```
-customer message → Clarifier ──READY / UNRESOLVED──▶ Resolver (designed) → answer, or escalate with context
+customer message → Clarifier ──READY / UNRESOLVED──▶ Resolver → cited answer, or escalate with context
                        ▲  │ ASK                          │
                        └──┘ reply            NeedClarification (shared question budget)
 ```
@@ -42,7 +45,8 @@ default (field extraction); everything else is deterministic and auditable. Full
 scripts/      numbered data pipeline 01–09 (profile → filter → clean → chunk → metadata → store → retrieve → evaluate → understand)
 triage/       the agent layer: state (shared contracts), understand, clarifier, differential, session memory, reflection,
               tools, retrieval interface, simulated customer (sim/), evaluation + guardrails (eval/), cli
-tests/        213 tests (those needing the real tokenizer, KB store or ticket CSV auto-skip if absent)
+frontend/     React app: customer chat + engineer console (19 Vitest tests)
+tests/        281 tests (those needing the real tokenizer, KB store or ticket CSV auto-skip if absent)
 notebooks/    Colab notebooks 01–09 that build the Tier 2 ticket dataset
 reports/      generated evaluation report
 docs/         ARCHITECTURE, MEMBER_A_HANDBOOK, DOCKER_KB_BUILD, DATA_SOURCES, DATASET_QUALITY_REPORT
@@ -83,6 +87,10 @@ python -m triage.cli chat -v                       # you play the customer
 python -m triage.cli replay --id S02 -v            # replay a labeled scenario with a simulated customer
 python -m triage.eval.clarifier_eval               # offline evaluation → reports/
 python -m triage.eval.clarifier_eval --sweep       # threshold calibration grid (~2.5 min)
+python -m triage.cli joint                         # the WHOLE system (Clarifier + Resolver), you are the customer
+python -m triage.eval.e2e_eval                     # 29 scenarios end to end (simulated customer + oracle) -> reports/
+uvicorn "triage.api.app:create_app" --factory --port 8000   # the backend API (docs at /docs); RESOLVER_LLM=gemini for the real model
+cd frontend && npm install && npm run dev                   # the UI at http://localhost:5173 (proxies /api to :8000)
 ```
 
 Live-LLM variants (`--extractor llm`, `--customer llm`) make API calls and have **never been run** by the authors of this
@@ -121,7 +129,7 @@ python scripts/10_tickets.py --query "container exits with code 137"   # smoke-t
 One vector per ticket (title + cleaned error lines + head of the problem, capped at 256 tokens); the resolution is stored
 whole in a SQLite docstore and not embedded. 13,092 tickets are indexed; the 655 synthetic and 152 KB-duplicate rows are
 kept but not indexed. The store is **separate from the KB** (`data/processed/docker/store/tickets/`). Design and field-by-field
-rationale: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §2; retrieval: `triage.hybrid.TicketRetriever` (§4.1). **No router or Resolver calls it yet.**
+rationale: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §2; retrieval: `triage.hybrid.TicketRetriever` (§4.1). The Resolver uses it as a labelled, community-sourced fallback.
 
 ## Configuration
 
@@ -144,6 +152,9 @@ Tier 1 data, hybrid retrieval, memory/cache, and the Resolver. The contract betw
 | Document | What it covers |
 |---|---|
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Full architecture, status of each part, known gaps |
+| [frontend/README.md](frontend/README.md) | The UI: screens, how to run it, what is not done |
+| [docs/BACKEND.md](docs/BACKEND.md) | The HTTP API: endpoints, statuses, data model, token cost and pricing, analytics definitions, what is not done |
+| [docs/INTEGRATION.md](docs/INTEGRATION.md) | The A+B merge: where B's code lives, the contract mapping, every change made to B's code and why, end-to-end results |
 | [docs/MEMBER_A_HANDBOOK.md](docs/MEMBER_A_HANDBOOK.md) | Clarifier hand-over: contracts, assumptions, what is and is not verified, integration guide |
 | [docs/DOCKER_KB_BUILD.md](docs/DOCKER_KB_BUILD.md) | Building and verifying the Docker KB, including the EC2 batch runbook and pitfalls |
 | [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) | Where data comes from, licences (opens with the current Docker sources) |
@@ -152,6 +163,5 @@ Tier 1 data, hybrid retrieval, memory/cache, and the Resolver. The contract betw
 
 ## Known gaps
 
-No live LLM run; no hybrid-retriever run on Docker; Resolver, cache, router and the integrated graph not built; the ticket store is built but no router
-or Resolver uses it yet; ticket retrieval quality is unmeasured; no cross-encoder rerank; the dense index embeds chunk text without its heading; the pre-pivot
+No live LLM run (the end-to-end numbers use an offline FakeLLM); Resolver gate/cache thresholds are uncalibrated starting guesses; no router; ticket retrieval quality is unmeasured; no cross-encoder rerank; the dense index embeds chunk text without its heading; the pre-pivot
 slide deck is out of date; the new scripts, tests and docs are not yet committed.

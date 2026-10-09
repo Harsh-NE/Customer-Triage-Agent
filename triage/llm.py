@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 from typing import Callable, Protocol
 
 from triage import config
@@ -44,10 +45,25 @@ class _Usage:
                 "approx_tokens": (self.prompt_chars + self.response_chars) // 4}
 
 
+_tls = threading.local()      # the provider call functions return text; usage rides here so their signatures stay unchanged
+
+
+def _set_usage(input_tokens: int, output_tokens: int) -> None:
+    _tls.usage = {"input_tokens": int(input_tokens or 0), "output_tokens": int(output_tokens or 0)}
+
+
 def _call_gemini(prompt: str, model: str, api_key: str) -> str:
+    import logging
+
     from google import genai
+    logging.getLogger("google_genai.models").setLevel(logging.ERROR)    # silences the harmless "automatic function calling" notice
     client = genai.Client(api_key=api_key)
-    return client.models.generate_content(model=model, contents=prompt).text
+    response = client.models.generate_content(model=model, contents=prompt)
+    meta = getattr(response, "usage_metadata", None)
+    if meta is not None:     # thinking tokens are billed as output tokens
+        _set_usage(getattr(meta, "prompt_token_count", 0),
+                   (getattr(meta, "candidates_token_count", 0) or 0) + (getattr(meta, "thoughts_token_count", 0) or 0))
+    return response.text
 
 
 def _call_anthropic(prompt: str, model: str, api_key: str) -> str:
@@ -55,6 +71,7 @@ def _call_anthropic(prompt: str, model: str, api_key: str) -> str:
     client = anthropic.Anthropic(api_key=api_key)
     response = client.messages.create(model=model, max_tokens=1024,
                                       messages=[{"role": "user", "content": prompt}])
+    _set_usage(response.usage.input_tokens, response.usage.output_tokens)
     return response.content[0].text
 
 
@@ -62,6 +79,8 @@ def _call_openai(prompt: str, model: str, api_key: str) -> str:
     from openai import OpenAI
     client = OpenAI(api_key=api_key)
     response = client.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}])
+    if response.usage:
+        _set_usage(response.usage.prompt_tokens, response.usage.completion_tokens)
     return response.choices[0].message.content
 
 
@@ -80,10 +99,15 @@ class ProviderLLM:
             raise RuntimeError(f"No API key for '{self.provider}'. Set "
                                f"{config.PROVIDER_API_KEY_ENV[self.provider]} in your .env.")
         self.usage = _Usage()
+        self.last_usage: dict = {}       # {input_tokens, output_tokens[, estimated]} of the most recent call
 
     def complete(self, prompt: str) -> str:
+        _tls.usage = None
         response = _DISPATCH[self.provider](prompt, self.model, self._api_key)
         self.usage.record(prompt, response)
+        reported = getattr(_tls, "usage", None)
+        # If a provider response carries no usage, fall back to ~4 characters per token and say so.
+        self.last_usage = reported or {"input_tokens": len(prompt) // 4, "output_tokens": len(response) // 4, "estimated": True}
         return response
 
 

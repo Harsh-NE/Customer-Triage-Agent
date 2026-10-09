@@ -85,6 +85,14 @@ class HybridKBRetriever(ChromaRetriever):
         self._bm25 = None
         self._bm25_ids: list[str] = []
 
+    def fetch(self, chunk_ids: list[str]) -> list[Candidate]:
+        """Chunks by id (optional retriever capability; the Resolver adapter uses it to re-load the Clarifier's leading issue)."""
+        if not chunk_ids:
+            return []
+        self._ensure()
+        got = self._collection.get(ids=list(chunk_ids), include=["documents", "metadatas"])
+        return [self._to_candidate(cid, doc, meta, 0.0) for cid, doc, meta in zip(got["ids"], got["documents"], got["metadatas"])]
+
     def search(self, query: str, top_k: int = 8) -> list[Candidate]:
         self._ensure()
         if self._bm25 is None:
@@ -139,6 +147,18 @@ def query_exit_codes(query: str) -> set[str]:
     return {m for m in _EXIT_CODE_RE.findall(query) if int(m) <= 255}
 
 
+def query_coverage(query: str, text: str) -> float:
+    """Share of the query's content words (function words dropped, crude stemming) that appear in `text`. RRF ranks are
+    relative -- the best ticket for ANY query gets ~1.0 -- so this is the absolute relevance signal that lets a gate
+    tell a real match from the least-bad one. No content words in the query: nothing to check, return 1.0."""
+    from triage.differential import _FUNCTION_WORDS, _stem
+    words = {w for w in tokenize(query) if len(w) > 2 and w not in _FUNCTION_WORDS}
+    if not words:
+        return 1.0
+    hay = text.lower()
+    return sum(1 for w in words if _stem(w) in hay) / len(words)
+
+
 def recency_factor(age_years: float | None) -> float:
     """Docker changes: a 9-year-old fix is weaker evidence than a 2-year-old one. Mild, floored, unknown age = 0.9."""
     if age_years is None:
@@ -152,6 +172,10 @@ def score_ticket(row: dict, base: float, query: str, codes: set[str], topics: se
     score = base * (0.6 + 0.4 * (row["trust_score"] or 0.0))
     score *= RESOLUTION_KIND_WEIGHT.get(row["resolution_kind"], 0.85)
     score *= recency_factor(row["age_years"])
+    words = len((row.get("resolution") or "").split())
+    if words < 30:               # "closing this", "fixed in 3.5.2": the dataset itself flags these ("very short answer")
+        score *= 0.6 if words < 15 else 0.85
+    score *= 0.4 + 0.6 * query_coverage(query, f"{row['title']} {row['problem']} {' '.join(row['errors_clean'])}")
     ticket_codes = set(row["exit_codes"]) | query_exit_codes(row["title"])      # the column is sparse; titles often say it
     if codes and ticket_codes:
         if codes & ticket_codes:

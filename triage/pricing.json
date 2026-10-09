@@ -1,0 +1,14 @@
+{
+  "currency": "USD",
+  "unit": "per 1M tokens",
+  "retrieved": "2026-10-08",
+  "models": {
+    "gemini-3.5-flash-lite": {
+      "input": 0.30,
+      "output": 2.50,
+      "cached_input": 0.03,
+      "source": "https://openrouter.ai/api/v1/models  (id: google/gemini-3.5-flash-lite)",
+      "note": "OpenRouter list price. Google's own API price and free tier can differ; edit this file if you are billed directly. Thinking tokens, if any, are billed as output."
+    }
+  }
+}

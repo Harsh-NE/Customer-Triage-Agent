@@ -1,0 +1,917 @@
+{
+  "meta": {
+    "retriever": "hybrid",
+    "resolver_llm": "fake",
+    "seconds": 88.8
+  },
+  "summary": {
+    "scenarios": 29,
+    "with_gold": 20,
+    "out_of_scope": 6,
+    "no_gold_other": 3,
+    "gold_resolved_rate": 0.8,
+    "gold_first_attempt_rate": 0.8,
+    "gold_escalated_rate": 0.2,
+    "wrong_fix_sent_rate_gold": 0.0,
+    "oos_resolved_rate": 0.0,
+    "oos_fix_sent_rate": 0.0,
+    "oos_escalated_or_rejected_rate": 1.0,
+    "no_gold_other_fix_sent_rate": 0.333,
+    "first_fix_tier": {
+      "kb": 17
+    },
+    "mean_questions": 1.45,
+    "outcomes": {
+      "resolved": 16,
+      "escalated": 9,
+      "rejected": 4
+    }
+  },
+  "rows": [
+    {
+      "id": "S01",
+      "opening": "docker pull fails with 'You have reached your pull rate limit' HTTP 429 from Docker Hub",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "You have reached your pull rate limit (429 response code)",
+            "View pull rate and limit"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8813,
+        "margin": 0.7958,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "docker-hub|?|docker pull fails with 'you have reached your pull rate limit' http 429 from docker hub"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S02",
+      "opening": "Docker Hub pulls are failing with a 429 error",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Too many requests (429 response code)",
+            "Abuse rate limit"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.6113,
+        "margin": 0.5313,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "docker-hub|?|docker hub pulls are failing with a 429 error; too many requests"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S03",
+      "opening": "getting a 429 when our CI pulls images from Docker Hub",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 2,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "You have reached your pull rate limit (429 response code)",
+            "View pull rate and limit"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8768,
+        "margin": 0.7893,
+        "uncovered_terms": [],
+        "questions_asked": 2,
+        "canonical_string": "docker-hub|?|getting a 429 when our ci pulls images from docker hub; none of these fit; you have reached your pull rate limit; you may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S04",
+      "opening": "pulling from Docker Hub gives a 500 error",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "500 response code",
+            "Abuse rate limit"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.6025,
+        "margin": 0.3677,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "docker-hub|?|pulling from docker hub gives a 500 error"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S05",
+      "opening": "docker commands fail and say they can't connect to the daemon",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Unable to connect to the Docker daemon",
+            "Troubleshoot conflicts between the `daemon.json` and startup"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7275,
+        "margin": 0.6624,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|docker commands fail and say they can't connect to the daemon"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S06",
+      "opening": "containers on our Linux server can't resolve hostnames, DNS lookups fail inside containers",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "DNS resolver issues",
+            "DNS services"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.9391,
+        "margin": 0.8886,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|containers on our linux server can't resolve hostnames, dns lookups fail inside containers"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S07",
+      "opening": "Docker Desktop won't start on my Windows laptop",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 2,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.4066,
+        "margin": 0.2243,
+        "uncovered_terms": [
+          "text",
+          "there's"
+        ],
+        "questions_asked": 2,
+        "canonical_string": "desktop|?|docker desktop won't start on my windows laptop; none of these fit; there's no error text, it just fails"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S08",
+      "opening": "Docker isn't starting",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 3,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "budget_exhausted",
+        "p_top": 0.212,
+        "margin": 0.0066,
+        "uncovered_terms": [],
+        "questions_asked": 3,
+        "canonical_string": "?|?|docker isn't starting; i don't see an error message, it just fails; none of these fit; there's no error text, it just fails"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S09",
+      "opening": "I get an error that a port is already allocated when I start a container in Docker Desktop",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "`port already allocated` errors",
+            "Installing Docker Desktop and Docker Engine"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8175,
+        "margin": 0.7255,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "desktop|?|i get an error that a port is already allocated when i start a container in docker desktop"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S10",
+      "opening": "pulling from our private registry fails with a TLS handshake error on Docker Desktop",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Certificates not set up correctly",
+            "How do I add TLS certificates?"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8244,
+        "margin": 0.7715,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "desktop|?|pulling from our private registry fails with a tls handshake error on docker desktop"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S11",
+      "opening": "Docker Desktop on my Mac says my CPU is incompatible",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 0,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Incompatible CPU detected",
+            "Bug fixes and enhancements"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.9458,
+        "margin": 0.9179,
+        "uncovered_terms": [],
+        "questions_asked": 0,
+        "canonical_string": "desktop|?|docker desktop on my mac says my cpu is incompatible"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S12",
+      "opening": "shell scripts I mount into containers fail with weird syntax errors, we develop on Windows",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Unexpected syntax errors, use Unix style line endings for fi",
+            "Run the application"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7215,
+        "margin": 0.6518,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "desktop|?|shell scripts i mount into containers fail with weird syntax errors, we develop on windows"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S13",
+      "opening": "SSO sign in isn't working for my team",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 2,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Not enough seats in organization",
+            "Error messages"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7598,
+        "margin": 0.6907,
+        "uncovered_terms": [],
+        "questions_asked": 2,
+        "canonical_string": "accounts|?|none of these fit; not enough seats in organization 'acme'; sso sign in isn't working for my team"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S14",
+      "opening": "our users can't sign in to Docker with SSO",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 2,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "no_discriminating_question",
+        "p_top": 0.3669,
+        "margin": 0.2048,
+        "uncovered_terms": [],
+        "questions_asked": 2,
+        "canonical_string": "security|?|none of these fit; our users can't sign in to docker with sso; user 'jdoe' is not assigned to this sso organization"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S15",
+      "opening": "SSO says our domain isn't verified",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Domain is not verified for SSO connection",
+            "Can users use different email addresses to authenticate thro"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7846,
+        "margin": 0.734,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "security|?|sso says our domain isn't verified"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S16",
+      "opening": "SCIM provisioning is not updating users that already existed in Docker",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "SCIM updates don't apply to existing users",
+            "SCIM attribute values are overwritten or ignored"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.589,
+        "margin": 0.4934,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "security|?|scim provisioning is not updating users that already existed in docker"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S17",
+      "opening": "docker pull fails for me on rootless Docker",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 2,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.2177,
+        "margin": 0.0231,
+        "uncovered_terms": [
+          "none",
+          "rootless",
+          "text"
+        ],
+        "questions_asked": 2,
+        "canonical_string": "?|?|docker pull fails for me on rootless docker; none of these fit; there's no error text, it just fails"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S18",
+      "opening": "I can't remove a docker volume, it says unable to remove filesystem",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Unable to remove filesystem",
+            "Remove volumes"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8246,
+        "margin": 0.7861,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|i can't remove a docker volume, it says unable to remove filesystem"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S19",
+      "opening": "my containers keep getting killed, I think they run out of memory",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Out of memory issues",
+            "Understand the risks of running out of memory"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7921,
+        "margin": 0.7439,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|my containers keep getting killed, i think they run out of memory"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S20",
+      "opening": "my Docker sandbox ran out of disk space",
+      "has_gold": true,
+      "oos": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "sources": [
+            "Sandbox runs out of disk space",
+            "Where does Docker Desktop store Linux containers and images?"
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.6439,
+        "margin": 0.5361,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "ai|?|my docker sandbox ran out of disk space"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S21",
+      "opening": "our kubernetes ingress controller returns 502 bad gateway intermittently",
+      "has_gold": false,
+      "oos": true,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 1,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.1714,
+        "margin": 0.0335,
+        "uncovered_terms": [
+          "502",
+          "controller",
+          "ingress"
+        ],
+        "questions_asked": 1,
+        "canonical_string": "?|?|502 bad gateway; our kubernetes ingress controller returns 502 bad gateway intermittently"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S22",
+      "opening": "how do I reset my Netflix password",
+      "has_gold": false,
+      "oos": true,
+      "outcome": "rejected",
+      "escalation_reason": "OUT_OF_SCOPE",
+      "questions": 0,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "out_of_scope"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S23",
+      "opening": "it doesn't work",
+      "has_gold": false,
+      "oos": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 3,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "budget_exhausted",
+        "p_top": 0.3408,
+        "margin": 0.104,
+        "uncovered_terms": [],
+        "questions_asked": 3,
+        "canonical_string": "desktop|?|it doesn't work; none of these fit; the docker desktop app won't open after updating; there's no error text, it just fails"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S24",
+      "opening": "help",
+      "has_gold": false,
+      "oos": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 3,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "budget_exhausted",
+        "p_top": 0.2519,
+        "margin": 0.0927,
+        "uncovered_terms": [
+          "none",
+          "text"
+        ],
+        "questions_asked": 3,
+        "canonical_string": "build|?|docker build is very slow; help; none of these fit; there's no error text, it just fails"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S25",
+      "opening": "docker",
+      "has_gold": false,
+      "oos": false,
+      "outcome": "escalated",
+      "escalation_reason": "RETRY_EXHAUSTED",
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": false,
+          "sources": [
+            "Troubleshoot menu",
+            "Bug fixes and enhancements"
+          ]
+        },
+        {
+          "tier": "tickets",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": false,
+          "sources": [
+            "T-f780c52fb9eb",
+            "T-fde6eca21942"
+          ]
+        }
+      ],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8615,
+        "margin": 0.8196,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "desktop|?|docker; docker desktop crashes at startup"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S26",
+      "opening": "my python script throws a KeyError when it reads the config file",
+      "has_gold": false,
+      "oos": true,
+      "outcome": "rejected",
+      "escalation_reason": "OUT_OF_SCOPE",
+      "questions": 3,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "budget_exhausted",
+        "p_top": 0.2479,
+        "margin": 0.001,
+        "uncovered_terms": [],
+        "questions_asked": 3,
+        "canonical_string": "?|?|keyerror: 'database_url'; my python script throws a keyerror when it reads the config file; none of these fit"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S27",
+      "opening": "how do I install nginx on ubuntu and configure a reverse proxy",
+      "has_gold": false,
+      "oos": true,
+      "outcome": "rejected",
+      "escalation_reason": "OUT_OF_SCOPE",
+      "questions": 3,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "budget_exhausted",
+        "p_top": 0.2401,
+        "margin": 0.0699,
+        "uncovered_terms": [],
+        "questions_asked": 3,
+        "canonical_string": "?|?|how do i install nginx on ubuntu and configure a reverse proxy; i'm not sure which product it is; none of these fit; there's no error text, it just fails"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S28",
+      "opening": "my AWS lambda function times out after 3 seconds",
+      "has_gold": false,
+      "oos": true,
+      "outcome": "rejected",
+      "escalation_reason": "OUT_OF_SCOPE",
+      "questions": 1,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.1295,
+        "margin": 0.0075,
+        "uncovered_terms": [
+          "function",
+          "timed"
+        ],
+        "questions_asked": 1,
+        "canonical_string": "?|?|my aws lambda function times out after 3 seconds; task timed out after 3.00 seconds"
+      },
+      "clarify_returns": 0
+    },
+    {
+      "id": "S29",
+      "opening": "kubernetes pods are stuck in CrashLoopBackOff after the deployment",
+      "has_gold": false,
+      "oos": true,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 1,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.1956,
+        "margin": 0.022,
+        "uncovered_terms": [
+          "deployment",
+          "pods"
+        ],
+        "questions_asked": 1,
+        "canonical_string": "?|?|crashloopbackoff; kubernetes pods are stuck in crashloopbackoff after the deployment"
+      },
+      "clarify_returns": 0
+    }
+  ]
+}

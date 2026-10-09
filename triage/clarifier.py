@@ -35,7 +35,7 @@ from triage.differential import AmbiguityResult, Discriminator, ambiguity_check,
 from triage.llm import LLM
 from triage.reflect import ReflectionVerdict, reflect_question
 from triage.retrieval import Retriever
-from triage.state import (PLATFORMS, ClarifierResult, ClarifierStatus, Gap, NeedClarification, QuestionPlan,
+from triage.state import (PLATFORMS, ClarifierResult, ClarifierStatus, ExtractedFields, Gap, NeedClarification, QuestionPlan,
                           SignatureConfidence)
 from triage.tools import ToolRegistry, make_clarifier_registry
 
@@ -141,6 +141,15 @@ class GraphState(TypedDict, total=False):
     result: Any
 
 
+_PICK_FILLER = {"i", "think", "its", "it", "is", "s", "number", "option", "no", "the", "one", "please", "thanks", "st", "nd", "rd", "th"}
+
+
+def _is_menu_pick(reply: str) -> bool:
+    """A reply that only names a menu entry ("1", "it's number 2", "option 3"): the choice is the whole content."""
+    tokens = re.findall(r"[a-z]+|\d+", reply.lower())
+    return any(t.isdigit() for t in tokens) and all(t.isdigit() or t in _PICK_FILLER for t in tokens)
+
+
 class Clarifier:
     def __init__(self, llm: LLM | None, retriever: Retriever, cfg: ClarifierConfig | None = None,
                  embedder: U.Embedder | None = None, known_products: list[str] | None = None) -> None:
@@ -210,8 +219,12 @@ class Clarifier:
         # (a bare "Mac" is only meaningful next to "which operating system?").
         prev = s.turns[ctx.turn_idx - 1] if ctx.turn_idx > 0 else None
         pending_text = prev.text if prev is not None and prev.role == "assistant" else None
-        ctx.extraction = U.extract(s.turns[ctx.turn_idx].text, self.llm, self.known_products,
-                                   known=s.fields, pending_question=pending_text)
+        reply = s.turns[ctx.turn_idx].text
+        if ctx.notes.get("answered") and _is_menu_pick(reply):
+            # "1" selected a menu entry; run through the extractor it would be stored as a symptom ("...linux; 1")
+            ctx.extraction = U.ExtractionResult(ExtractedFields(), "menu_reply")
+        else:
+            ctx.extraction = U.extract(reply, self.llm, self.known_products, known=s.fields, pending_question=pending_text)
         s.apply_extraction(ctx.extraction.fields, ctx.turn_idx)
         error_text = ctx.notes.get("error_text")
         if error_text and error_text not in s.fields.error_messages:

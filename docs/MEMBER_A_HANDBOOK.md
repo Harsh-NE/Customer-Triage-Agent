@@ -5,6 +5,11 @@ Member A built: what exists, how to run it, the contracts you depend on, **every
 what was and was not verified, and how to plug your work in. Written against the Team Workplan v2
 (tasks A1–A10).
 
+> **Update 2026-10-08:** B's Resolver has been merged into this tree and wired to the Clarifier. Where this handbook says "B will
+> build X" or "plug in here", the actual join is documented in [INTEGRATION.md](INTEGRATION.md): the contract mapping, the
+> changes made to B's code, and the first end-to-end results. The Clarifier details below are still accurate; note that the
+> Resolver currently hands back raw (`next = "clarifier"`) rather than through `NeedClarification` (§4.3).
+
 > Read §1 (status), §2 (run it), §6 (integration) and §7 (assumptions) first. The rest is reference.
 
 ---
@@ -28,7 +33,7 @@ what was and was not verified, and how to plug your work in. Written against the
 
 | Metric | Value |
 |---|---|
-| Tests | **213 pass** (incl. chunker, store-guard and ticket-pipeline tests, and 12 against the real Docker store) |
+| Tests | **281 pass** (incl. chunker, store-guard and ticket-pipeline tests, and 12 against the real Docker store) |
 | Gold issue is the Clarifier's #1 hypothesis | **0.85** (17 of 20 labeled scenarios) |
 | READY precision (READY *and* correct) | **1.00** (hybrid retriever; 0.94 vector-only) |
 | Wrong-READY rate | **0.00** (hybrid; vector-only 0.05 = S07) |
@@ -43,7 +48,7 @@ what was and was not verified, and how to plug your work in. Written against the
 
 ```bash
 pip install -r requirements.txt          # adds langgraph + pytest to the existing deps
-python -m pytest                          # 213 tests; those needing the store/tokenizer/CSV skip if absent
+python -m pytest                          # 281 tests; those needing the store/tokenizer/CSV skip if absent
 python -m pytest -m real_store -s         # only the real-store tests (~1.5 min: each runs full dialogues on the real store)
 ```
 
@@ -317,7 +322,7 @@ Each is something I decided without being able to confirm it. "If wrong" says wh
 ## 8. What is verified, and what is not
 
 **Verified (by tests or a measured run):**
-* 213 tests: contract round-trips, extractors, redaction, merging, session compaction under hard token caps,
+* 281 tests: contract round-trips, extractors, redaction, merging, session compaction under hard token caps,
   reflection rules, clustering for both heading layouts, discriminator ranking and soft re-weighting, the full
   turn on a demo corpus, LangGraph ≡ plain call, simulator behaviour, and 12 tests on the **real** store.
 * **Negative controls** for the guardrail checks: break redaction → PII check fails; break vagueness detection →

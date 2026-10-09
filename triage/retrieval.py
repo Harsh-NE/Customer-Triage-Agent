@@ -53,6 +53,13 @@ class MockRetriever:
         self._idf = {t: math.log((n + 1) / (c + 0.5)) + 1 for t, c in df.items()}
         self.queries: list[str] = []          # every query received, for assertions in tests
 
+    def fetch(self, chunk_ids: list[str]) -> list[Candidate]:
+        """Chunks by id (optional retriever capability; the Resolver adapter uses it to re-load the Clarifier's leading issue)."""
+        wanted = set(chunk_ids)
+        return [Candidate(chunk_id=d["chunk_id"], text=d["text"], score=0.0, source_path=d.get("source_path", ""),
+                          article_title=d.get("article_title", ""), heading_path=list(d.get("heading_path", [])),
+                          metadata=dict(d.get("metadata", {}))) for d in self._corpus if d["chunk_id"] in wanted]
+
     def search(self, query: str, top_k: int = 8) -> list[Candidate]:
         self.queries.append(query)
         q = set(_TOKEN.findall(query.lower())) & set(self._idf)

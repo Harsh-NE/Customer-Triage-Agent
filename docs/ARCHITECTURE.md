@@ -250,7 +250,7 @@ Two LLM agents plus a deterministic router; control flow is a graph, not a free-
 ```
 customer message
       │
-      ▼        Clarifier [Built, verified]                                Resolver [Designed]
+      ▼        Clarifier [Built, verified]                                Resolver [Built by B, integrated]
  ┌──────────────────────────────┐   READY / UNRESOLVED   ┌───────────────────────────────┐
  │ ingest → understand →        │ ──── ProblemSignature ─▶│ retrieve → confidence gate →  │
  │ {ask_gap | diagnose → decide}│ ◀── NeedClarification ──│ draft → classify reply →      │
@@ -292,7 +292,11 @@ lets the Resolver ask the Clarifier one more targeted question, counted against 
 **LangGraph**: `Clarifier.build_graph()` wires the same stages as nodes (a test asserts it behaves identically to the plain
 call); `Clarifier.as_node()` is the plug-in point for the integrated graph.
 
-### 6.2 Resolver [Designed]
+### 6.2 Resolver [Built by Member B; integrated 2026-10-08, see [INTEGRATION.md](INTEGRATION.md)]
+
+Implemented as a LangGraph subgraph (`triage/resolver/graph.py`): guard (injection, secret requests, out-of-domain, security/data-loss and critical-severity overrides) -> semantic cache -> retrieve KB -> confidence gate (weighted top score, margin, agreement, completeness) -> ticket fallback only when the Clarifier was confident -> draft (evidence-only, cited) -> deterministic verify (drops steps whose citation or backticked command/URL is not in the cited passage) -> send -> `interrupt()` for the reply -> classify (`resolved | not_fixed | new_info | off_topic`) -> close / retry with excluded evidence (max 2) / hand back to the Clarifier / escalate with a reason code, priority and PII-masked payload. Every LLM, retrieval, cache and gate event is written to a JSONL log. The A+B mapping, the changes made to B's code and the first end-to-end numbers are in [INTEGRATION.md](INTEGRATION.md). Not yet run with a real LLM; thresholds are B's starting guesses.
+
+The original design, kept for reference (retry count and the reply labels differ from what B built):
 
 A conversational loop, not a single-shot answer:
 
@@ -319,7 +323,7 @@ records), with a JSON round-trip and `validate_signature()` for each side's test
 
 ## 7. Evaluation & Testing [Built for the Clarifier]
 
-- **213 tests** (`python -m pytest`): contracts, extractors, redaction, merging, session compaction under hard token caps,
+- **281 tests** (`python -m pytest`): contracts, extractors, redaction, merging, session compaction under hard token caps,
   reflection rules, clustering for both heading layouts, discriminator ranking, full turns on an offline demo corpus,
   LangGraph ≡ plain call, the simulator, the 06_store rebuild guard and heading-aware BM25 (4), the token-aware chunker (16), the ticket pipeline (15), the two retrievers (17: fusion, ticket ranking, card
   rendering, and both retrievers on the real stores), and 12 tests against the **real** Docker store. Tests that need the
@@ -352,9 +356,10 @@ every chunk plus new graph infrastructure. **Could fit later** for Tier-2 trend 
 | Hybrid KB retrieval (`HybridKBRetriever`) | **Built**, default for the Clarifier; evaluated through the Clarifier eval only |
 | Docker retrieval benchmark (Recall@k, `08_evaluate.py`) | Not adapted; no direct retrieval benchmark on Docker |
 | M8a: Clarifier (extraction, differential diagnosis, reflection, session memory, tools) | **Built, verified** |
-| M8b: Resolver (grounded generation, groundedness + confidence gates, retry, escalation) | Designed |
-| M7: Semantic cache keyed on the problem signature | Designed |
-| Router + integrated LangGraph; end-to-end simulated-customer evaluation | Not started |
+| M8b: Resolver (grounded generation, verification, confidence gate, retry, escalation) | **Built by B and integrated**; FakeLLM only, thresholds uncalibrated |
+| M7: Semantic cache keyed on the problem signature | **Built by B and integrated** (+ leading-issue hard gate, per-LLM cache file) |
+| Integrated LangGraph; end-to-end simulated-customer evaluation | **Built** (`triage/joint.py`, `triage/eval/e2e_eval.py`): 16/20 gold fixes first try, 0 wrong fixes, 0/6 out-of-scope answered |
+| Deterministic router (dispatch by product/component) | Not started |
 | Tier 2: ticket store (clean, embed, docstore, BM25) | **Built** (`scripts/10_tickets.py`, 13,092 tickets) |
 | Tier 2: ticket retriever (`TicketRetriever`) | **Built**, spot-checked only |
 | KB+ticket routing, ticket use by the Resolver | Designed (§2), not built |
@@ -383,7 +388,7 @@ pipeline scripts. Agent-layer thresholds live in `triage/config.py::ClarifierCon
 - `docs/customer_support_rag_overview.pptx` predates the Docker pivot and the agent layer; it is not updated.
 - Scripts 01, 07, 08 are not adapted to Docker (§3, §4.1). 09 is superseded.
 - No live LLM run, no hybrid-retriever run, no Tier-2 integration, no Docker retrieval benchmark.
-- `TicketRetriever` exists but no router or Resolver calls it yet. Ticket retrieval quality is unmeasured beyond unit tests and spot checks. The CSV's `error_strings` column is noisy (prose fragments, quoted paths/commands); `10_tickets.py` filters it
+- `TicketRetriever` is used only as the Resolver's fallback (when the Clarifier was READY but the KB evidence did not hold up). Ticket retrieval quality is unmeasured beyond unit tests and spot checks, and the end-to-end oracle cannot credit ticket fixes. The CSV's `error_strings` column is noisy (prose fragments, quoted paths/commands); `10_tickets.py` filters it
   down to ~3.2k tickets with real error lines.
 - Clarifier: the rare-term check (§6.1) is lexical, so a customer's paraphrase of what the docs call something else can cost one extra question (S06); its 0.7 threshold is not calibrated on a large set.
 - Clarifier thresholds are from a small same-author sweep and should be re-calibrated when the retriever changes.
