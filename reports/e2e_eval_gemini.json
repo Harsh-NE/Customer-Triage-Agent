@@ -1,0 +1,3510 @@
+{
+  "meta": {
+    "retriever": "hybrid",
+    "resolver_llm": "gemini",
+    "resolver_model": "gemini-3.5-flash-lite",
+    "seconds": 326.1,
+    "scenario_file": "scenarios.jsonl",
+    "llm_calls": 64,
+    "input_tokens": 64106,
+    "output_tokens": 4754,
+    "cost_usd": 0.0311,
+    "llm_latency_ms_p50": 3256.45,
+    "llm_latency_ms_p95": 4902.6
+  },
+  "summary": {
+    "scenarios": 29,
+    "with_gold": 20,
+    "out_of_scope": 6,
+    "no_gold_other": 3,
+    "gold_resolved_rate": 0.85,
+    "gold_first_attempt_rate": 0.85,
+    "gold_escalated_rate": 0.15,
+    "wrong_fix_sent_rate_gold": 0.0,
+    "oos_resolved_rate": 0.0,
+    "oos_fix_sent_rate": 0.0,
+    "oos_escalated_or_rejected_rate": 1.0,
+    "no_gold_other_fix_sent_rate": 0.0,
+    "kb_gap": 0,
+    "kb_gap_kb_fix_sent_rate": null,
+    "kb_gap_any_fix_sent_rate": null,
+    "first_fix_tier": {
+      "kb": 17
+    },
+    "mean_questions": 1.17,
+    "outcomes": {
+      "resolved": 17,
+      "escalated": 8,
+      "rejected": 4
+    }
+  },
+  "rows": [
+    {
+      "id": "S01",
+      "opening": "docker pull fails with 'You have reached your pull rate limit' HTTP 429 from Docker Hub",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "You have exceeded the Docker Hub pull rate limit applied to unauthenticated or Docker Personal users.\n\n1. Authenticate or upgrade your Docker account. [E1]\n2. Wait until your pull rate limit decreases, and then try again. [E1]\n\nTo confirm: Confirm you can successfully pull images from Docker Hub without receiving the 429 rate limit error.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "You have reached your pull rate limit (429 response code)"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md",
+              "text": "When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\n- You have reached your pull rate limit as an authenticated Docker Personal\n  user.\n- You have reached your pull rate limit as an unauthenticated user based on your\n  IPv4 address or IPv6 /64 subnet.\n\nYou can use one of the following solutions:\n\n- [Authenticate](./usage/pulls.md#authentication) or\n  [upgrade](../subscription-billing/manage/plans.md#upgrade-plans) your Docker\n  account.\n- [View your pull rate limit](./usage/pulls.md#view-hourly-pull-rate-and-limit),\n  wait until your pull rate limit decreases, and then try again."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8813,
+        "margin": 0.7958,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "docker-hub|?|docker pull fails with 'you have reached your pull rate limit' http 429 from docker hub"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.941,
+          "p_top": 0.8813,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0001",
+              "tier": "kb",
+              "rerank_score": 0.8987,
+              "component": "troubleshoot",
+              "topics": [],
+              "issue": "You have reached your pull rate limit (429 response code)",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0009",
+              "tier": "kb",
+              "rerank_score": 0.6584,
+              "component": "usage",
+              "topics": [],
+              "issue": "View pull rate and limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/docker-hub/usage/_index.md#content__manuals__docker-hub__usage___index__0002",
+              "tier": "kb",
+              "rerank_score": 0.5471,
+              "component": "usage",
+              "topics": [],
+              "issue": "Abuse rate limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0000",
+              "tier": "kb",
+              "rerank_score": 0.4148,
+              "component": "usage",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/docker-hub/image-library/mirror.md#content__manuals__docker-hub__image-library__mirror__0004",
+              "tier": "kb",
+              "rerank_score": 0.3716,
+              "component": "image-library",
+              "topics": [],
+              "issue": "Using Registry Access Management (RAM) with a registry mirror",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.9189,
+        "strong": true,
+        "top": 0.8987,
+        "margin": 0.2403,
+        "agreement": 0.8813,
+        "completeness": 0.941,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.9189
+    },
+    {
+      "id": "S02",
+      "opening": "Docker Hub pulls are failing with a 429 error",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "You have reached the abuse rate limit, which returns a 429 Too Many Requests response when making thousands of requests per minute.\n\n1. Check for broken CI/CD pipelines accessing Docker Hub and fix them. [E1]\n2. Implement a retry with back-off solution in your automated scripts to ensure that you're not resending thousands of requests per minute. [E1]\n\nTo confirm: Confirm that your automated scripts and CI/CD pipelines are no longer sending thousands of requests per minute and successful pulls resume.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Too many requests (429 response code)"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md",
+              "text": "When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nToo Many Requests\n```\n\n- You have reached the [Abuse rate limit](./usage/_index.md#abuse-rate-limit).\n\n1. Check for broken CI/CD pipelines accessing Docker Hub and fix them.\n2. Implement a retry with back-off solution in your automated scripts to ensure\n   that you're not resending thousands of requests per minute."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7185,
+        "margin": 0.6245,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "docker-hub|?|docker hub pulls are failing with a 429 error; too many requests"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.859,
+          "p_top": 0.7185,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0004",
+              "tier": "kb",
+              "rerank_score": 0.7696,
+              "component": "troubleshoot",
+              "topics": [],
+              "issue": "Too many requests (429 response code)",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/docker-hub/usage/_index.md#content__manuals__docker-hub__usage___index__0002",
+              "tier": "kb",
+              "rerank_score": 0.5899,
+              "component": "usage",
+              "topics": [],
+              "issue": "Abuse rate limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0009",
+              "tier": "kb",
+              "rerank_score": 0.5295,
+              "component": "usage",
+              "topics": [],
+              "issue": "View pull rate and limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0001",
+              "tier": "kb",
+              "rerank_score": 0.5286,
+              "component": "troubleshoot",
+              "topics": [],
+              "issue": "You have reached your pull rate limit (429 response code)",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.7966,
+        "strong": true,
+        "top": 0.7696,
+        "margin": 0.1797,
+        "agreement": 0.7185,
+        "completeness": 0.859,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.7966
+    },
+    {
+      "id": "S03",
+      "opening": "getting a 429 when our CI pulls images from Docker Hub",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 2,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "You have received a 429 response because you have exceeded your Docker Hub pull rate limit as an unauthenticated or Docker Personal user.\n\n1. Authenticate or upgrade your Docker account to increase your limit or receive unlimited pulls. [E1]\n2. View your current pull rate limit and wait until it decreases, then try again. [E1]\n\nTo confirm: Confirm that your CI pulls succeed without receiving the 429 error message.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "You have reached your pull rate limit (429 response code)"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md",
+              "text": "When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\n- You have reached your pull rate limit as an authenticated Docker Personal\n  user.\n- You have reached your pull rate limit as an unauthenticated user based on your\n  IPv4 address or IPv6 /64 subnet.\n\nYou can use one of the following solutions:\n\n- [Authenticate](./usage/pulls.md#authentication) or\n  [upgrade](../subscription-billing/manage/plans.md#upgrade-plans) your Docker\n  account.\n- [View your pull rate limit](./usage/pulls.md#view-hourly-pull-rate-and-limit),\n  wait until your pull rate limit decreases, and then try again."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8816,
+        "margin": 0.7936,
+        "uncovered_terms": [],
+        "questions_asked": 2,
+        "canonical_string": "docker-hub|?|getting a 429 when our ci pulls images from docker hub; none of these fit; you have reached your pull rate limit; you may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.941,
+          "p_top": 0.8816,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0001",
+              "tier": "kb",
+              "rerank_score": 0.9101,
+              "component": "troubleshoot",
+              "topics": [],
+              "issue": "You have reached your pull rate limit (429 response code)",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0009",
+              "tier": "kb",
+              "rerank_score": 0.6785,
+              "component": "usage",
+              "topics": [],
+              "issue": "View pull rate and limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/docker-hub/usage/_index.md#content__manuals__docker-hub__usage___index__0002",
+              "tier": "kb",
+              "rerank_score": 0.4844,
+              "component": "usage",
+              "topics": [],
+              "issue": "Abuse rate limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0000",
+              "tier": "kb",
+              "rerank_score": 0.4275,
+              "component": "usage",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/docker-hub/usage/manage.md#content__manuals__docker-hub__usage__manage__0000",
+              "tier": "kb",
+              "rerank_score": 0.4156,
+              "component": "usage",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.9241,
+        "strong": true,
+        "top": 0.9101,
+        "margin": 0.2316,
+        "agreement": 0.8816,
+        "completeness": 0.941,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.9241
+    },
+    {
+      "id": "S04",
+      "opening": "pulling from Docker Hub gives a 500 error",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "A 500 status code error when pulling from Docker Hub is commonly caused by a temporary Docker Hub service issue.\n\n1. View the Docker System Status Page at https://www.dockerstatus.com/ and verify that all services are operational. [E1]\n2. Try accessing Docker Hub again. [E1]\n3. Contact Docker Support at https://www.docker.com/support/ to report the issue. [E1]\n\nTo confirm: You confirm it works when Docker Hub services are verified as operational and you can successfully access Docker Hub and pull images.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "500 response code"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md",
+              "text": "When this issue occurs, the following error message is common in the Docker CLI\nor in the Docker Engine logs:\n\n```text\nUnexpected status code 500\n```\n\n- There is a temporary Docker Hub service issue.\n\n1. View the [Docker System Status Page](https://www.dockerstatus.com/) and\n   verify that all services are operational.\n2. Try accessing Docker Hub again. It may be a temporary issue.\n3. [Contact Docker Support](https://www.docker.com/support/) to report the issue."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.5013,
+        "margin": 0.3059,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "docker-hub|?|pulling from docker hub gives a 500 error"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.751,
+          "p_top": 0.5013,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0007",
+              "tier": "kb",
+              "rerank_score": 0.6907,
+              "component": "troubleshoot",
+              "topics": [],
+              "issue": "500 response code",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/docker-hub/usage/_index.md#content__manuals__docker-hub__usage___index__0002",
+              "tier": "kb",
+              "rerank_score": 0.5278,
+              "component": "usage",
+              "topics": [],
+              "issue": "Abuse rate limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0009",
+              "tier": "kb",
+              "rerank_score": 0.499,
+              "component": "usage",
+              "topics": [],
+              "issue": "View pull rate and limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/docker-hub/image-library/mirror.md#content__manuals__docker-hub__image-library__mirror__0004",
+              "tier": "kb",
+              "rerank_score": 0.4282,
+              "component": "image-library",
+              "topics": [],
+              "issue": "Using Registry Access Management (RAM) with a registry mirror",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/engine/release-notes/19.03.md#content__manuals__engine__release-notes__19.03__0059",
+              "tier": "kb",
+              "rerank_score": 0.3131,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Runtime",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/engine/release-notes/prior-releases.md#content__manuals__engine__release-notes__prior-releases__0079",
+              "tier": "kb",
+              "rerank_score": 0.301,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Runtime",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.6835,
+        "strong": true,
+        "top": 0.6907,
+        "margin": 0.1629,
+        "agreement": 0.5013,
+        "completeness": 0.751,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.6835
+    },
+    {
+      "id": "S05",
+      "opening": "docker commands fail and say they can't connect to the daemon",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "Docker commands fail to connect to the daemon because the Docker daemon isn't running on your system or the client is attempting to connect to an unreachable remote host.\n\n1. Start the Docker daemon on your system and try running the command again. [E1]\n\nTo confirm: Run your docker command again to confirm it successfully connects to the daemon.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/engine/daemon/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Unable to connect to the Docker daemon"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/engine/daemon/troubleshoot.md",
+              "text": "```text\nCannot connect to the Docker daemon. Is 'docker daemon' running on this host?\n```\n\nThis error may indicate:\n\n- The Docker daemon isn't running on your system. Start the daemon and try\n  running the command again.\n- Your Docker client is attempting to connect to a Docker daemon on a different\n  host, and that host is unreachable."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7592,
+        "margin": 0.6995,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|docker commands fail and say they can't connect to the daemon"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.88,
+          "p_top": 0.7592,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/engine/daemon/troubleshoot.md#content__manuals__engine__daemon__troubleshoot__0001",
+              "tier": "kb",
+              "rerank_score": 0.8107,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Unable to connect to the Docker daemon",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/engine/daemon/troubleshoot.md#content__manuals__engine__daemon__troubleshoot__0003",
+              "tier": "kb",
+              "rerank_score": 0.5447,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Troubleshoot conflicts between the `daemon.json` and startup scripts",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/engine/security/rootless/troubleshoot.md#content__manuals__engine__security__rootless__troubleshoot__0006",
+              "tier": "kb",
+              "rerank_score": 0.522,
+              "component": "security",
+              "topics": [],
+              "issue": "Errors when starting the Docker daemon",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/engine/daemon/remote-access.md#content__manuals__engine__daemon__remote-access__0003",
+              "tier": "kb",
+              "rerank_score": 0.4168,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Configuring remote access with `daemon.json`",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/engine/daemon/troubleshoot.md#content__manuals__engine__daemon__troubleshoot__0010",
+              "tier": "kb",
+              "rerank_score": 0.4168,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Specify DNS servers for Docker",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/get-started/docker-overview.md#content__get-started__docker-overview__0005",
+              "tier": "kb",
+              "rerank_score": 0.4127,
+              "component": "docker-overview",
+              "topics": [],
+              "issue": "Docker architecture",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/engine/daemon/_index.md#content__manuals__engine__daemon___index__0001",
+              "tier": "kb",
+              "rerank_score": 0.368,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Configure the Docker daemon",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/get-started/docker-overview.md#content__get-started__docker-overview__0006",
+              "tier": "kb",
+              "rerank_score": 0.3646,
+              "component": "docker-overview",
+              "topics": [],
+              "issue": "The Docker daemon",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8427,
+        "strong": true,
+        "top": 0.8107,
+        "margin": 0.266,
+        "agreement": 0.7592,
+        "completeness": 0.88,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8427
+    },
+    {
+      "id": "S06",
+      "opening": "containers on our Linux server can't resolve hostnames, DNS lookups fail inside containers",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "Containers cannot resolve hostnames because a local loopback DNS resolver like dnsmasq in /etc/resolv.conf cannot be used inside the container's network namespace.\n\n1. Check if you use dnsmasq by running `$ ps aux | grep dnsmasq`. [E1]\n2. Specify DNS servers for Docker to use or turn off dnsmasq. [E1]\n\nTo confirm: Confirm that DNS lookups succeed inside your containers.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/engine/daemon/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "DNS resolver issues"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/engine/daemon/troubleshoot.md",
+              "text": "```console\nDNS resolver found in resolv.conf and containers can't use it\n```\n\nLinux desktop environments often have a network manager program running, that\nuses `dnsmasq` to cache DNS requests by adding them to `/etc/resolv.conf`. The\n`dnsmasq` instance runs on a loopback address such as `127.0.0.1` or\n`127.0.1.1`. It speeds up DNS look-ups and provides DHCP services. Such a\nconfiguration doesn't work within a Docker container. The Docker container uses\nits own network namespace, and resolves loopback addresses such as `127.0.0.1`\nto itself, and it's unlikely to be running a DNS server on its own loopback\naddress.\n\nIf Docker detects that no DNS server referenced in `/etc/resolv.conf` is a fully\nfunctional DNS server, the following warning occurs:\n\n```text\nWARNING: Local (127.0.0.1) DNS resolver found in resolv.conf and containers\ncan't use it. Using default external servers : [8.8.8.8 8.8.4.4]\n```\n\nIf you see this warning, first check to see if you use `dnsmasq`:\n\n```console\n$ ps aux | grep dnsmasq\n```\n\nIf your container needs to resolve hosts which are internal to your network, the\npublic nameservers aren't adequate. You have two choices:\n\n- Specify DNS servers for Docker to use.\n- Turn off `dnsmasq`.\n\n  Turning off `dnsmasq` adds the IP addresses of actual DNS nameservers to\n  `/etc/resolv.conf`, and you lose the benefits of `dnsmasq`.\n\nYou only need to use one of these methods."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.9398,
+        "margin": 0.8893,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|containers on our linux server can't resolve hostnames, dns lookups fail inside containers"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.97,
+          "p_top": 0.9398,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/engine/daemon/troubleshoot.md#content__manuals__engine__daemon__troubleshoot__0009",
+              "tier": "kb",
+              "rerank_score": 0.7995,
+              "component": "daemon",
+              "topics": [],
+              "issue": "DNS resolver issues",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/engine/network/_index.md#content__manuals__engine__network___index__0008",
+              "tier": "kb",
+              "rerank_score": 0.5095,
+              "component": "network",
+              "topics": [],
+              "issue": "DNS services",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/engine/release-notes/26.1.md#content__manuals__engine__release-notes__26.1__0016",
+              "tier": "kb",
+              "rerank_score": 0.3118,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Bug fixes and enhancements",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/desktop/previous-versions/archive-mac.md#content__manuals__desktop__previous-versions__archive-mac__0001",
+              "tier": "kb",
+              "rerank_score": 0.1843,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Docker Community Edition 18.06.1-ce-mac73 2018-08-29",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/desktop/previous-versions/3.x-mac.md#content__manuals__desktop__previous-versions__3.x-mac__0054",
+              "tier": "kb",
+              "rerank_score": 0.1314,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Known issues",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8917,
+        "strong": true,
+        "top": 0.7995,
+        "margin": 0.29,
+        "agreement": 0.9398,
+        "completeness": 0.97,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8917
+    },
+    {
+      "id": "S07",
+      "opening": "Docker Desktop won't start on my Windows laptop",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 2,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.3252,
+        "margin": 0.1794,
+        "uncovered_terms": [],
+        "questions_asked": 2,
+        "canonical_string": "desktop|?|docker desktop won't start on my windows laptop; none of these fit; there's no error text, it just fails"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.5,
+          "p_top": 0.3252,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot__topics__0015",
+              "tier": "kb",
+              "rerank_score": 0.5162,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Docker Desktop fails due to Virtualization not working",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot__topics__0010",
+              "tier": "kb",
+              "rerank_score": 0.5051,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Docker Desktop fails to start when anti-virus software is installed",
+              "gold": true
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/faqs/windowsfaqs.md#content__manuals__desktop__troubleshoot-and-support__faqs__windowsfaqs__0002",
+              "tier": "kb",
+              "rerank_score": 0.4883,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Can I run Docker Desktop on Windows Server?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot__topics__0019",
+              "tier": "kb",
+              "rerank_score": 0.4483,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Docker Desktop with Windows Containers fails with \"The media is write protected\"",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/desktop/setup/install/windows-install.md#content__manuals__desktop__setup__install__windows-install__0009",
+              "tier": "kb",
+              "rerank_score": 0.384,
+              "component": "setup",
+              "topics": [],
+              "issue": "Start Docker Desktop",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/desktop/enterprise/enterprise-deployment/ms-store.md#content__manuals__desktop__enterprise__enterprise-deployment__ms-store__0000",
+              "tier": "kb",
+              "rerank_score": 0.3547,
+              "component": "enterprise",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/desktop/use-desktop/resource-saver.md#content__manuals__desktop__use-desktop__resource-saver__0000",
+              "tier": "kb",
+              "rerank_score": 0.3394,
+              "component": "use-desktop",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/desktop/release-notes.md#content__manuals__desktop__release-notes__0322",
+              "tier": "kb",
+              "rerank_score": 0.2977,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Bug fixes and enhancements",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.4906,
+        "strong": false,
+        "top": 0.5162,
+        "margin": 0.0111,
+        "agreement": 0.75,
+        "completeness": 0.5,
+        "reasons": [
+          "top_score 0.52 < 0.55",
+          "confidence 0.49 < 0.6"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.4906
+    },
+    {
+      "id": "S08",
+      "opening": "Docker isn't starting",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 3,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "budget_exhausted",
+        "p_top": 0.212,
+        "margin": 0.0066,
+        "uncovered_terms": [],
+        "questions_asked": 3,
+        "canonical_string": "?|?|docker isn't starting; i don't see an error message, it just fails; none of these fit; there's no error text, it just fails"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.5,
+          "p_top": 0.212,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/engine/daemon/troubleshoot.md#content__manuals__engine__daemon__troubleshoot__0003",
+              "tier": "kb",
+              "rerank_score": 0.537,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Troubleshoot conflicts between the `daemon.json` and startup scripts",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/engine/daemon/troubleshoot.md#content__manuals__engine__daemon__troubleshoot__0001",
+              "tier": "kb",
+              "rerank_score": 0.5182,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Unable to connect to the Docker daemon",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0007",
+              "tier": "kb",
+              "rerank_score": 0.4488,
+              "component": "troubleshoot",
+              "topics": [],
+              "issue": "500 response code",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/desktop/features/wasm.md#content__manuals__desktop__features__wasm__0009",
+              "tier": "kb",
+              "rerank_score": 0.4265,
+              "component": "features",
+              "topics": [],
+              "issue": "Failed to start shim: failed to resolve runtime path",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/engine/daemon/_index.md#content__manuals__engine__daemon___index__0001",
+              "tier": "kb",
+              "rerank_score": 0.3789,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Configure the Docker daemon",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/faqs/security.md#content__manuals__faqs__security__0018",
+              "tier": "kb",
+              "rerank_score": 0.3481,
+              "component": "security",
+              "topics": [],
+              "issue": "How does turning off Just-in-Time provisioning affect user sign-in?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/ai/sandboxes/governance/monitor-and-enforce/sign-in-enforcement.md#content__manuals__ai__sandboxes__governance__monitor-and-enforce__sign-in-enforcement__0007",
+              "tier": "kb",
+              "rerank_score": 0.342,
+              "component": "sandboxes",
+              "topics": [],
+              "issue": "Deploy the configuration",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/build-cloud/release-notes.md#content__manuals__build-cloud__release-notes__0008",
+              "tier": "kb",
+              "rerank_score": 0.2662,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Enhancements",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.4557,
+        "strong": false,
+        "top": 0.537,
+        "margin": 0.0188,
+        "agreement": 0.5,
+        "completeness": 0.5,
+        "reasons": [
+          "top_score 0.54 < 0.55",
+          "confidence 0.46 < 0.6"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.4557
+    },
+    {
+      "id": "S09",
+      "opening": "I get an error that a port is already allocated when I start a container in Docker Desktop",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "Another application or a previously running container on your system is already using the specified port.\n\n1. Use the `resmon.exe` GUI, select **Network** and then **Listening Ports**. [E1]\n2. Alternatively, in PowerShell, use `netstat -aon | find /i \"listening \"` to discover the PID of the process currently using the port. [E1]\n3. Decide whether to shut the other process down, or to use a different port in your Docker app. [E1]\n\nTo confirm: Confirm that the port is no longer bound by another process and that your container starts successfully without port allocation errors.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md\n\nDid this resolve the issue?",
+          "sources": [
+            "`port already allocated` errors"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md",
+              "text": "**Error message**\n\nWhen starting a container, you may see an error like:\n\n```text\nBind for 0.0.0.0:8080 failed: port is already allocated\n```\n\nOr\n\n```text\nlisten tcp:0.0.0.0:8080: bind: address is already in use\n```\n\n**Cause**\n\n- Another application on your system is already using the specified port.\n- A previously running container was not stopped properly and is still bound to the port.\n\n**Solution**\n\nTo discover the identity of this software, either:\n- Use the `resmon.exe` GUI, select **Network** and then **Listening Ports**\n- In PowerShell, use `netstat -aon | find /i \"listening \"` to discover the PID of the process\ncurrently using the port (the PID is the number in the rightmost column).\n\nThen, decide whether to shut the other process down, or to use a different port in your\nDocker app."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8281,
+        "margin": 0.735,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "desktop|?|i get an error that a port is already allocated when i start a container in docker desktop"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.914,
+          "p_top": 0.8281,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot__topics__0004",
+              "tier": "kb",
+              "rerank_score": 0.8566,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "`port already allocated` errors",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/setup/install/linux/_index.md#content__manuals__desktop__setup__install__linux___index__0001",
+              "tier": "kb",
+              "rerank_score": 0.5011,
+              "component": "setup",
+              "topics": [],
+              "issue": "Installing Docker Desktop and Docker Engine",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/reference/compose-file/services.md#content__reference__compose-file__services__0096",
+              "tier": "kb",
+              "rerank_score": 0.3822,
+              "component": "compose-file",
+              "topics": [],
+              "issue": "`stdin_open`",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/desktop/release-notes.md#content__manuals__desktop__release-notes__0242",
+              "tier": "kb",
+              "rerank_score": 0.3161,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Bug fixes and enhancements",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/desktop/release-notes.md#content__manuals__desktop__release-notes__0421",
+              "tier": "kb",
+              "rerank_score": 0.2936,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Known issues",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/desktop/previous-versions/edge-releases-windows.md#content__manuals__desktop__previous-versions__edge-releases-windows__0095",
+              "tier": "kb",
+              "rerank_score": 0.223,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Bug fixes and minor changes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/desktop/previous-versions/edge-releases-mac.md#content__manuals__desktop__previous-versions__edge-releases-mac__0078",
+              "tier": "kb",
+              "rerank_score": 0.2063,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Bug fixes and minor changes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/desktop/previous-versions/2.x-mac.md#content__manuals__desktop__previous-versions__2.x-mac__0044",
+              "tier": "kb",
+              "rerank_score": 0.1976,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Known issues",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8839,
+        "strong": true,
+        "top": 0.8566,
+        "margin": 0.3555,
+        "agreement": 0.8281,
+        "completeness": 0.914,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8839
+    },
+    {
+      "id": "S10",
+      "opening": "pulling from our private registry fails with a TLS handshake error on Docker Desktop",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2",
+            "E3"
+          ],
+          "gold": true,
+          "message": "TLS handshake errors when pulling from a private registry on Docker Desktop are typically caused by missing or unconfigured SSL certificates, or because the registry is incorrectly listed under insecure registries which causes Docker to ignore certificates and fail to send client certificates.\n\n1. Ensure that your registry is not listed as an insecure registry, as Docker Desktop ignores certificates listed under insecure registries and does not send client certificates. [E1, E3]\n2. Add your client certificates in `~/.docker/certs.d/<MyRegistry>:<Port>/client.cert` and `~/.docker/certs.d/<MyRegistry>:<Port>/client.key`. [E2, E3]\n3. Restart Docker Desktop after making any changes to the keychain or to the `~/.docker/certs.d` directory in order for the changes to take effect. [E2, E3]\n\nTo confirm: Confirm that you can successfully pull images from your private registry using `docker run` or `docker pull` without encountering a TLS handshake error.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md; E2 https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/faqs/macfaqs.md; E3 https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/faqs/windowsfaqs.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Certificates not set up correctly",
+            "How do I add TLS certificates?",
+            "How do I add client certificates?"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md",
+              "text": "**Error message**\n\nWhen attempting to pull from a registry using `docker run`, you may encounter the following error:\n\n```console\nError response from daemon: Get http://192.168.203.139:5858/v2/: malformed HTTP response \"\\x15\\x03\\x01\\x00\\x02\\x02\"\n```\n\nAdditionally, logs from the registry may show:\n\n```console\n2017/06/20 18:15:30 http: TLS handshake error from 192.168.203.139:52882: tls: client didn't provide a certificate\n2017/06/20 18:15:30 http: TLS handshake error from 192.168.203.139:52883: tls: first record does not look like a TLS handshake\n```\n\n**Possible causes**\n\n- Docker Desktop ignores certificates listed under insecure registries.\n- Client certificates are not sent to insecure registries, causing handshake failures.\n\n**Solution**\n\n- Ensure that your registry is properly configured with valid SSL certificates.\n- If your registry is self-signed, configure Docker to trust the certificate by adding it to Docker\u2019s certificates directory (/etc/docker/certs.d/ on Linux).\n- If the issue persists, check your Docker daemon configuration and enable TLS authentication."
+            },
+            {
+              "evidence_id": "E2",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/faqs/macfaqs.md",
+              "text": "You can add trusted Certificate Authorities (CAs) (used to verify registry\nserver certificates) and client certificates (used to authenticate to\nregistries) to your Docker daemon.\n\n**Add custom CA certificates (server side)**\n\nAll trusted CAs (root or intermediate) are supported. Docker Desktop creates a\ncertificate bundle of all user-trusted CAs based on the Mac Keychain, and\nappends it to Moby trusted certificates. So if an enterprise SSL certificate is\ntrusted by the user on the host, it is trusted by Docker Desktop.\n\nTo manually add a custom, self-signed certificate, start by adding the\ncertificate to the macOS keychain, which is picked up by Docker Desktop. Here is\nan example:\n\n```console\n$ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ca.crt\n```\n\nOr, if you prefer to add the certificate to your own local keychain only (rather\nthan for all users), run this command instead:\n\n```console\n$ security add-trusted-cert -d -r trustRoot -k ~/Library/Keychains/login.keychain ca.crt\n```\n\nSee also, [Directory structures for\ncertificates](#directory-structures-for-certificates).\n\n**Note:** You need to restart Docker Desktop after making any changes to the keychain or to the `~/.docker/certs.d` directory in order for the changes to take effect.\n\nFor a complete explanation of how to do this, see the blog post [Adding\nSelf-signed Registry Certs to Docker & Docker Desktop for\nMac](https://blog.container-solutions.com/adding-self-signed-registry-certs-docker-mac).\n\n**Add client certificates**\n\nYou can put your client certificates in\n`~/.docker/certs.d/<MyRegistry>:<Port>/client.cert` and\n`~/.docker/certs.d/<MyRegistry>:<Port>/client.key`.\n\nWhen the Docker Desktop application starts, it copies the `~/.docker/certs.d`\nfolder on your Mac to the `/etc/docker/certs.d` directory inside the Docker Desktop Linux VM.\n\n**Note:** * You need to restart Docker Desktop after making any changes to the keychain or to the `~/.docker/certs.d` directory in order for the changes to take effect. * The registry cannot be listed as an _insecure registry_. Docker Desktop ignores certificates listed under insecure registries, and does not send client certificates. Commands like `docker run` that attempt to pull from the registry produce error messages on the command line, as well as on the registry.\n\n**Directory structures for certificates**\n\nIf you have this directory structure, you do not need to manually add the CA\ncertificate to your Mac OS system log"
+            },
+            {
+              "evidence_id": "E3",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/faqs/windowsfaqs.md",
+              "text": "You can add your client certificates\nin `~/.docker/certs.d/<MyRegistry>:<Port>/client.cert` and\n`~/.docker/certs.d/<MyRegistry>:<Port>/client.key`. You do not need to push your certificates with `git` commands.\n\nWhen the Docker Desktop application starts, it copies the\n`~/.docker/certs.d` folder on your Windows system to the `/etc/docker/certs.d`\ndirectory inside the Docker Desktop Linux VM.\n\nYou need to restart Docker Desktop after making any changes to the keychain\nor to the `~/.docker/certs.d` directory in order for the changes to take effect.\n\nThe registry cannot be listed as an insecure registry (see\n[Docker Daemon](/manuals/desktop/settings-and-maintenance/settings.md#docker-engine)). Docker Desktop ignores\ncertificates listed under insecure registries, and does not send client\ncertificates. Commands like `docker run` that attempt to pull from the registry\nproduce error messages on the command line, as well as on the registry.\n\nTo learn more about how to set the client TLS certificate for verification, see\n[Verify repository client with certificates](/manuals/engine/security/certificates.md)\nin the Docker Engine topics."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8372,
+        "margin": 0.7834,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "desktop|?|pulling from our private registry fails with a tls handshake error on docker desktop"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.919,
+          "p_top": 0.8372,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot__topics__0001",
+              "tier": "kb",
+              "rerank_score": 0.9392,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Certificates not set up correctly",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/faqs/macfaqs.md#content__manuals__desktop__troubleshoot-and-support__faqs__macfaqs__0005",
+              "tier": "kb",
+              "rerank_score": 0.5556,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "How do I add TLS certificates?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/faqs/windowsfaqs.md#content__manuals__desktop__troubleshoot-and-support__faqs__windowsfaqs__0006",
+              "tier": "kb",
+              "rerank_score": 0.5294,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "How do I add client certificates?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/reference/api/registry/auth.md#content__reference__api__registry__auth__0008",
+              "tier": "kb",
+              "rerank_score": 0.4307,
+              "component": "api",
+              "topics": [],
+              "issue": "Example",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/engine/security/trust/_index.md#content__manuals__engine__security__trust___index__0008",
+              "tier": "kb",
+              "rerank_score": 0.4117,
+              "component": "security",
+              "topics": [],
+              "issue": "Client enforcement with Docker Content Trust",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/faqs/windowsfaqs.md#content__manuals__desktop__troubleshoot-and-support__faqs__windowsfaqs__0005",
+              "tier": "kb",
+              "rerank_score": 0.4078,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "How do I add custom CA certificates?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/guides/admin-set-up.md#content__guides__admin-set-up__0015",
+              "tier": "kb",
+              "rerank_score": 0.3982,
+              "component": "admin-set-up",
+              "topics": [],
+              "issue": "Test Registry Access Management and Image Access Management",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/engine/security/certificates.md#content__manuals__engine__security__certificates__0000",
+              "tier": "kb",
+              "rerank_score": 0.3684,
+              "component": "security",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.9239,
+        "strong": true,
+        "top": 0.9392,
+        "margin": 0.3836,
+        "agreement": 0.8372,
+        "completeness": 0.919,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.9239
+    },
+    {
+      "id": "S11",
+      "opening": "Docker Desktop on my Mac says my CPU is incompatible",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 0,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "Docker Desktop requires a CPU that supports virtualization and the Apple Hypervisor framework.\n\n1. Verify that you've installed the correct Docker Desktop for your architecture. [E1]\n2. Run the command `sysctl kern.hv_support` in a terminal window to check if your Mac supports Apple's Hypervisor framework. [E1]\n\nTo confirm: Confirm that the command prints `kern.hv_support: 1`, indicating your Mac supports the Hypervisor Framework.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Incompatible CPU detected"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md",
+              "text": "**Cause**\n\nDocker Desktop requires a processor (CPU) that supports virtualization and, more\nspecifically, the [Apple Hypervisor\nframework](https://developer.apple.com/library/mac/documentation/DriversKernelHardware/Reference/Hypervisor/).\n\n**Solution**\n\nCheck that:\n\n - You've installed the correct Docker Desktop for your architecture\n - Your Mac supports Apple's Hypervisor framework. To check if your Mac supports the Hypervisor framework, run the following command in a terminal window.\n\n   ```console\n   $ sysctl kern.hv_support\n   ```\n\n   If your Mac supports the Hypervisor Framework, the command prints `kern.hv_support: 1`.\n\n   If not, the command prints `kern.hv_support: 0`.\n\nSee also, [Hypervisor Framework\nReference](https://developer.apple.com/library/mac/documentation/DriversKernelHardware/Reference/Hypervisor/)\nin the Apple documentation, and Docker Desktop [Mac system requirements](/manuals/desktop/setup/install/mac-install.md#system-requirements)."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7094,
+        "margin": 0.4594,
+        "uncovered_terms": [],
+        "questions_asked": 0,
+        "canonical_string": "desktop|?|docker desktop on my mac says my cpu is incompatible"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.855,
+          "p_top": 0.7094,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot__topics__0008",
+              "tier": "kb",
+              "rerank_score": 0.8235,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Incompatible CPU detected",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/features/networking/networking-how-tos.md#content__manuals__desktop__features__networking__networking-how-tos__0005",
+              "tier": "kb",
+              "rerank_score": 0.4233,
+              "component": "features",
+              "topics": [],
+              "issue": "Network how-tos for Mac and Windows",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/desktop/release-notes.md#content__manuals__desktop__release-notes__0154",
+              "tier": "kb",
+              "rerank_score": 0.2893,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Bug fixes and enhancements",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/desktop/previous-versions/2.x-mac.md#content__manuals__desktop__previous-versions__2.x-mac__0013",
+              "tier": "kb",
+              "rerank_score": 0.2166,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Bug fixes and minor changes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/desktop/previous-versions/3.x-mac.md#content__manuals__desktop__previous-versions__3.x-mac__0031",
+              "tier": "kb",
+              "rerank_score": 0.2134,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Bug fixes and minor changes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/desktop/previous-versions/edge-releases-mac.md#content__manuals__desktop__previous-versions__edge-releases-mac__0048",
+              "tier": "kb",
+              "rerank_score": 0.2103,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Bug fixes and minor changes",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8335,
+        "strong": true,
+        "top": 0.8235,
+        "margin": 0.4002,
+        "agreement": 0.7094,
+        "completeness": 0.855,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8335
+    },
+    {
+      "id": "S12",
+      "opening": "shell scripts I mount into containers fail with weird syntax errors, we develop on Windows",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "Windows tools create files with Windows-style line endings (CRLF) instead of Unix-style line endings (LF), causing containers running Unix shell scripts to fail with syntax errors.\n\n1. Convert files to Unix-style line endings using: dos2unix script.sh [E1]\n2. In VS Code, set line endings to LF (Unix) instead of CRLF (Windows). [E1]\n\nTo confirm: Run the container again to confirm that the shell script executes without syntax errors.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Unexpected syntax errors, use Unix style line endings for fi"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md",
+              "text": "**Cause**\n\nDocker containers expect Unix-style line `\\n` endings, not Windows style: `\\r\\n`. This includes files referenced at the command line for builds and in RUN commands in Docker files.\n\nKeep this in mind when authoring files such as shell scripts using Windows\ntools, where the default is likely to be Windows style line endings. These\ncommands ultimately get passed to Unix commands inside a Unix based container\n(for example, a shell script passed to `/bin/sh`). If Windows style line endings\nare used, `docker run` fails with syntax errors.\n\n**Solution**\n\n - Convert files to Unix-style line endings using:\n\n   ```console\n   $ dos2unix script.sh\n   ```\n- In VS Code, set line endings to `LF` (Unix) instead of `CRLF` (Windows)."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7078,
+        "margin": 0.6395,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "desktop|?|shell scripts i mount into containers fail with weird syntax errors, we develop on windows"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.854,
+          "p_top": 0.7078,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot__topics__0012",
+              "tier": "kb",
+              "rerank_score": 0.7318,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Unexpected syntax errors, use Unix style line endings for files in containers",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/topics.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot__topics__0013",
+              "tier": "kb",
+              "rerank_score": 0.4552,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Path conversion errors on Windows",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/guides/sentiment-analysis.md#content__guides__sentiment-analysis__0008",
+              "tier": "kb",
+              "rerank_score": 0.4029,
+              "component": "sentiment-analysis",
+              "topics": [],
+              "issue": "Run the application",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/guides/text-summarization.md#content__guides__text-summarization__0008",
+              "tier": "kb",
+              "rerank_score": 0.399,
+              "component": "text-summarization",
+              "topics": [],
+              "issue": "Run the application",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/guides/text-classification.md#content__guides__text-classification__0009",
+              "tier": "kb",
+              "rerank_score": 0.3988,
+              "component": "text-classification",
+              "topics": [],
+              "issue": "Run the application",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/guides/language-translation.md#content__guides__language-translation__0008",
+              "tier": "kb",
+              "rerank_score": 0.3975,
+              "component": "language-translation",
+              "topics": [],
+              "issue": "Run the application",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/guides/named-entity-recognition.md#content__guides__named-entity-recognition__0008",
+              "tier": "kb",
+              "rerank_score": 0.3951,
+              "component": "named-entity-recognition",
+              "topics": [],
+              "issue": "Run the application",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/desktop/previous-versions/2.x-windows.md#content__manuals__desktop__previous-versions__2.x-windows__0037",
+              "tier": "kb",
+              "rerank_score": 0.171,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Known issues",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.7917,
+        "strong": true,
+        "top": 0.7318,
+        "margin": 0.2766,
+        "agreement": 0.7078,
+        "completeness": 0.854,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.7917
+    },
+    {
+      "id": "S13",
+      "opening": "SSO sign in isn't working for my team",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 2,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E5"
+          ],
+          "gold": true,
+          "message": "The SSO sign-in error occurs because the organization has no available seats for the user during Just-in-Time provisioning or SCIM.\n\n1. Sign in to Docker Home and select your organization. [E5]\n2. Select Billing. [E5]\n3. Select the action menu from the Active Plans tile, then choose Add seats. [E5]\n4. Follow the on-screen instructions to complete adding seats. [E5]\n5. Alternatively, review your organization members and pending invitations, and remove inactive users or pending invitations to free up seats. [E1]\n\nTo confirm: Team members can successfully sign in via SSO once additional seats are purchased or freed up.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/security/authentication/single-sign-on/troubleshoot-sso.md; E5 https://github.com/docker/docs/blob/main/content/manuals/accounts/organization/manage/manage-seats.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Not enough seats in organization",
+            "Add seats to your subscription"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/security/authentication/single-sign-on/troubleshoot-sso.md",
+              "text": "When this issue occurs, the following error message is common:\n\n```text\nNot enough seats in organization '$orgName'. Add more seats or contact your administrator.\n```\n\nThis error occurs when the organization has no available seats for the user when\nprovisioning via Just-in-Time (JIT) provisioning or SCIM.\n\n**Add more seats to the organization**\n\nPurchase additional Docker Business subscription seats. For details, see\n[Manage subscription seats](/manuals/accounts/organization/manage/manage-seats.md).\n\n**Remove users or pending invitations**\n\nReview your organization members and pending invitations. Remove inactive users\nor pending invitations to free up seats. For more details, see\n[Manage organization members](/manuals/accounts/organization/manage/members.md)."
+            },
+            {
+              "evidence_id": "E5",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/accounts/organization/manage/manage-seats.md",
+              "text": "To add seats:\n\n1. Sign in to [Docker Home](https://app.docker.com/) and select your\n   organization.\n1. Select **Billing**.\n1. Select the action menu from the **Active Plans** tile, then choose **Add seats**.\n1. Follow the on-screen instructions to complete adding seats.\n   - You can't use pay by invoice for purchasing additional seats.\n   - You must use a card or US bank account.\n\nYou can add more members to your organization. For more information, see [Manage organization members](./members.md)."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.83,
+        "margin": 0.7766,
+        "uncovered_terms": [],
+        "questions_asked": 2,
+        "canonical_string": "accounts|?|none of these fit; not enough seats in organization 'acme'; sso sign in isn't working for my team"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.915,
+          "p_top": 0.83,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/security/authentication/single-sign-on/troubleshoot-sso.md#content__manuals__security__authentication__single-sign-on__troubleshoot-sso__0015",
+              "tier": "kb",
+              "rerank_score": 0.7335,
+              "component": "authentication",
+              "topics": [],
+              "issue": "Not enough seats in organization",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/enterprise/unassociated-machines/_index.md#content__manuals__desktop__enterprise__unassociated-machines___index__0007",
+              "tier": "kb",
+              "rerank_score": 0.3636,
+              "component": "enterprise",
+              "topics": [],
+              "issue": "Add unassociated machines to your organization",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/faqs/accounts.md#content__manuals__faqs__accounts__0008",
+              "tier": "kb",
+              "rerank_score": 0.3573,
+              "component": "accounts",
+              "topics": [],
+              "issue": "Do organization invitees take up seats?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/subscription-billing/plans/docker.md#content__manuals__subscription-billing__plans__docker__0003",
+              "tier": "kb",
+              "rerank_score": 0.3458,
+              "component": "plans",
+              "topics": [],
+              "issue": "Organization seats",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/accounts/organization/manage/manage-seats.md#content__manuals__accounts__organization__manage__manage-seats__0001",
+              "tier": "kb",
+              "rerank_score": 0.3393,
+              "component": "organization",
+              "topics": [],
+              "issue": "Add seats to your subscription",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/accounts/company/manage.md#content__manuals__accounts__company__manage__0009",
+              "tier": "kb",
+              "rerank_score": 0.3281,
+              "component": "company",
+              "topics": [],
+              "issue": "Add seats to an organization",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8291,
+        "strong": true,
+        "top": 0.7335,
+        "margin": 0.3699,
+        "agreement": 0.83,
+        "completeness": 0.915,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8291
+    },
+    {
+      "id": "S14",
+      "opening": "our users can't sign in to Docker with SSO",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 2,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "no_discriminating_question",
+        "p_top": 0.4096,
+        "margin": 0.2286,
+        "uncovered_terms": [],
+        "questions_asked": 2,
+        "canonical_string": "security|?|none of these fit; our users can't sign in to docker with sso; user 'jdoe' is not assigned to this sso organization"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.5,
+          "p_top": 0.4096,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/security/authentication/single-sign-on/troubleshoot-sso.md#content__manuals__security__authentication__single-sign-on__troubleshoot-sso__0009",
+              "tier": "kb",
+              "rerank_score": 0.6559,
+              "component": "authentication",
+              "topics": [],
+              "issue": "User is not assigned to the organization",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/security/authentication/single-sign-on/troubleshoot-sso.md#content__manuals__security__authentication__single-sign-on__troubleshoot-sso__0007",
+              "tier": "kb",
+              "rerank_score": 0.5647,
+              "component": "authentication",
+              "topics": [],
+              "issue": "Groups are not formatted correctly",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/faqs/security.md#content__manuals__faqs__security__0008",
+              "tier": "kb",
+              "rerank_score": 0.4779,
+              "component": "security",
+              "topics": [],
+              "issue": "What happens if my existing certificate expires?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/security/provisioning/just-in-time.md#content__manuals__security__provisioning__just-in-time__0003",
+              "tier": "kb",
+              "rerank_score": 0.438,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "SSO authentication with JIT provisioning disabled",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/security/authentication/single-sign-on/_index.md#content__manuals__security__authentication__single-sign-on___index__0002",
+              "tier": "kb",
+              "rerank_score": 0.4265,
+              "component": "authentication",
+              "topics": [],
+              "issue": "Set up SSO",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/security/provisioning/just-in-time.md#content__manuals__security__provisioning__just-in-time__0002",
+              "tier": "kb",
+              "rerank_score": 0.4211,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "SSO authentication with JIT provisioning enabled",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.5636,
+        "strong": false,
+        "top": 0.6559,
+        "margin": 0.0912,
+        "agreement": 0.5,
+        "completeness": 0.5,
+        "reasons": [
+          "confidence 0.56 < 0.6"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.5636
+    },
+    {
+      "id": "S15",
+      "opening": "SSO says our domain isn't verified",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "The error occurs because the User Principal Name (UPN) returned by the IdP does not match any verified domains associated with the Docker SSO connection.\n\n1. Ensure that the IdP SSO connection is returning the correct UPN value in the assertion attributes by verifying the UPN attribute mapping. [E1]\n2. Add and verify all domains and subdomains used as UPN by your IdP and associate them with your Docker SSO connection. [E1]\n\nTo confirm: Confirm that users can successfully authenticate through SSO without receiving the unverified domain error.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/security/authentication/single-sign-on/troubleshoot-sso.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Domain is not verified for SSO connection"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/security/authentication/single-sign-on/troubleshoot-sso.md",
+              "text": "When this issue occurs, the following error message is common:\n\n```text\nDomain '$emailDomain' is not verified for your SSO connection. Contact your company administrator. TraceID: XXXXXXXXXXXXXX\n```\n\nThis error occurs if the IdP authenticated a user through SSO and the User\nPrincipal Name (UPN) returned to Docker doesn\u2019t match any of the verified\ndomains associated to the SSO connection configured in Docker.\n\n**Verify UPN attribute mapping**\n\nEnsure that the IdP SSO connection is returning the correct UPN value in the\nassertion attributes.\n\n**Add and verify all domains**\n\nAdd and verify all domains and subdomains used as UPN by your IdP and associate\nthem with your Docker SSO connection. For details, see\n[Configure single sign-on](/manuals/security/authentication/single-sign-on/connect.md)."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8194,
+        "margin": 0.7727,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "security|?|sso says our domain isn't verified"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.91,
+          "p_top": 0.8194,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/security/authentication/single-sign-on/troubleshoot-sso.md#content__manuals__security__authentication__single-sign-on__troubleshoot-sso__0018",
+              "tier": "kb",
+              "rerank_score": 0.7457,
+              "component": "authentication",
+              "topics": [],
+              "issue": "Domain is not verified for SSO connection",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/faqs/security.md#content__manuals__faqs__security__0014",
+              "tier": "kb",
+              "rerank_score": 0.537,
+              "component": "security",
+              "topics": [],
+              "issue": "Can users use different email addresses to authenticate through SSO?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/faqs/security.md#content__manuals__faqs__security__0025",
+              "tier": "kb",
+              "rerank_score": 0.4842,
+              "component": "security",
+              "topics": [],
+              "issue": "Why can a user sign in with a username and password when SSO is enforced?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/faqs/security.md#content__manuals__faqs__security__0024",
+              "tier": "kb",
+              "rerank_score": 0.4337,
+              "component": "security",
+              "topics": [],
+              "issue": "Can I turn on SSO without enforcing it immediately?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/faqs/security.md#content__manuals__faqs__security__0019",
+              "tier": "kb",
+              "rerank_score": 0.4326,
+              "component": "security",
+              "topics": [],
+              "issue": "Can someone join an organization without an invitation?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/guides/admin-set-up.md#content__guides__admin-set-up__0022",
+              "tier": "kb",
+              "rerank_score": 0.3686,
+              "component": "admin-set-up",
+              "topics": [],
+              "issue": "Enforce SSO",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8314,
+        "strong": true,
+        "top": 0.7457,
+        "margin": 0.2087,
+        "agreement": 0.8194,
+        "completeness": 0.91,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8314
+    },
+    {
+      "id": "S16",
+      "opening": "SCIM provisioning is not updating users that already existed in Docker",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "SCIM does not manage users that were originally created manually or via JIT before SCIM was linked.\n\n1. Remove the user manually from Docker Home under Members (remembering to transfer resource ownership first if necessary). [E1]\n2. Trigger provisioning from your IdP so SCIM can re-create the user with the correct attributes. [E1]\n\nTo confirm: Confirm that the user is re-created by SCIM and that their profile and attributes successfully update from your identity provider.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/security/provisioning/troubleshoot-provisioning.md\n\nDid this resolve the issue?",
+          "sources": [
+            "SCIM updates don't apply to existing users"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/security/provisioning/troubleshoot-provisioning.md",
+              "text": "User accounts were originally created manually or via JIT, and SCIM is not\nlinked to manage them.\n\nSCIM only manages users that it provisions. To allow SCIM to manage an\nexisting user:\n\n1. Remove the user manually from [Docker Home](https://app.docker.com) under **Members**.\n1. Trigger provisioning from your IdP.\n1. SCIM will re-create the user with correct attributes.\n\n**Warning:** Deleting a user removes their resource ownership (e.g., repositories). Transfer ownership before removing the user."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7331,
+        "margin": 0.6318,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "security|?|scim provisioning is not updating users that already existed in docker"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.867,
+          "p_top": 0.7331,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/security/provisioning/troubleshoot-provisioning.md#content__manuals__security__provisioning__troubleshoot-provisioning__0007",
+              "tier": "kb",
+              "rerank_score": 0.925,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "SCIM updates don't apply to existing users",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/security/provisioning/troubleshoot-provisioning.md#content__manuals__security__provisioning__troubleshoot-provisioning__0002",
+              "tier": "kb",
+              "rerank_score": 0.6991,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "SCIM attribute values are overwritten or ignored",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/security/provisioning/scim/_index.md#content__manuals__security__provisioning__scim___index__0002",
+              "tier": "kb",
+              "rerank_score": 0.5827,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "How SCIM works",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/security/provisioning/scim/migrate-scim.md#content__manuals__security__provisioning__scim__migrate-scim__0011",
+              "tier": "kb",
+              "rerank_score": 0.5305,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "Troubleshoot migration issues",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/security/provisioning/scim/provision-scim.md#content__manuals__security__provisioning__scim__provision-scim__0001",
+              "tier": "kb",
+              "rerank_score": 0.5237,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "Supported attributes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/security/provisioning/scim/_index.md#content__manuals__security__provisioning__scim___index__0000",
+              "tier": "kb",
+              "rerank_score": 0.5034,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/security/provisioning/scim/provision-scim.md#content__manuals__security__provisioning__scim__provision-scim__0019",
+              "tier": "kb",
+              "rerank_score": 0.497,
+              "component": "provisioning",
+              "topics": [],
+              "issue": "Disable SCIM",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.9397,
+        "strong": true,
+        "top": 0.925,
+        "margin": 0.2259,
+        "agreement": 1.0,
+        "completeness": 0.867,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.9397
+    },
+    {
+      "id": "S17",
+      "opening": "docker pull fails for me on rootless Docker",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "The `docker pull` failure on rootless Docker is caused by an insufficient number of available entries in `/etc/subuid` or `/etc/subgid`, or by `~/.local/share/docker` being located on NFS.\n\n1. Verify that your `/etc/subuid` and `/etc/subgid` files contain a sufficient number of entries (65,536 entries are sufficient for most images). [E1]\n2. If using NFS, specify a non-NFS `data-root` directory in `~/.config/docker/daemon.json` using the `{\"data-root\":\"/somewhere-out-of-nfs\"}` configuration. [E1]\n\nTo confirm: Confirm that `docker pull` successfully completes without layer registration or lchown errors.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/engine/security/rootless/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "`docker pull` errors"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/engine/security/rootless/troubleshoot.md",
+              "text": "**docker: failed to register layer: Error processing tar file(exit status 1): lchown <FILE>: invalid argument**\n\nThis error occurs when the number of available entries in `/etc/subuid` or\n`/etc/subgid` is not sufficient. The number of entries required vary across\nimages. However, 65,536 entries are sufficient for most images. See\n[Prerequisites](./_index.md#prerequisites).\n\n**docker: failed to register layer: ApplyLayer exit status 1 stdout:  stderr: lchown <FILE>: operation not permitted**\n\nThis error occurs mostly when `~/.local/share/docker` is located on NFS.\n\nA workaround is to specify non-NFS `data-root` directory in `~/.config/docker/daemon.json` as follows:\n```json\n{\"data-root\":\"/somewhere-out-of-nfs\"}\n```"
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7289,
+        "margin": 0.636,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|docker pull fails for me on rootless docker"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.864,
+          "p_top": 0.7289,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/engine/security/rootless/troubleshoot.md#content__manuals__engine__security__rootless__troubleshoot__0007",
+              "tier": "kb",
+              "rerank_score": 0.7246,
+              "component": "security",
+              "topics": [],
+              "issue": "`docker pull` errors",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/engine/security/rootless/tips.md#content__manuals__engine__security__rootless__tips__0002",
+              "tier": "kb",
+              "rerank_score": 0.3986,
+              "component": "security",
+              "topics": [],
+              "issue": "Rootless Docker in Docker",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/engine/release-notes/19.03.md#content__manuals__engine__release-notes__19.03__0082",
+              "tier": "kb",
+              "rerank_score": 0.3258,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Runtime",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/engine/release-notes/20.10.md#content__manuals__engine__release-notes__20.10__0120",
+              "tier": "kb",
+              "rerank_score": 0.3222,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Rootless",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/engine/release-notes/19.03.md#content__manuals__engine__release-notes__19.03__0035",
+              "tier": "kb",
+              "rerank_score": 0.3215,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Rootless",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/engine/release-notes/20.10.md#content__manuals__engine__release-notes__20.10__0068",
+              "tier": "kb",
+              "rerank_score": 0.3199,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Contrib",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/engine/release-notes/27.md#content__manuals__engine__release-notes__27__0037",
+              "tier": "kb",
+              "rerank_score": 0.3184,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "27.1.0",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.7947,
+        "strong": true,
+        "top": 0.7246,
+        "margin": 0.326,
+        "agreement": 0.7289,
+        "completeness": 0.864,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.7947
+    },
+    {
+      "id": "S18",
+      "opening": "I can't remove a docker volume, it says unable to remove filesystem",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2"
+          ],
+          "gold": true,
+          "message": "Container-based utilities or running containers bind-mounting Docker system directories or attached to the volume can cause filesystem busy errors when attempting removal.\n\n1. If a container is using the volume, remove the previous container first with `docker rm -f new-db`. [E2]\n2. Alternatively, use the `docker volume rm postgres_data` command or `docker volume prune` to remove unused volumes. [E2]\n3. If unsure which process is causing the path to be busy, use the `lsof` command to find its process. [E1]\n\nTo confirm: Confirm the volume is successfully removed by checking that the error no longer appears and the volume is no longer listed.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/engine/daemon/troubleshoot.md; E2 https://github.com/docker/docs/blob/main/content/get-started/docker-concepts/running-containers/persisting-container-data.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Unable to remove filesystem",
+            "Remove volumes"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/engine/daemon/troubleshoot.md",
+              "text": "```text\nError: Unable to remove filesystem\n```\n\nSome container-based utilities, such\nas [Google cAdvisor](https://github.com/google/cadvisor), mount Docker system\ndirectories, such as `/var/lib/docker/`, into a container. For instance, the\ndocumentation for `cadvisor` instructs you to run the `cadvisor` container as\nfollows:\n\n```console\n$ sudo docker run \\\n  --volume=/:/rootfs:ro \\\n  --volume=/var/run:/var/run:rw \\\n  --volume=/sys:/sys:ro \\\n  --volume=/var/lib/docker/:/var/lib/docker:ro \\\n  --publish=8080:8080 \\\n  --detach=true \\\n  --name=cadvisor \\\n  google/cadvisor:latest\n```\n\nWhen you bind-mount `/var/lib/docker/`, this effectively mounts all resources of\nall other running containers as filesystems within the container which mounts\n`/var/lib/docker/`. When you attempt to remove any of these containers, the\nremoval attempt may fail with an error like the following:\n\n```text\nError: Unable to remove filesystem for\n74bef250361c7817bee19349c93139621b272bc8f654ae112dd4eb9652af9515:\nremove /var/lib/docker/containers/74bef250361c7817bee19349c93139621b272bc8f654ae112dd4eb9652af9515/shm:\nDevice or resource busy\n```\n\nThe problem occurs if the container which bind-mounts `/var/lib/docker/`\nuses `statfs` or `fstatfs` on filesystem handles within `/var/lib/docker/`\nand does not close them.\n\nTypically, we would advise against bind-mounting `/var/lib/docker` in this way.\nHowever, `cAdvisor` requires this bind-mount for core functionality.\n\nIf you are unsure which process is causing the path mentioned in the error to\nbe busy and preventing it from being removed, you can use the `lsof` command\nto find its process. For instance, for the error above:\n\n```console\n$ sudo lsof /var/lib/docker/containers/74bef250361c7817bee19349c93139621b272bc8f654ae112dd4eb9652af9515/shm\n```\n\nTo work around this problem, stop the container which bind-mounts\n`/var/lib/docker` and try again to remove the other container."
+            },
+            {
+              "evidence_id": "E2",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/get-started/docker-concepts/running-containers/persisting-container-data.md",
+              "text": "Before removing a volume, it must not be attached to any containers. If you haven\u2019t removed the previous container, do so with the following command (the `-f` will stop the container first and then remove it):\n\n```console\n$ docker rm -f new-db\n```\n\nThere are a few methods to remove volumes, including the following:\n\n- Select the **Delete Volume** option on a volume in the Docker Desktop Dashboard.\n- Use the `docker volume rm` command:\n\n    ```console\n    $ docker volume rm postgres_data\n    ```\n- Use the `docker volume prune` command to remove all unused volumes:\n\n    ```console\n    $ docker volume prune\n    ```"
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8312,
+        "margin": 0.7924,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|i can't remove a docker volume, it says unable to remove filesystem"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.916,
+          "p_top": 0.8312,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/engine/daemon/troubleshoot.md#content__manuals__engine__daemon__troubleshoot__0015",
+              "tier": "kb",
+              "rerank_score": 0.8404,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Unable to remove filesystem",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/get-started/docker-concepts/running-containers/persisting-container-data.md#content__get-started__docker-concepts__running-containers__persisting-container-data__0008",
+              "tier": "kb",
+              "rerank_score": 0.4255,
+              "component": "docker-concepts",
+              "topics": [],
+              "issue": "Remove volumes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/get-started/docker-concepts/running-containers/persisting-container-data.md#content__get-started__docker-concepts__running-containers__persisting-container-data__0003",
+              "tier": "kb",
+              "rerank_score": 0.4245,
+              "component": "docker-concepts",
+              "topics": [],
+              "issue": "Managing volumes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/engine/manage-resources/pruning.md#content__manuals__engine__manage-resources__pruning__0003",
+              "tier": "kb",
+              "rerank_score": 0.4126,
+              "component": "manage-resources",
+              "topics": [],
+              "issue": "Prune volumes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/engine/storage/volumes.md#content__manuals__engine__storage__volumes__0002",
+              "tier": "kb",
+              "rerank_score": 0.4026,
+              "component": "storage",
+              "topics": [],
+              "issue": "A volume's lifecycle",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/engine/storage/volumes.md#content__manuals__engine__storage__volumes__0029",
+              "tier": "kb",
+              "rerank_score": 0.4009,
+              "component": "storage",
+              "topics": [],
+              "issue": "Remove volumes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/engine/storage/volumes.md#content__manuals__engine__storage__volumes__0030",
+              "tier": "kb",
+              "rerank_score": 0.3964,
+              "component": "storage",
+              "topics": [],
+              "issue": "Remove anonymous volumes",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8776,
+        "strong": true,
+        "top": 0.8404,
+        "margin": 0.4149,
+        "agreement": 0.8312,
+        "completeness": 0.916,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8776
+    },
+    {
+      "id": "S19",
+      "opening": "my containers keep getting killed, I think they run out of memory",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1",
+            "E2",
+            "E5"
+          ],
+          "gold": true,
+          "message": "Containers are likely experiencing an Out of Memory (OOM) exception and being killed by the kernel because they attempt to use more memory than available or lack proper resource limits.\n\n1. Perform tests to understand the memory requirements of your application before placing it into production. [E2]\n2. Ensure that your application runs only on hosts with adequate resources. [E1, E2]\n3. Limit the amount of memory your container can use by utilizing flags like `--memory` with the `docker run` command. [E2, E5]\n4. Be mindful when configuring swap on your Docker hosts, or consider converting your container to a service and using service-level constraints and node labels. [E2]\n\nTo confirm: Confirm the application runs stably without unexpected termination and monitor container resource utilization to ensure memory consumption stays within the configured limits.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/engine/daemon/troubleshoot.md; E2 https://github.com/docker/docs/blob/main/content/manuals/engine/containers/resource_constraints.md; E5 https://github.com/docker/docs/blob/main/content/get-started/docker-concepts/running-containers/overriding-container-defaults.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Out of memory issues",
+            "Understand the risks of running out of memory",
+            "Manage the resources"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/engine/daemon/troubleshoot.md",
+              "text": "If your containers attempt to use more memory than the system has available, you\nmay experience an Out of Memory (OOM) exception, and a container, or the Docker\ndaemon, might be stopped by the kernel OOM killer. To prevent this from\nhappening, ensure that your application runs on hosts with adequate memory and\nsee\n[Understand the risks of running out of memory](../containers/resource_constraints.md#understand-the-risks-of-running-out-of-memory)."
+            },
+            {
+              "evidence_id": "E2",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/engine/containers/resource_constraints.md",
+              "text": "It's important not to allow a running container to consume too much of the\nhost machine's memory. On Linux hosts, if the kernel detects that there isn't\nenough memory to perform important system functions, it throws an `OOME`, or\n`Out Of Memory Exception`, and starts killing processes to free up\nmemory. Any process is subject to killing, including Docker and other important\napplications. This can effectively bring the entire system down if the wrong\nprocess is killed.\n\nDocker attempts to mitigate these risks by adjusting the OOM priority on the\nDocker daemon so that it's less likely to be killed than other processes\non the system. The OOM priority on containers isn't adjusted. This makes it more\nlikely for an individual container to be killed than for the Docker daemon\nor other system processes to be killed. You shouldn't try to circumvent\nthese safeguards by manually setting `--oom-score-adj` to an extreme negative\nnumber on the daemon or a container, or by setting `--oom-kill-disable` on a\ncontainer.\n\nFor more information about the Linux kernel's OOM management, see\n[Out of Memory Management](https://www.kernel.org/doc/gorman/html/understand/understand016.html).\n\nYou can mitigate the risk of system instability due to OOME by:\n\n- Perform tests to understand the memory requirements of your application\n  before placing it into production.\n- Ensure that your application runs only on hosts with adequate resources.\n- Limit the amount of memory your container can use, as described below.\n- Be mindful when configuring swap on your Docker hosts. Swap is slower than\n  memory but can provide a buffer against running out of system memory.\n- Consider converting your container to a\n  [service](/manuals/engine/swarm/services.md), and using service-level constraints\n  and node labels to ensure that the application runs only on hosts with enough\n  memory"
+            },
+            {
+              "evidence_id": "E5",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/get-started/docker-concepts/running-containers/overriding-container-defaults.md",
+              "text": "By default, containers are not limited in their resource usage. However, on shared systems, it's crucial to manage resources effectively. It's important not to let a running container consume too much of the host machine's memory.\n\nThis is where the `docker run` command shines again. It offers flags like `--memory` and `--cpus` to restrict how much CPU and memory a container can use.\n\n```console\n$ docker run -d -e POSTGRES_PASSWORD=secret --memory=\"512m\" --cpus=\".5\" postgres\n```\n\nThe `--cpus` flag specifies the CPU quota for the container. Here, it's set to half a CPU core (0.5) whereas the `--memory` flag specifies the memory limit for the container. In this case, it's set to 512 MB."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8369,
+        "margin": 0.7859,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|my containers keep getting killed, i think they run out of memory"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.918,
+          "p_top": 0.8369,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/engine/daemon/troubleshoot.md#content__manuals__engine__daemon__troubleshoot__0005",
+              "tier": "kb",
+              "rerank_score": 0.7761,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Out of memory issues",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/engine/containers/resource_constraints.md#content__manuals__engine__containers__resource_constraints__0001",
+              "tier": "kb",
+              "rerank_score": 0.4813,
+              "component": "containers",
+              "topics": [],
+              "issue": "Understand the risks of running out of memory",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/engine/containers/resource_constraints.md#content__manuals__engine__containers__resource_constraints__0004",
+              "tier": "kb",
+              "rerank_score": 0.4292,
+              "component": "containers",
+              "topics": [],
+              "issue": "Limit a container's access to memory",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/engine/swarm/services.md#content__manuals__engine__swarm__services__0023",
+              "tier": "kb",
+              "rerank_score": 0.4158,
+              "component": "swarm",
+              "topics": [],
+              "issue": "Control service placement",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/get-started/docker-concepts/running-containers/overriding-container-defaults.md#content__get-started__docker-concepts__running-containers__overriding-container-defaults__0009",
+              "tier": "kb",
+              "rerank_score": 0.3904,
+              "component": "docker-concepts",
+              "topics": [],
+              "issue": "Manage the resources",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/reference/compose-file/services.md#content__reference__compose-file__services__0073",
+              "tier": "kb",
+              "rerank_score": 0.3482,
+              "component": "compose-file",
+              "topics": [],
+              "issue": "`oom_score_adj`",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/engine/containers/resource_constraints.md#content__manuals__engine__containers__resource_constraints__0006",
+              "tier": "kb",
+              "rerank_score": 0.3278,
+              "component": "containers",
+              "topics": [],
+              "issue": "`--memory-swap` details",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8502,
+        "strong": true,
+        "top": 0.7761,
+        "margin": 0.2948,
+        "agreement": 0.8369,
+        "completeness": 0.918,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8502
+    },
+    {
+      "id": "S20",
+      "opening": "my Docker sandbox ran out of disk space",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "The Docker sandbox ran out of disk space because the default root filesystem or Docker data disk size limit was reached.\n\n1. Increase the root filesystem size by setting `DOCKER_SANDBOXES_ROOT_SIZE` before creating the sandbox. [E1]\n2. Alternatively, change the Docker data disk size for a sandbox by setting `DOCKER_SANDBOXES_DOCKER_SIZE` when you create it. [E1]\n3. For a clone-mode sandbox, set `DOCKER_SANDBOXES_CLONED_WORKSPACE_SIZE` before creating the sandbox to configure the cloned workspace volume capacity. [E1]\n\nTo confirm: Confirm the sandbox successfully creates and operates without running out of disk space after applying the size configuration.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/ai/sandboxes/troubleshooting.md\n\nDid this resolve the issue?",
+          "sources": [
+            "Sandbox runs out of disk space"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/ai/sandboxes/troubleshooting.md",
+              "text": "The sandbox root (`/`) filesystem defaults to 20 GB. To increase it, set\n`DOCKER_SANDBOXES_ROOT_SIZE` before creating the sandbox:\n\n```console\n$ DOCKER_SANDBOXES_ROOT_SIZE=40g sbx run claude\n```\n\n`DOCKER_SANDBOXES_ROOT_SIZE` controls the root filesystem size. The Docker data\ndisk at `/var/lib/docker` is independent and defaults to 10 GB. To change the\nDocker data disk size for a sandbox, set `DOCKER_SANDBOXES_DOCKER_SIZE` when you\ncreate it:\n\n```console\n$ DOCKER_SANDBOXES_DOCKER_SIZE=20g sbx run claude\n```\n\nThe Docker data disk must be at least 512 MiB. The environment variable doesn't\nresize existing volumes.\n\nFor a [clone-mode sandbox](usage.md#clone-mode), set\n`DOCKER_SANDBOXES_CLONED_WORKSPACE_SIZE` before creating the sandbox to\nconfigure the cloned workspace volume capacity. The variable accepts\nhuman-readable size strings such as `100g`:\n\n```console\n$ DOCKER_SANDBOXES_CLONED_WORKSPACE_SIZE=100g sbx run --clone claude .\n```"
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.6146,
+        "margin": 0.5117,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "ai|?|my docker sandbox ran out of disk space"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.807,
+          "p_top": 0.6146,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/ai/sandboxes/troubleshooting.md#content__manuals__ai__sandboxes__troubleshooting__0016",
+              "tier": "kb",
+              "rerank_score": 0.7022,
+              "component": "sandboxes",
+              "topics": [],
+              "issue": "Sandbox runs out of disk space",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/faqs/macfaqs.md#content__manuals__desktop__troubleshoot-and-support__faqs__macfaqs__0003",
+              "tier": "kb",
+              "rerank_score": 0.5169,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Where does Docker Desktop store Linux containers and images?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/faqs/linuxfaqs.md#content__manuals__desktop__troubleshoot-and-support__faqs__linuxfaqs__0005",
+              "tier": "kb",
+              "rerank_score": 0.5069,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Where does Docker Desktop store Linux containers?",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/ai/sandboxes/configuration/settings.md#content__manuals__ai__sandboxes__configuration__settings__0010",
+              "tier": "kb",
+              "rerank_score": 0.4795,
+              "component": "sandboxes",
+              "topics": [],
+              "issue": "Images and storage",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/ai/sandboxes/get-started.md#content__manuals__ai__sandboxes__get-started__0006",
+              "tier": "kb",
+              "rerank_score": 0.4677,
+              "component": "sandboxes",
+              "topics": [],
+              "issue": "Clean up",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/ai/gordon/use-cases.md#content__manuals__ai__gordon__use-cases__0004",
+              "tier": "kb",
+              "rerank_score": 0.4233,
+              "component": "gordon",
+              "topics": [],
+              "issue": "Manage volumes and resources",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.7393,
+        "strong": true,
+        "top": 0.7022,
+        "margin": 0.1853,
+        "agreement": 0.6146,
+        "completeness": 0.807,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.7393
+    },
+    {
+      "id": "S21",
+      "opening": "our kubernetes ingress controller returns 502 bad gateway intermittently",
+      "has_gold": false,
+      "oos": true,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 1,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.1766,
+        "margin": 0.0346,
+        "uncovered_terms": [
+          "502",
+          "controller",
+          "gateway",
+          "ingress",
+          "returns"
+        ],
+        "questions_asked": 1,
+        "canonical_string": "?|?|502 bad gateway; our kubernetes ingress controller returns 502 bad gateway intermittently"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.5,
+          "p_top": 0.1766,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/ai/sandboxes-api/cookbook/give-a-sandbox-an-mcp-gateway.md#content__manuals__ai__sandboxes-api__cookbook__give-a-sandbox-an-mcp-gateway__0002",
+              "tier": "kb",
+              "rerank_score": 0.3162,
+              "component": "sandboxes-api",
+              "topics": [],
+              "issue": "Read the gateway address {#2-read-the-gateway-address}",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/setup/install/mac-permission-requirements.md#content__manuals__desktop__setup__install__mac-permission-requirements__0003",
+              "tier": "kb",
+              "rerank_score": 0.3068,
+              "component": "setup",
+              "topics": [],
+              "issue": "Ensuring `localhost` and `kubernetes.docker.internal` are defined",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/guides/testcontainers-java-micronaut-wiremock.md#content__guides__testcontainers-java-micronaut-wiremock__0007",
+              "tier": "kb",
+              "rerank_score": 0.3001,
+              "component": "testcontainers-java-micronaut-wiremock",
+              "topics": [],
+              "issue": "Create the REST API endpoint",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/guides/traefik.md#content__guides__traefik__0010",
+              "tier": "kb",
+              "rerank_score": 0.2946,
+              "component": "traefik",
+              "topics": [],
+              "issue": "Starting the example app",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/reference/api/extensions-sdk/ServiceError.md#content__reference__api__extensions-sdk__ServiceError__0000",
+              "tier": "kb",
+              "rerank_score": 0.2927,
+              "component": "api",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/engine/network/firewall-iptables.md#content__manuals__engine__network__firewall-iptables__0006",
+              "tier": "kb",
+              "rerank_score": 0.2822,
+              "component": "network",
+              "topics": [],
+              "issue": "Restrict external connections to containers",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/engine/swarm/networking.md#content__manuals__engine__swarm__networking__0013",
+              "tier": "kb",
+              "rerank_score": 0.2758,
+              "component": "swarm",
+              "topics": [],
+              "issue": "Customize the ingress network {#customize-ingress}",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/engine/network/drivers/bridge.md#content__manuals__engine__network__drivers__bridge__0020",
+              "tier": "kb",
+              "rerank_score": 0.2608,
+              "component": "network",
+              "topics": [],
+              "issue": "Use the default bridge network",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.2847,
+        "strong": false,
+        "top": 0.3162,
+        "margin": 0.0094,
+        "agreement": 0.1766,
+        "completeness": 0.5,
+        "reasons": [
+          "top_score 0.32 < 0.55",
+          "ambiguous: low margin and low agreement",
+          "confidence 0.28 < 0.6"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.2847
+    },
+    {
+      "id": "S22",
+      "opening": "how do I reset my Netflix password",
+      "has_gold": false,
+      "oos": true,
+      "kb_gap": false,
+      "outcome": "rejected",
+      "escalation_reason": "OUT_OF_SCOPE",
+      "questions": 0,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "out_of_scope",
+        "scope": {
+          "source": "rule"
+        }
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [],
+      "gate_final": {
+        "guardrail": "clarifier_out_of_scope"
+      },
+      "confidence": null
+    },
+    {
+      "id": "S23",
+      "opening": "it doesn't work",
+      "has_gold": false,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 3,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "budget_exhausted",
+        "p_top": 0.3408,
+        "margin": 0.104,
+        "uncovered_terms": [],
+        "questions_asked": 3,
+        "canonical_string": "desktop|?|it doesn't work; none of these fit; the docker desktop app won't open after updating; there's no error text, it just fails"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.5,
+          "p_top": 0.3408,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/use-desktop/_index.md#content__manuals__desktop__use-desktop___index__0004",
+              "tier": "kb",
+              "rerank_score": 0.4775,
+              "component": "use-desktop",
+              "topics": [],
+              "issue": "Configure, troubleshoot, and stay updated",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/setup/install/mac-install.md#content__manuals__desktop__setup__install__mac-install__0003",
+              "tier": "kb",
+              "rerank_score": 0.4356,
+              "component": "setup",
+              "topics": [],
+              "issue": "Install interactively",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/engine/daemon/_index.md#content__manuals__engine__daemon___index__0001",
+              "tier": "kb",
+              "rerank_score": 0.382,
+              "component": "daemon",
+              "topics": [],
+              "issue": "Configure the Docker daemon",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/engine/swarm/secrets.md#content__manuals__engine__swarm__secrets__0008",
+              "tier": "kb",
+              "rerank_score": 0.3507,
+              "component": "swarm",
+              "topics": [],
+              "issue": "Simple example: Get started with secrets",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0010",
+              "tier": "kb",
+              "rerank_score": 0.3417,
+              "component": "usage",
+              "topics": [],
+              "issue": "View pull rate and limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/desktop/release-notes.md#content__manuals__desktop__release-notes__0322",
+              "tier": "kb",
+              "rerank_score": 0.2613,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Bug fixes and enhancements",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/desktop/previous-versions/3.x-mac.md#content__manuals__desktop__previous-versions__3.x-mac__0046",
+              "tier": "kb",
+              "rerank_score": 0.173,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Known issue",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/desktop/previous-versions/3.x-mac.md#content__manuals__desktop__previous-versions__3.x-mac__0041",
+              "tier": "kb",
+              "rerank_score": 0.1723,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Bug fixes and minor changes",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.4145,
+        "strong": false,
+        "top": 0.4775,
+        "margin": 0.0419,
+        "agreement": 0.3408,
+        "completeness": 0.5,
+        "reasons": [
+          "top_score 0.48 < 0.55",
+          "ambiguous: low margin and low agreement",
+          "confidence 0.41 < 0.6"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.4145
+    },
+    {
+      "id": "S24",
+      "opening": "help",
+      "has_gold": false,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 3,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "budget_exhausted",
+        "p_top": 0.2519,
+        "margin": 0.0927,
+        "uncovered_terms": [
+          "none",
+          "text"
+        ],
+        "questions_asked": 3,
+        "canonical_string": "build|?|docker build is very slow; help; none of these fit; there's no error text, it just fails"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.5,
+          "p_top": 0.2519,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/ai/gordon/use-cases.md#content__manuals__ai__gordon__use-cases__0002",
+              "tier": "kb",
+              "rerank_score": 0.494,
+              "component": "gordon",
+              "topics": [],
+              "issue": "Debug a failed build",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/engine/security/rootless/troubleshoot.md#content__manuals__engine__security__rootless__troubleshoot__0012",
+              "tier": "kb",
+              "rerank_score": 0.4643,
+              "component": "security",
+              "topics": [],
+              "issue": "Networking errors",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/get-started/docker-concepts/building-images/using-the-build-cache.md#content__get-started__docker-concepts__building-images__using-the-build-cache__0008",
+              "tier": "kb",
+              "rerank_score": 0.4079,
+              "component": "docker-concepts",
+              "topics": [],
+              "issue": "Build the application",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/build/policies/usage.md#content__manuals__build__policies__usage__0019",
+              "tier": "kb",
+              "rerank_score": 0.3768,
+              "component": "policies",
+              "topics": [],
+              "issue": "When policies don't load",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/guides/golang.md#content__guides__golang__0044",
+              "tier": "kb",
+              "rerank_score": 0.3524,
+              "component": "golang",
+              "topics": [],
+              "issue": "Better productivity with Docker Compose",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/build/concepts/overview.md#content__manuals__build__concepts__overview__0001",
+              "tier": "kb",
+              "rerank_score": 0.3179,
+              "component": "concepts",
+              "topics": [],
+              "issue": "Buildx",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/ai/sandboxes/governance/concepts.md#content__manuals__ai__sandboxes__governance__concepts__0002",
+              "tier": "kb",
+              "rerank_score": 0.3019,
+              "component": "sandboxes",
+              "topics": [],
+              "issue": "Limits",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/build-cloud/release-notes.md#content__manuals__build-cloud__release-notes__0008",
+              "tier": "kb",
+              "rerank_score": 0.292,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Enhancements",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.395,
+        "strong": false,
+        "top": 0.494,
+        "margin": 0.0297,
+        "agreement": 0.2519,
+        "completeness": 0.5,
+        "reasons": [
+          "top_score 0.49 < 0.55",
+          "ambiguous: low margin and low agreement",
+          "confidence 0.39 < 0.6"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.395
+    },
+    {
+      "id": "S25",
+      "opening": "docker",
+      "has_gold": false,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "VERIFICATION_FAILED",
+      "questions": 1,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.6807,
+        "margin": 0.4633,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "desktop|?|docker; docker desktop crashes at startup"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.84,
+          "p_top": 0.6807,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/_index.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot___index__0001",
+              "tier": "kb",
+              "rerank_score": 0.644,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Troubleshoot menu",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/release-notes.md#content__manuals__desktop__release-notes__0455",
+              "tier": "kb",
+              "rerank_score": 0.3257,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Bug fixes and enhancements",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/desktop/previous-versions/2.x-windows.md#content__manuals__desktop__previous-versions__2.x-windows__0055",
+              "tier": "kb",
+              "rerank_score": 0.2533,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Bug fixes and minor changes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/desktop/previous-versions/edge-releases-windows.md#content__manuals__desktop__previous-versions__edge-releases-windows__0110",
+              "tier": "kb",
+              "rerank_score": 0.2485,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Docker Community Edition 2.0.5.0 2019-06-12",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/desktop/previous-versions/edge-releases-mac.md#content__manuals__desktop__previous-versions__edge-releases-mac__0064",
+              "tier": "kb",
+              "rerank_score": 0.228,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "New",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/desktop/previous-versions/edge-releases-windows.md#content__manuals__desktop__previous-versions__edge-releases-windows__0068",
+              "tier": "kb",
+              "rerank_score": 0.228,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "New",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/desktop/previous-versions/3.x-mac.md#content__manuals__desktop__previous-versions__3.x-mac__0031",
+              "tier": "kb",
+              "rerank_score": 0.2249,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "Bug fixes and minor changes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/desktop/previous-versions/2.x-mac.md#content__manuals__desktop__previous-versions__2.x-mac__0028",
+              "tier": "kb",
+              "rerank_score": 0.2236,
+              "component": "previous-versions",
+              "topics": [],
+              "issue": "New",
+              "gold": false
+            }
+          ]
+        },
+        {
+          "tier": "tickets",
+          "completeness": 0.84,
+          "p_top": 0.6807,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "T-f780c52fb9eb",
+              "tier": "tickets",
+              "rerank_score": 0.8995,
+              "component": null,
+              "topics": [
+                "desktop",
+                "runtime"
+              ],
+              "issue": "",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "T-fde6eca21942",
+              "tier": "tickets",
+              "rerank_score": 0.8222,
+              "component": null,
+              "topics": [
+                "desktop",
+                "runtime"
+              ],
+              "issue": "",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "T-b060a61c1115",
+              "tier": "tickets",
+              "rerank_score": 0.787,
+              "component": null,
+              "topics": [
+                "desktop",
+                "runtime"
+              ],
+              "issue": "",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "T-dc28844086d1",
+              "tier": "tickets",
+              "rerank_score": 0.7677,
+              "component": null,
+              "topics": [
+                "desktop",
+                "runtime"
+              ],
+              "issue": "",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "T-b31716253444",
+              "tier": "tickets",
+              "rerank_score": 0.6084,
+              "component": null,
+              "topics": [
+                "desktop"
+              ],
+              "issue": "",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "T-2e16889515c7",
+              "tier": "tickets",
+              "rerank_score": 0.4491,
+              "component": null,
+              "topics": [
+                "desktop",
+                "engine",
+                "installation",
+                "runtime"
+              ],
+              "issue": "",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "T-f9430ebb5750",
+              "tier": "tickets",
+              "rerank_score": 0.4467,
+              "component": null,
+              "topics": [
+                "desktop",
+                "engine",
+                "networking",
+                "runtime"
+              ],
+              "issue": "",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "T-f839270e07ce",
+              "tier": "tickets",
+              "rerank_score": 0.4218,
+              "component": null,
+              "topics": [
+                "architecture",
+                "desktop",
+                "engine",
+                "runtime"
+              ],
+              "issue": "",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8307,
+        "strong": true,
+        "top": 0.8995,
+        "margin": 0.0773,
+        "agreement": 1.0,
+        "completeness": 0.84,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "tickets"
+      },
+      "confidence": 0.8307
+    },
+    {
+      "id": "S26",
+      "opening": "my python script throws a KeyError when it reads the config file",
+      "has_gold": false,
+      "oos": true,
+      "kb_gap": false,
+      "outcome": "rejected",
+      "escalation_reason": "OUT_OF_SCOPE",
+      "questions": 0,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "out_of_scope",
+        "scope": {
+          "source": "llm",
+          "reason": "The request is about a general programming issue (Python KeyError) without any mention of Docker or containers.",
+          "confidence": 0.95
+        }
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [],
+      "gate_final": {
+        "guardrail": "clarifier_out_of_scope"
+      },
+      "confidence": null
+    },
+    {
+      "id": "S27",
+      "opening": "how do I install nginx on ubuntu and configure a reverse proxy",
+      "has_gold": false,
+      "oos": true,
+      "kb_gap": false,
+      "outcome": "rejected",
+      "escalation_reason": "OUT_OF_SCOPE",
+      "questions": 0,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "out_of_scope",
+        "scope": {
+          "source": "llm",
+          "reason": "The request asks about installing Nginx and configuring a reverse proxy on Ubuntu directly, without mentioning Docker or containers.",
+          "confidence": 0.9
+        }
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [],
+      "gate_final": {
+        "guardrail": "clarifier_out_of_scope"
+      },
+      "confidence": null
+    },
+    {
+      "id": "S28",
+      "opening": "my AWS lambda function times out after 3 seconds",
+      "has_gold": false,
+      "oos": true,
+      "kb_gap": false,
+      "outcome": "rejected",
+      "escalation_reason": "OUT_OF_SCOPE",
+      "questions": 0,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "out_of_scope",
+        "scope": {
+          "source": "llm",
+          "reason": "The request is about AWS Lambda, which is an Amazon Web Services product, with no mention of Docker or containers.",
+          "confidence": 0.95
+        }
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [],
+      "gate_final": {
+        "guardrail": "clarifier_out_of_scope"
+      },
+      "confidence": null
+    },
+    {
+      "id": "S29",
+      "opening": "kubernetes pods are stuck in CrashLoopBackOff after the deployment",
+      "has_gold": false,
+      "oos": true,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 1,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.1863,
+        "margin": 0.021,
+        "uncovered_terms": [
+          "deployment",
+          "pods"
+        ],
+        "questions_asked": 1,
+        "canonical_string": "?|?|crashloopbackoff; kubernetes pods are stuck in crashloopbackoff after the deployment"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.5,
+          "p_top": 0.1863,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/use-desktop/kubernetes.md#content__manuals__desktop__use-desktop__kubernetes__0004",
+              "tier": "kb",
+              "rerank_score": 0.4173,
+              "component": "use-desktop",
+              "topics": [],
+              "issue": "Dashboard view",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/use-desktop/kubernetes.md#content__manuals__desktop__use-desktop__kubernetes__0011",
+              "tier": "kb",
+              "rerank_score": 0.3955,
+              "component": "use-desktop",
+              "topics": [],
+              "issue": "Troubleshooting",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/build/builders/drivers/kubernetes.md#content__manuals__build__builders__drivers__kubernetes__0015",
+              "tier": "kb",
+              "rerank_score": 0.3859,
+              "component": "builders",
+              "topics": [],
+              "issue": "Example: Creating a Buildx builder in Kubernetes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/build/builders/drivers/remote.md#content__manuals__build__builders__drivers__remote__0007",
+              "tier": "kb",
+              "rerank_score": 0.3754,
+              "component": "builders",
+              "topics": [],
+              "issue": "Debug a remote builder in Kubernetes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/build/builders/drivers/remote.md#content__manuals__build__builders__drivers__remote__0006",
+              "tier": "kb",
+              "rerank_score": 0.3617,
+              "component": "builders",
+              "topics": [],
+              "issue": "Example: Remote BuildKit in Kubernetes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/_index.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot___index__0001",
+              "tier": "kb",
+              "rerank_score": 0.3571,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Troubleshoot menu",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/desktop/release-notes.md#content__manuals__desktop__release-notes__0191",
+              "tier": "kb",
+              "rerank_score": 0.261,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "New",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/extensions/extensions-sdk/guides/kubernetes.md#content__manuals__extensions__extensions-sdk__guides__kubernetes__0008",
+              "tier": "kb",
+              "rerank_score": 0.2371,
+              "component": "extensions-sdk",
+              "topics": [],
+              "issue": "Extension's backend container",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.3541,
+        "strong": false,
+        "top": 0.4173,
+        "margin": 0.0218,
+        "agreement": 0.25,
+        "completeness": 0.5,
+        "reasons": [
+          "top_score 0.42 < 0.55",
+          "ambiguous: low margin and low agreement",
+          "confidence 0.35 < 0.6"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.3541
+    }
+  ]
+}

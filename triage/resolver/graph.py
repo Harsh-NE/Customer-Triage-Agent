@@ -50,6 +50,7 @@ class ResolverDeps:
     cache: Optional[SemanticCache] = None
     logger: EventLogger = NULL_LOGGER
     cfg: ResolverConfig = field(default_factory=ResolverConfig)
+    ontology: Optional[Any] = None       # triage.ontology.Ontology: used only for the optional definitions-only background
 
 
 def _sig(state: TriageState) -> ProblemSignature:
@@ -183,7 +184,9 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
         tried = [s["text"] for a in state.get("attempts") or [] if a.get("reply_label") != ReplyLabel.NEW_INFO.value
                  for s in a.get("steps", [])]
         last_reply = (state.get("attempts") or [{}])[-1].get("customer_reply")
-        d = _llm_logged("draft", state, draft_resolution, deps.llm, sig, evs, tried, last_reply)
+        background = (deps.ontology.background(f"{sig.raw_query} {sig.symptom or ''}")
+                      if deps.ontology is not None and cfg.use_background else None)
+        d = _llm_logged("draft", state, draft_resolution, deps.llm, sig, evs, tried, last_reply, background)
         return {"draft": d}
 
     def verify(state: TriageState) -> dict[str, Any]:

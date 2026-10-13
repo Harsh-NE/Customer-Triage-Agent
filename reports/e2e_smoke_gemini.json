@@ -1,0 +1,422 @@
+{
+  "meta": {
+    "retriever": "hybrid",
+    "resolver_llm": "gemini",
+    "resolver_model": "gemini-3.5-flash-lite",
+    "seconds": 67.9,
+    "scenario_file": "scenarios.jsonl",
+    "llm_calls": 7,
+    "input_tokens": 7158,
+    "output_tokens": 410,
+    "cost_usd": 0.0032,
+    "llm_latency_ms_p50": 3128.41,
+    "llm_latency_ms_p95": 4372.04
+  },
+  "summary": {
+    "scenarios": 3,
+    "with_gold": 2,
+    "out_of_scope": 1,
+    "no_gold_other": 0,
+    "gold_resolved_rate": 1.0,
+    "gold_first_attempt_rate": 1.0,
+    "gold_escalated_rate": 0.0,
+    "wrong_fix_sent_rate_gold": 0.0,
+    "oos_resolved_rate": 0.0,
+    "oos_fix_sent_rate": 0.0,
+    "oos_escalated_or_rejected_rate": 1.0,
+    "no_gold_other_fix_sent_rate": null,
+    "kb_gap": 0,
+    "kb_gap_kb_fix_sent_rate": null,
+    "kb_gap_any_fix_sent_rate": null,
+    "first_fix_tier": {
+      "kb": 2
+    },
+    "mean_questions": 1.0,
+    "outcomes": {
+      "resolved": 2,
+      "escalated": 1
+    }
+  },
+  "rows": [
+    {
+      "id": "S01",
+      "opening": "docker pull fails with 'You have reached your pull rate limit' HTTP 429 from Docker Hub",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "You have exceeded your Docker Hub pull rate limit based on your account type or IP address.\n\n1. Authenticate or upgrade your Docker account to increase your pull rate limit. [E1]\n2. View your pull rate limit, wait until your pull rate limit decreases, and then try again. [E1]\n\nTo confirm: Confirm that subsequent image pulls succeed without returning the HTTP 429 pull rate limit error.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "You have reached your pull rate limit (429 response code)"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md",
+              "text": "When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\n- You have reached your pull rate limit as an authenticated Docker Personal\n  user.\n- You have reached your pull rate limit as an unauthenticated user based on your\n  IPv4 address or IPv6 /64 subnet.\n\nYou can use one of the following solutions:\n\n- [Authenticate](./usage/pulls.md#authentication) or\n  [upgrade](../subscription-billing/manage/plans.md#upgrade-plans) your Docker\n  account.\n- [View your pull rate limit](./usage/pulls.md#view-hourly-pull-rate-and-limit),\n  wait until your pull rate limit decreases, and then try again."
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.8813,
+        "margin": 0.7958,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "docker-hub|?|docker pull fails with 'you have reached your pull rate limit' http 429 from docker hub"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.941,
+          "p_top": 0.8813,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0001",
+              "tier": "kb",
+              "rerank_score": 0.8987,
+              "component": "troubleshoot",
+              "topics": [],
+              "issue": "You have reached your pull rate limit (429 response code)",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0009",
+              "tier": "kb",
+              "rerank_score": 0.6584,
+              "component": "usage",
+              "topics": [],
+              "issue": "View pull rate and limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/docker-hub/usage/_index.md#content__manuals__docker-hub__usage___index__0002",
+              "tier": "kb",
+              "rerank_score": 0.5471,
+              "component": "usage",
+              "topics": [],
+              "issue": "Abuse rate limit",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0000",
+              "tier": "kb",
+              "rerank_score": 0.4148,
+              "component": "usage",
+              "topics": [],
+              "issue": "Overview",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/docker-hub/image-library/mirror.md#content__manuals__docker-hub__image-library__mirror__0004",
+              "tier": "kb",
+              "rerank_score": 0.3716,
+              "component": "image-library",
+              "topics": [],
+              "issue": "Using Registry Access Management (RAM) with a registry mirror",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.9189,
+        "strong": true,
+        "top": 0.8987,
+        "margin": 0.2403,
+        "agreement": 0.8813,
+        "completeness": 0.941,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.9189
+    },
+    {
+      "id": "S17",
+      "opening": "docker pull fails for me on rootless Docker",
+      "has_gold": true,
+      "oos": false,
+      "kb_gap": false,
+      "outcome": "resolved",
+      "escalation_reason": null,
+      "questions": 1,
+      "fixes_sent": [
+        {
+          "tier": "kb",
+          "cited": [
+            "E1"
+          ],
+          "gold": true,
+          "message": "The docker pull failure on rootless Docker is caused by an insufficient number of available entries in /etc/subuid or /etc/subgid.\n\n1. Check and ensure that sufficient entries (65,536 entries are recommended for most images) are provided in /etc/subuid or /etc/subgid. [E1]\n\nTo confirm: Confirm that running `docker pull` succeeds without throwing layer registration or lchown invalid argument errors.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/engine/security/rootless/troubleshoot.md\n\nDid this resolve the issue?",
+          "sources": [
+            "`docker pull` errors"
+          ],
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "tier": "kb",
+              "url": "https://github.com/docker/docs/blob/main/content/manuals/engine/security/rootless/troubleshoot.md",
+              "text": "**docker: failed to register layer: Error processing tar file(exit status 1): lchown <FILE>: invalid argument**\n\nThis error occurs when the number of available entries in `/etc/subuid` or\n`/etc/subgid` is not sufficient. The number of entries required vary across\nimages. However, 65,536 entries are sufficient for most images. See\n[Prerequisites](./_index.md#prerequisites).\n\n**docker: failed to register layer: ApplyLayer exit status 1 stdout:  stderr: lchown <FILE>: operation not permitted**\n\nThis error occurs mostly when `~/.local/share/docker` is located on NFS.\n\nA workaround is to specify non-NFS `data-root` directory in `~/.config/docker/daemon.json` as follows:\n```json\n{\"data-root\":\"/somewhere-out-of-nfs\"}\n```"
+            }
+          ]
+        }
+      ],
+      "first_gold": true,
+      "resolved_gold": true,
+      "clarifier": {
+        "status": "ready",
+        "reason": "clear",
+        "p_top": 0.7626,
+        "margin": 0.6655,
+        "uncovered_terms": [],
+        "questions_asked": 1,
+        "canonical_string": "engine|?|docker pull fails for me on rootless docker"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.881,
+          "p_top": 0.7626,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/engine/security/rootless/troubleshoot.md#content__manuals__engine__security__rootless__troubleshoot__0007",
+              "tier": "kb",
+              "rerank_score": 0.7347,
+              "component": "security",
+              "topics": [],
+              "issue": "`docker pull` errors",
+              "gold": true
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/engine/security/rootless/_index.md#content__manuals__engine__security__rootless___index__0004",
+              "tier": "kb",
+              "rerank_score": 0.4207,
+              "component": "security",
+              "topics": [],
+              "issue": "Install",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/engine/release-notes/19.03.md#content__manuals__engine__release-notes__19.03__0082",
+              "tier": "kb",
+              "rerank_score": 0.3258,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Runtime",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/engine/release-notes/20.10.md#content__manuals__engine__release-notes__20.10__0120",
+              "tier": "kb",
+              "rerank_score": 0.3222,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Rootless",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/engine/release-notes/19.03.md#content__manuals__engine__release-notes__19.03__0035",
+              "tier": "kb",
+              "rerank_score": 0.3215,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Rootless",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/engine/release-notes/20.10.md#content__manuals__engine__release-notes__20.10__0068",
+              "tier": "kb",
+              "rerank_score": 0.3199,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "Contrib",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/engine/release-notes/27.md#content__manuals__engine__release-notes__27__0037",
+              "tier": "kb",
+              "rerank_score": 0.3184,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "27.1.0",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.8093,
+        "strong": true,
+        "top": 0.7347,
+        "margin": 0.314,
+        "agreement": 0.7626,
+        "completeness": 0.881,
+        "reasons": [
+          "ok"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.8093
+    },
+    {
+      "id": "S29",
+      "opening": "kubernetes pods are stuck in CrashLoopBackOff after the deployment",
+      "has_gold": false,
+      "oos": true,
+      "kb_gap": false,
+      "outcome": "escalated",
+      "escalation_reason": "LOW_EVIDENCE",
+      "questions": 1,
+      "fixes_sent": [],
+      "first_gold": false,
+      "resolved_gold": false,
+      "clarifier": {
+        "status": "unresolved",
+        "reason": "ungrounded",
+        "p_top": 0.1664,
+        "margin": 0.0187,
+        "uncovered_terms": [
+          "deployment",
+          "pods"
+        ],
+        "questions_asked": 1,
+        "canonical_string": "?|?|crashloopbackoff; kubernetes pods are stuck in crashloopbackoff after the deployment"
+      },
+      "clarify_returns": 0,
+      "gate_inputs": [
+        {
+          "tier": "kb",
+          "completeness": 0.5,
+          "p_top": 0.1664,
+          "evidence": [
+            {
+              "evidence_id": "E1",
+              "doc_id": "content/manuals/desktop/use-desktop/kubernetes.md#content__manuals__desktop__use-desktop__kubernetes__0004",
+              "tier": "kb",
+              "rerank_score": 0.3929,
+              "component": "use-desktop",
+              "topics": [],
+              "issue": "Dashboard view",
+              "gold": false
+            },
+            {
+              "evidence_id": "E2",
+              "doc_id": "content/manuals/desktop/use-desktop/kubernetes.md#content__manuals__desktop__use-desktop__kubernetes__0011",
+              "tier": "kb",
+              "rerank_score": 0.3901,
+              "component": "use-desktop",
+              "topics": [],
+              "issue": "Troubleshooting",
+              "gold": false
+            },
+            {
+              "evidence_id": "E3",
+              "doc_id": "content/manuals/build/builders/drivers/kubernetes.md#content__manuals__build__builders__drivers__kubernetes__0015",
+              "tier": "kb",
+              "rerank_score": 0.3859,
+              "component": "builders",
+              "topics": [],
+              "issue": "Example: Creating a Buildx builder in Kubernetes",
+              "gold": false
+            },
+            {
+              "evidence_id": "E4",
+              "doc_id": "content/manuals/build/builders/drivers/kubernetes.md#content__manuals__build__builders__drivers__kubernetes__0008",
+              "tier": "kb",
+              "rerank_score": 0.3775,
+              "component": "builders",
+              "topics": [],
+              "issue": "Node assignment",
+              "gold": false
+            },
+            {
+              "evidence_id": "E5",
+              "doc_id": "content/manuals/desktop/troubleshoot-and-support/troubleshoot/_index.md#content__manuals__desktop__troubleshoot-and-support__troubleshoot___index__0001",
+              "tier": "kb",
+              "rerank_score": 0.3511,
+              "component": "troubleshoot-and-support",
+              "topics": [],
+              "issue": "Troubleshoot menu",
+              "gold": false
+            },
+            {
+              "evidence_id": "E6",
+              "doc_id": "content/manuals/desktop/use-desktop/kubernetes.md#content__manuals__desktop__use-desktop__kubernetes__0006",
+              "tier": "kb",
+              "rerank_score": 0.3249,
+              "component": "use-desktop",
+              "topics": [],
+              "issue": "Edit or stop your cluster",
+              "gold": false
+            },
+            {
+              "evidence_id": "E7",
+              "doc_id": "content/manuals/desktop/release-notes.md#content__manuals__desktop__release-notes__0191",
+              "tier": "kb",
+              "rerank_score": 0.261,
+              "component": "release-notes",
+              "topics": [],
+              "issue": "New",
+              "gold": false
+            },
+            {
+              "evidence_id": "E8",
+              "doc_id": "content/manuals/extensions/extensions-sdk/guides/kubernetes.md#content__manuals__extensions__extensions-sdk__guides__kubernetes__0008",
+              "tier": "kb",
+              "rerank_score": 0.2371,
+              "component": "extensions-sdk",
+              "topics": [],
+              "issue": "Extension's backend container",
+              "gold": false
+            }
+          ]
+        }
+      ],
+      "gate_final": {
+        "confidence": 0.3289,
+        "strong": false,
+        "top": 0.3929,
+        "margin": 0.0028,
+        "agreement": 0.25,
+        "completeness": 0.5,
+        "reasons": [
+          "top_score 0.39 < 0.55",
+          "ambiguous: low margin and low agreement",
+          "confidence 0.33 < 0.6"
+        ],
+        "tier": "kb"
+      },
+      "confidence": 0.3289
+    }
+  ]
+}

@@ -36,6 +36,7 @@ GITHUB_BASE_URL = "https://github.com/docker/docs/blob/main/"     # same citable
 HYPOTHESIS_BOOST = 0.30        # relevance += this x the Clarifier's probability for the issue. The posterior includes everything the
                                # customer said and answered (a pasted error, a picked menu entry) which the raw query cannot see.
 COVERAGE_FLOOR = 0.5           # rerank_score = similarity x (0.5 + 0.5 x coverage)
+APPLICABILITY_PENALTY = 0.6    # the issue's heading is limited to platforms that exclude the customer's (soft, never a filter)
 PARENT_TEXT_CHARS = 6000       # cap per issue; the prompt builder cuts further
 QUERY_CHARS = 800
 DOC_KIND_WEIGHT = ClarifierConfig().doc_kind_weight     # release notes x0.6, archive x0.4 ... the same soft weights the Clarifier uses
@@ -77,9 +78,11 @@ def _customer_words(signature: Optional[ProblemSignature], query: str) -> str:
 # ---------------------------------------------------------------------------
 
 class KBEvidenceRetriever:
-    def __init__(self, kb) -> None:
-        """kb: any A-side retriever with search(query, top_k) and fetch(chunk_ids) -- HybridKBRetriever, MockRetriever."""
+    def __init__(self, kb, ontology=None) -> None:
+        """kb: any A-side retriever with search(query, top_k) and fetch(chunk_ids) -- HybridKBRetriever, MockRetriever.
+        ontology: used to check platform applicability; defaults to the retriever's own (None when it has none)."""
         self.kb = kb
+        self.ontology = ontology if ontology is not None else getattr(kb, "ontology", None)
 
     def _fetch(self, chunk_ids: list[str]) -> list[Candidate]:
         return self.kb.fetch(chunk_ids) if chunk_ids else []
@@ -104,6 +107,7 @@ class KBEvidenceRetriever:
             if key not in excluded_issues:
                 by_issue.setdefault(key, []).append(c)
 
+        customer_platform = ((signature.environment or {}).get("os") if signature else None) or None
         words = _customer_words(signature, query)
         weight_of = {cid: float(h.get("weight") or 0.0) for h in reversed(hyps) for cid in h.get("chunk_ids") or []}
         evidence: list[Evidence] = []
@@ -114,6 +118,11 @@ class KBEvidenceRetriever:
             relevance = best.score * DOC_KIND_WEIGHT.get(str(best.metadata.get("doc_kind", "")), 0.9) * (COVERAGE_FLOOR + (1 - COVERAGE_FLOOR) * query_coverage(words, f"{issue_title(best)} {parent}"))
             relevance += HYPOTHESIS_BOOST * max((weight_of.get(c.chunk_id, 0.0) for c in chunks), default=0.0)
             meta = dict(best.metadata)
+            limited_to = self.ontology.required_platforms(" ".join(best.heading_path)) if self.ontology is not None else frozenset()
+            if limited_to:        # e.g. a section under "Topics for Windows", or about WSL 2: it applies to those platforms only
+                meta["applicability"] = {"limited_to": sorted(limited_to), "customer_platform": customer_platform}
+                if customer_platform and customer_platform not in limited_to:
+                    relevance *= APPLICABILITY_PENALTY
             meta.update({"issue": issue_title(best), "heading_path": " > ".join(best.heading_path),
                          "chunk_ids": [c.chunk_id for c in chunks], "license": meta.get("license") or "Apache-2.0"})
             evidence.append(Evidence(

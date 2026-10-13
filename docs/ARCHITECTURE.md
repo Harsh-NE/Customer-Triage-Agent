@@ -323,7 +323,7 @@ records), with a JSON round-trip and `validate_signature()` for each side's test
 
 ## 7. Evaluation & Testing [Built for the Clarifier]
 
-- **281 tests** (`python -m pytest`): contracts, extractors, redaction, merging, session compaction under hard token caps,
+- **303 tests** (`python -m pytest`): contracts, extractors, redaction, merging, session compaction under hard token caps,
   reflection rules, clustering for both heading layouts, discriminator ranking, full turns on an offline demo corpus,
   LangGraph ≡ plain call, the simulator, the 06_store rebuild guard and heading-aware BM25 (4), the token-aware chunker (16), the ticket pipeline (15), the two retrievers (17: fusion, ticket ranking, card
   rendering, and both retrievers on the real stores), and 12 tests against the **real** Docker store. Tests that need the

@@ -1,0 +1,1206 @@
+# Docker domain pack: the knowledge graph the agent reads alongside retrieval. Human-curated, reviewed in git.
+#
+# provenance:  kb      = taken from the Docker documentation in our KB (headings, product pages)
+#              tickets = alias wording seen in the 13k historical tickets
+#              general = author's general Docker knowledge; REVIEW before relying on it (no KB passage backs it here)
+# Issues with `kb: []` are known community problems the KB does not document: the agent can say so instead of guessing.
+# `summary` is background for the model, never evidence. Add a node by copying one; run `python -m triage.ontology check`.
+domain: docker
+version: "0.1"
+
+entities:
+  # ============================================================ the platform and its core objects
+  - id: docker
+    type: concept
+    name: Docker
+    generic: true
+    aliases: [docker, docker platform]
+    summary: "A platform for building, shipping and running applications in containers."
+    provenance: kb
+  - id: container
+    type: concept
+    name: container
+    generic: true
+    aliases: [container, containers]
+    summary: "A running, isolated instance of an image."
+    provenance: kb
+  - id: image
+    type: concept
+    name: image
+    generic: true
+    aliases: [image, images, docker image, docker images]
+    summary: "A read-only template (layers plus metadata) a container is started from."
+    provenance: kb
+  - id: dockerfile
+    type: concept
+    name: Dockerfile
+    generic: true
+    aliases: [dockerfile, docker file]
+    summary: "The text file of instructions that describes how to build an image."
+    provenance: kb
+
+  # ============================================================ products and components
+  - id: docker-desktop
+    type: product
+    name: Docker Desktop
+    kb_area: desktop
+    aliases: [docker desktop, docker desktop app]
+    summary: "The desktop application for Windows, Mac and Linux that bundles Docker Engine, the CLI, Compose and a GUI; on every platform it runs the Engine inside a lightweight VM."
+    related: [docker-engine, docker-compose, kubernetes, docker-extensions]
+    confused_with:
+      - {id: docker-engine, differs: "Desktop is the app with a GUI and a VM; Engine is the daemon itself, native on Linux."}
+    provenance: kb
+  - id: docker-desktop-mac
+    type: product
+    name: Docker Desktop for Mac
+    parent: docker-desktop
+    kb_area: desktop
+    aliases: [docker for mac, docker desktop for mac, docker desktop on mac, docker desktop macos]
+    available_on: [mac]
+    summary: "Docker Desktop on macOS (Apple silicon and Intel)."
+    provenance: kb
+  - id: docker-desktop-windows
+    type: product
+    name: Docker Desktop for Windows
+    parent: docker-desktop
+    kb_area: desktop
+    aliases: [docker for windows, docker desktop for windows, docker desktop on windows]
+    available_on: [windows]
+    summary: "Docker Desktop on Windows 10 or 11, using the WSL 2 or Hyper-V backend."
+    provenance: kb
+  - id: docker-desktop-linux
+    type: product
+    name: Docker Desktop for Linux
+    parent: docker-desktop
+    kb_area: desktop
+    aliases: [docker desktop for linux, docker desktop on linux]
+    available_on: [linux]
+    summary: "Docker Desktop on Linux; it runs a VM with its own socket, separate from a native Docker Engine install."
+    provenance: kb
+  - id: docker-engine
+    type: product
+    name: Docker Engine
+    kb_area: engine
+    aliases: [docker engine, docker ce, docker community edition, docker engine community]
+    summary: "The open source container runtime stack: the Docker daemon (dockerd), the API, and the docker CLI, running natively on Linux."
+    related: [dockerd, containerd, docker-cli]
+    provenance: kb
+  - id: dockerd
+    type: component
+    name: Docker daemon
+    parent: docker-engine
+    aliases: [dockerd, docker daemon, docker service]
+    scoped:
+      - {alias: daemon, needs: [docker]}
+    summary: "The background service (dockerd) that serves the Docker API and manages images, containers, networks and volumes."
+    confused_with:
+      - {id: containerd, differs: "dockerd is the Docker API daemon; containerd is the lower-level runtime it calls."}
+    provenance: kb
+  - id: docker-cli
+    type: tool
+    name: Docker CLI
+    parent: docker-engine
+    aliases: [docker cli, docker client, docker command line, docker command]
+    summary: "The `docker` command-line client; it talks to the daemon over its API socket."
+    provenance: kb
+  - id: containerd
+    type: component
+    name: containerd
+    parent: docker-engine
+    aliases: [containerd]
+    summary: "The container runtime manager that dockerd uses to run containers."
+    provenance: tickets
+  - id: runc
+    type: component
+    name: runc
+    parent: docker-engine
+    aliases: [runc]
+    summary: "The low-level runtime that actually starts container processes."
+    provenance: tickets
+  - id: docker-compose
+    type: product
+    name: Docker Compose
+    kb_area: compose
+    aliases: [docker compose, docker-compose, compose v2, compose v1, docker compose v2, docker compose plugin, compose plugin]
+    scoped:
+      - {alias: compose, needs: [docker]}
+    summary: "A tool for defining and running multi-container applications; Compose v2 (`docker compose`) replaced the older standalone `docker-compose` (v1)."
+    related: [compose-file]
+    provenance: kb
+  - id: compose-file
+    type: feature
+    name: Compose file
+    parent: docker-compose
+    kb_area: compose
+    aliases: [compose file, docker compose file, docker-compose.yml, docker-compose.yaml, compose.yaml, compose.yml]
+    summary: "The YAML file (compose.yaml) that declares an application's services, networks and volumes."
+    provenance: kb
+  - id: docker-buildx
+    type: tool
+    name: Docker Buildx
+    kb_area: build
+    aliases: [buildx, docker buildx]
+    summary: "The Docker CLI plugin for builds, including multi-platform builds; it drives BuildKit."
+    related: [buildkit]
+    confused_with:
+      - {id: buildkit, differs: "Buildx is the CLI front end; BuildKit is the build engine behind it."}
+    provenance: kb
+  - id: buildkit
+    type: component
+    name: BuildKit
+    kb_area: build
+    aliases: [buildkit, docker buildkit, moby buildkit]
+    summary: "The build engine behind `docker build` and Buildx (caching, parallel stages, secrets)."
+    provenance: kb
+  - id: docker-build-cloud
+    type: product
+    name: Docker Build Cloud
+    kb_area: build-cloud
+    aliases: [docker build cloud, build cloud]
+    summary: "A service that runs image builds on cloud infrastructure, locally and in CI."
+    provenance: kb
+  - id: docker-hub
+    type: product
+    name: Docker Hub
+    kb_area: docker-hub
+    aliases: [docker hub, dockerhub, hub.docker.com, docker.io]
+    scoped:
+      - {alias: hub, needs: [docker]}
+    summary: "Docker's hosted container registry for storing, managing and sharing images."
+    related: [registry, docker-id]
+    confused_with:
+      - {id: registry, differs: "Docker Hub is one hosted registry; 'registry' also means any private or self-hosted one."}
+    provenance: kb
+  - id: registry
+    type: concept
+    name: container registry
+    aliases: [container registry, docker registry, private registry, registry v2, image registry, local registry]
+    summary: "A server that stores and distributes images; `docker pull` and `docker push` talk to one."
+    provenance: tickets
+  - id: docker-scout
+    type: product
+    name: Docker Scout
+    kb_area: scout
+    aliases: [docker scout]
+    scoped:
+      - {alias: scout, needs: [docker]}
+    summary: "A service that analyses images for known vulnerabilities and supply-chain issues."
+    provenance: kb
+  - id: docker-hardened-images
+    type: product
+    name: Docker Hardened Images
+    kb_area: dhi
+    aliases: [docker hardened images, hardened images, dhi]
+    summary: "Minimal, secure, production-ready images, charts and packages maintained by Docker."
+    provenance: kb
+  - id: docker-swarm
+    type: product
+    name: Swarm mode
+    kb_area: engine
+    aliases: [swarm mode, docker swarm, swarm]
+    summary: "Docker Engine's native clustering and orchestration mode for deploying services across several Engines."
+    confused_with:
+      - {id: kubernetes, differs: "Swarm is built into Docker Engine; Kubernetes is a separate orchestrator."}
+    provenance: kb
+  - id: docker-sandboxes
+    type: product
+    name: Docker Sandboxes
+    kb_area: ai
+    aliases: [docker sandboxes, docker sandbox, sbx cli]
+    scoped:
+      - {alias: sandbox, needs: [docker]}
+      - {alias: sandboxes, needs: [docker]}
+      - {alias: sbx, needs: [docker]}
+    summary: "Isolated environments, local or in Docker-managed cloud, for running AI coding agents; managed with the `sbx` CLI."
+    provenance: kb
+  - id: docker-model-runner
+    type: product
+    name: Docker Model Runner
+    kb_area: ai
+    aliases: [docker model runner, model runner]
+    scoped:
+      - {alias: dmr, needs: [docker]}
+    summary: "Manage, run and deploy AI models with Docker (pull, run and serve models)."
+    provenance: kb
+  - id: gordon
+    type: product
+    name: Gordon
+    kb_area: ai
+    aliases: [gordon, ask gordon, docker ai]
+    summary: "Docker's AI assistant that analyses your environment, proposes fixes and runs commands with your permission."
+    provenance: kb
+  - id: docker-agent
+    type: product
+    name: Docker Agent
+    kb_area: ai
+    aliases: [docker agent]
+    summary: "An open source framework for building teams of specialised AI agents."
+    provenance: kb
+  - id: docker-offload
+    type: product
+    name: Docker Offload
+    kb_area: offload
+    aliases: [docker offload]
+    scoped:
+      - {alias: offload, needs: [docker]}
+    summary: "A managed service that offloads building and running containers to the cloud using the usual Docker tools."
+    provenance: kb
+  - id: docker-extensions
+    type: product
+    name: Docker Extensions
+    kb_area: extensions
+    parent: docker-desktop
+    aliases: [docker extensions, docker extension, extensions marketplace]
+    scoped:
+      - {alias: extensions, needs: [docker]}
+      - {alias: marketplace, needs: [docker]}
+    summary: "Third-party tools that plug into Docker Desktop's GUI."
+    provenance: kb
+  - id: testcontainers
+    type: product
+    name: Testcontainers
+    kb_area: testcontainers
+    aliases: [testcontainers, testcontainers cloud]
+    summary: "An open source framework that spins up throwaway containers for integration tests; Testcontainers Cloud runs them in the cloud."
+    provenance: kb
+  - id: mcp
+    type: feature
+    name: MCP Catalog and Toolkit
+    parent: docker-desktop
+    kb_area: desktop
+    aliases: [mcp, mcp catalog, mcp toolkit, mcp server, mcp servers, model context protocol]
+    summary: "A catalogue of Model Context Protocol servers and a toolkit to run them from Docker Desktop."
+    provenance: kb
+  - id: kubernetes
+    type: concept
+    name: Kubernetes
+    aliases: [kubernetes, k8s]
+    summary: "A separate container orchestrator; Docker Desktop can run a local single-node Kubernetes cluster."
+    related: [docker-desktop, docker-swarm]
+    provenance: kb
+  - id: local-k8s-tools
+    type: tool
+    name: minikube, kind or k3d
+    aliases: [minikube, k3d]
+    scoped:
+      - {alias: kind, needs: [kubernetes]}
+    summary: "Separate tools for running local Kubernetes clusters; they are not part of Docker."
+    related: [kubernetes]
+    provenance: tickets
+  - id: podman
+    type: tool
+    name: Podman
+    aliases: [podman]
+    summary: "A different container engine; not Docker."
+    provenance: tickets
+
+  # ============================================================ accounts, identity and billing
+  - id: docker-id
+    type: concept
+    name: Docker ID
+    kb_area: accounts
+    aliases: [docker id, docker account, docker hub account, docker login]
+    summary: "An individual Docker account, used to sign in to Docker Hub and Docker Desktop."
+    related: [organization]
+    provenance: kb
+  - id: organization
+    type: concept
+    name: Docker organization
+    kb_area: accounts
+    aliases: [docker organization, docker organisation, organization, organisation, org seats]
+    summary: "A shared account that groups users into teams and holds the subscription seats."
+    confused_with:
+      - {id: docker-id, differs: "A Docker ID is one person; an organization is a shared account with seats and owners."}
+    provenance: kb
+  - id: subscription
+    type: concept
+    name: subscription and billing
+    kb_area: subscription-billing
+    aliases: [subscription, subscriptions, billing, docker pro, docker team, docker business, docker personal, invoice, payment method]
+    summary: "Docker's paid plans and how they are billed."
+    provenance: kb
+  - id: seats
+    type: concept
+    name: seats
+    kb_area: subscription-billing
+    aliases: [seat, seats, licence seats, license seats]
+    summary: "Paid user slots in an organization's subscription."
+    provenance: kb
+  - id: sso
+    type: feature
+    name: Single sign-on
+    kb_area: security
+    aliases: [sso, single sign on, saml, sso connection]
+    summary: "Lets an organization's users sign in to Docker through the company identity provider."
+    related: [idp, scim, domain-verification]
+    confused_with:
+      - {id: scim, differs: "SSO authenticates sign-ins; SCIM provisions, updates and removes the user accounts and groups."}
+    provenance: kb
+  - id: idp
+    type: concept
+    name: identity provider
+    kb_area: security
+    aliases: [idp, identity provider, entra id, azure ad, azure active directory, okta]
+    summary: "The company system (for example Microsoft Entra ID or Okta) that authenticates users for SSO."
+    provenance: kb
+  - id: scim
+    type: feature
+    name: SCIM provisioning
+    kb_area: security
+    aliases: [scim, user provisioning, scim provisioning]
+    summary: "Automatic creation, updating and removal of Docker users and groups from the identity provider."
+    related: [sso, jit]
+    provenance: kb
+  - id: jit
+    type: feature
+    name: Just-in-Time provisioning
+    kb_area: security
+    aliases: [just in time provisioning, jit provisioning, jit]
+    summary: "Creates a user's Docker account the first time they sign in through SSO."
+    related: [sso, scim]
+    provenance: kb
+  - id: domain-verification
+    type: feature
+    name: domain verification
+    kb_area: security
+    aliases: [domain verification, verify domain, verified domain, dns txt record, txt record]
+    summary: "Proves an organization owns an email domain (with a DNS TXT record) before SSO can use it."
+    related: [sso]
+    provenance: kb
+  - id: mfa
+    type: feature
+    name: multi-factor authentication
+    kb_area: security
+    aliases: [mfa, 2fa, two factor, multi factor, two step verification]
+    summary: "A second sign-in factor in addition to the password."
+    provenance: kb
+  - id: access-token
+    type: feature
+    name: access tokens
+    kb_area: security
+    aliases: [personal access token, access token, org access token, organization access token]
+    scoped:
+      - {alias: pat, needs: [docker]}
+    summary: "Tokens used instead of a password for CLI and CI sign-ins to Docker."
+    provenance: kb
+
+  # ============================================================ platforms and environment
+  - id: windows
+    type: platform
+    name: Windows
+    aliases: [windows, win10, win11, windows 10, windows 11]
+    available_on: [windows]
+    provenance: kb
+  - id: mac
+    type: platform
+    name: macOS
+    aliases: [mac, macos, mac os, mac os x, os x, osx, macbook]
+    available_on: [mac]
+    provenance: kb
+  - id: linux
+    type: platform
+    name: Linux
+    aliases: [linux, ubuntu, debian, fedora, centos, rhel, red hat, arch linux, rocky linux, almalinux, opensuse]
+    available_on: [linux]
+    provenance: kb
+  - id: windows-server
+    type: platform
+    name: Windows Server
+    aliases: [windows server]
+    available_on: [windows]
+    summary: "Server edition of Windows; Docker Desktop is not supported on it."
+    provenance: kb
+  - id: apple-silicon
+    type: concept
+    name: Apple silicon
+    aliases: [apple silicon, apple m1]
+    scoped:
+      - {alias: m1, needs: [docker]}
+      - {alias: m2, needs: [docker]}
+      - {alias: m3, needs: [docker]}
+      - {alias: m4, needs: [docker]}
+    available_on: [mac]
+    related: [cpu-architecture, rosetta]
+    summary: "Arm-based Macs (M-series chips); containers run as arm64 unless emulated."
+    provenance: tickets
+  - id: cpu-architecture
+    type: concept
+    name: CPU architecture (arm64 / amd64)
+    aliases: [arm64, aarch64, amd64, x86 64, x86_64, multi platform, multiplatform, cross platform build]
+    summary: "Images are built per CPU architecture; an image for one will not run natively on the other."
+    provenance: tickets
+  - id: rosetta
+    type: feature
+    name: Rosetta emulation
+    kb_area: desktop
+    aliases: [rosetta]
+    available_on: [mac]
+    summary: "Apple's translation layer, used by Docker Desktop on Apple silicon to run amd64 binaries."
+    provenance: kb
+  - id: qemu
+    type: component
+    name: QEMU emulation
+    aliases: [qemu, binfmt]
+    summary: "CPU emulation used to run or build images for a different architecture."
+    provenance: tickets
+  - id: wsl2
+    type: component
+    name: WSL 2
+    kb_area: desktop
+    aliases: [wsl, wsl2, wsl 2, windows subsystem for linux]
+    available_on: [windows]
+    parent: docker-desktop
+    summary: "Windows Subsystem for Linux 2: the Linux VM backend Docker Desktop uses on Windows."
+    related: [hyper-v]
+    provenance: kb
+  - id: hyper-v
+    type: component
+    name: Hyper-V
+    kb_area: desktop
+    aliases: [hyper v, hyperv]
+    available_on: [windows]
+    summary: "Windows' built-in hypervisor; an alternative virtualisation backend for Docker Desktop."
+    related: [wsl2, virtualization]
+    provenance: kb
+  - id: hyperkit
+    type: component
+    name: HyperKit
+    kb_area: desktop
+    aliases: [hyperkit]
+    available_on: [mac]
+    summary: "The older macOS hypervisor Docker Desktop used for its Linux VM."
+    provenance: kb
+  - id: virtualization
+    type: concept
+    name: hardware virtualization
+    aliases: [virtualization, virtualisation, vt x, bios virtualization, svm mode, virtualization disabled]
+    summary: "CPU virtualisation support that must be enabled in firmware for Docker Desktop's VM."
+    related: [hyper-v, wsl2]
+    provenance: kb
+  - id: virtualbox
+    type: tool
+    name: VirtualBox
+    aliases: [virtualbox, vbox]
+    summary: "A separate hypervisor; running it alongside Docker Desktop on Windows has restrictions."
+    provenance: kb
+  - id: git-bash
+    type: tool
+    name: Git Bash
+    aliases: [git bash, mintty, msys, msys2]
+    available_on: [windows]
+    summary: "A bash shell for Windows that can mangle paths and TTYs passed to docker."
+    provenance: kb
+  - id: windows-containers
+    type: feature
+    name: Windows containers
+    kb_area: desktop
+    aliases: [windows containers, windows container, windows container mode]
+    available_on: [windows]
+    summary: "Containers that run Windows workloads (as opposed to Linux containers) on Windows."
+    provenance: kb
+
+  # ============================================================ networking, storage, runtime concepts
+  - id: docker-network
+    type: concept
+    name: Docker networking
+    aliases: [docker network, docker networking, bridge network, user defined network, overlay network, docker0, container networking]
+    summary: "How containers talk to each other and the outside: bridge, host and overlay networks, with ports published to the host."
+    related: [port-mapping, dns, ip-forwarding]
+    provenance: kb
+  - id: port-mapping
+    type: feature
+    name: published ports
+    aliases: [port mapping, publish port, published port, port binding, expose port, exposed port, port forwarding]
+    summary: "Maps a container port to a port on the host so it can be reached from outside."
+    related: [docker-network]
+    provenance: tickets
+  - id: host-internal
+    type: feature
+    name: host.docker.internal
+    kb_area: desktop
+    aliases: [host.docker.internal, host gateway, host.docker.internal]
+    summary: "A special DNS name a container uses to reach services on the host machine."
+    provenance: kb
+  - id: dns
+    type: concept
+    name: DNS resolution
+    aliases: [dns, dnsmasq, resolv.conf, name resolution, nslookup, dns lookup]
+    summary: "Name lookup inside containers, configured from the host's resolver or the daemon's dns settings."
+    related: [docker-network]
+    provenance: kb
+  - id: ip-forwarding
+    type: concept
+    name: IP forwarding
+    aliases: [ip forwarding, ip forward, net.ipv4.ip forward]
+    available_on: [linux]
+    summary: "Kernel setting that must be on for containers to reach other networks."
+    provenance: kb
+  - id: netplan
+    type: component
+    name: Netplan
+    aliases: [netplan, systemd networkd]
+    available_on: [linux]
+    summary: "Ubuntu's network configuration layer, which can override Docker's network setup."
+    provenance: kb
+  - id: firewall
+    type: concept
+    name: firewall and iptables
+    aliases: [iptables, firewall, ufw, firewalld, nftables]
+    summary: "Host firewalling; Docker manages its own iptables rules, which can conflict with other tools."
+    provenance: tickets
+  - id: volumes
+    type: concept
+    name: volumes
+    aliases: [docker volume, named volume, volumes, volume mount, volume mounts]
+    summary: "Storage managed by Docker that outlives a container."
+    confused_with:
+      - {id: bind-mount, differs: "A volume is managed by Docker; a bind mount maps a specific host path into the container."}
+    provenance: kb
+  - id: bind-mount
+    type: concept
+    name: bind mounts
+    aliases: [bind mount, bind mounts, mounted volume, mounted volumes, mount a folder]
+    summary: "Maps a host directory or file into a container; permissions and performance depend on the host."
+    provenance: kb
+  - id: file-sharing
+    type: feature
+    name: file sharing
+    kb_area: desktop
+    aliases: [file sharing, virtiofs, grpc fuse, osxfs, shared folder, shared folders, shared drives]
+    parent: docker-desktop
+    summary: "How Docker Desktop makes host folders visible inside its VM and containers."
+    provenance: kb
+  - id: docker-socket
+    type: feature
+    name: Docker socket
+    aliases: [docker.sock, /var/run/docker.sock, docker socket, unix:///var/run/docker.sock]
+    summary: "The Unix socket the CLI uses to talk to the daemon; access to it is effectively root access."
+    related: [dockerd, docker-group]
+    provenance: tickets
+  - id: docker-group
+    type: concept
+    name: docker group
+    aliases: [docker group]
+    available_on: [linux]
+    summary: "The Linux group whose members may use the Docker socket without sudo."
+    related: [docker-socket]
+    provenance: general
+  - id: storage-driver
+    type: component
+    name: storage driver
+    aliases: [overlay2, storage driver, graph driver, devicemapper]
+    available_on: [linux]
+    summary: "How the Engine stores image layers and container filesystems on disk (overlay2 by default)."
+    provenance: tickets
+  - id: oom-kill
+    type: concept
+    name: out-of-memory kill
+    aliases: [oom, oom killed, oomkilled, oom killer, out of memory, memory limit, killed by the kernel]
+    summary: "The kernel kills a process (often showing as exit code 137) when memory runs out or a container's memory limit is hit."
+    related: [cgroups]
+    provenance: kb
+  - id: cgroups
+    type: concept
+    name: cgroups
+    aliases: [cgroup, cgroups, cgroup v2, cgroup swap limit]
+    available_on: [linux]
+    summary: "Linux kernel control groups that enforce container resource limits."
+    provenance: kb
+  - id: proxy
+    type: feature
+    name: proxy settings
+    aliases: [proxy, http proxy, https proxy, no proxy, proxy settings, corporate proxy]
+    summary: "HTTP(S) proxy configuration for Docker Desktop, the daemon and builds."
+    provenance: tickets
+  - id: certificates
+    type: feature
+    name: TLS certificates
+    kb_area: desktop
+    aliases: [certificate, certificates, tls, ssl, x509, ca certificate, custom ca, ca bundle, self signed, signed by unknown authority]
+    summary: "Certificates for registries, proxies and TLS inspection; custom CAs must be trusted by Docker."
+    provenance: kb
+  - id: healthcheck
+    type: feature
+    name: health checks
+    aliases: [healthcheck, health check, unhealthy]
+    summary: "A command Docker runs periodically to decide whether a container is healthy."
+    provenance: tickets
+  - id: entrypoint
+    type: feature
+    name: ENTRYPOINT and CMD
+    aliases: [entrypoint]
+    summary: "The Dockerfile instructions that define what a container runs on start."
+    provenance: tickets
+  - id: multi-stage-build
+    type: feature
+    name: multi-stage builds
+    kb_area: build
+    aliases: [multi stage, multi stage build, multistage]
+    summary: "Uses several FROM stages in one Dockerfile so the final image keeps only what it needs."
+    provenance: kb
+  - id: build-cache
+    type: feature
+    name: build cache
+    kb_area: build
+    aliases: [build cache, layer cache, cache mount, no cache]
+    summary: "Reuses unchanged layers between builds; invalidated by changes to earlier instructions."
+    provenance: kb
+  - id: rootless-mode
+    type: feature
+    name: rootless mode
+    kb_area: engine
+    aliases: [rootless, rootless mode, rootless docker, dockerd rootless, rootlesskit]
+    available_on: [linux]
+    parent: docker-engine
+    summary: "Runs the daemon and containers as an unprivileged user on Linux; has its own limitations and setup requirements."
+    provenance: kb
+  - id: docker-in-docker
+    type: concept
+    name: Docker-in-Docker
+    aliases: [dind, docker in docker, docker outside of docker, dood]
+    summary: "Running Docker inside a container, common in CI; either a nested daemon or the host's socket mounted in."
+    related: [docker-socket]
+    provenance: tickets
+  - id: daemon-json
+    type: feature
+    name: daemon.json
+    parent: dockerd
+    kb_area: engine
+    aliases: [daemon.json, /etc/docker/daemon.json]
+    summary: "The Docker daemon's configuration file."
+    provenance: kb
+  - id: systemd
+    type: tool
+    name: systemd
+    aliases: [systemd, systemctl, journalctl]
+    available_on: [linux]
+    summary: "The Linux service manager that usually starts and supervises dockerd."
+    provenance: kb
+  - id: gpu
+    type: feature
+    name: GPU access
+    aliases: [gpu, nvidia, cuda, nvidia container toolkit]
+    summary: "Giving containers access to a GPU, which needs host drivers and runtime support."
+    provenance: tickets
+
+  # ============================================================ what Docker is used for
+  - id: use-local-dev
+    type: use_case
+    name: local development environments
+    aliases: [local development, dev environment, development environment, devcontainer, dev container]
+    summary: "Running an app and its dependencies in containers on a developer machine so it behaves like production."
+    related: [docker-compose, docker-desktop]
+    provenance: general
+  - id: use-ci-cd
+    type: use_case
+    name: CI/CD pipelines
+    aliases: [ci cd, ci/cd, continuous integration, continuous delivery, github actions, gitlab ci, jenkins, circleci]
+    summary: "Building, testing and publishing images automatically in a pipeline."
+    related: [docker-buildx, docker-in-docker, docker-hub]
+    provenance: general
+  - id: use-microservices
+    type: use_case
+    name: multi-container and microservice apps
+    aliases: [microservice, microservices, multi container, multi container app]
+    summary: "Running several cooperating services, each in its own container, usually described with Compose."
+    related: [docker-compose, docker-network]
+    provenance: general
+  - id: use-testing
+    type: use_case
+    name: integration testing
+    aliases: [integration test, integration tests, integration testing]
+    summary: "Starting real dependencies (databases, brokers) in throwaway containers during tests."
+    related: [testcontainers]
+    provenance: general
+  - id: use-distribution
+    type: use_case
+    name: image distribution
+    aliases: [image distribution, publish an image, share an image, push an image]
+    summary: "Publishing images to a registry so other machines and teams can pull them."
+    related: [docker-hub, registry]
+    provenance: general
+  - id: use-supply-chain
+    type: use_case
+    name: software supply-chain security
+    aliases: [supply chain, vulnerability scanning, sbom, cve]
+    summary: "Scanning and hardening images to reduce vulnerabilities and meet compliance."
+    related: [docker-scout, docker-hardened-images]
+    provenance: kb
+  - id: use-ai
+    type: use_case
+    name: AI models and agents
+    aliases: [ai model, ai models, ai agent, ai agents, coding agent, llm]
+    summary: "Running AI models and agents in isolated, reproducible environments."
+    related: [docker-model-runner, docker-sandboxes, gordon]
+    provenance: kb
+
+  # ============================================================ error signals
+  - id: exit-125
+    type: error
+    name: exit code 125
+    aliases: [exit code 125, exited with code 125, exit status 125]
+    summary: "`docker run` itself failed (a daemon or option error), before the command ran."
+    provenance: general
+  - id: exit-126
+    type: error
+    name: exit code 126
+    aliases: [exit code 126, exited with code 126, exit status 126]
+    summary: "The command in the container was found but could not be executed (permissions or format)."
+    provenance: general
+  - id: exit-127
+    type: error
+    name: exit code 127
+    aliases: [exit code 127, exited with code 127, exit status 127]
+    summary: "The command in the container was not found."
+    provenance: general
+  - id: exit-137
+    type: error
+    name: exit code 137
+    aliases: [exit code 137, exited with code 137, exit status 137, error 137, code 137]
+    affects: [oom-kill]
+    summary: "The process was killed with SIGKILL, most often by the out-of-memory killer or `docker kill`."
+    provenance: general
+  - id: exit-139
+    type: error
+    name: exit code 139
+    aliases: [exit code 139, exited with code 139, exit status 139, segmentation fault]
+    summary: "The process crashed with a segmentation fault."
+    provenance: general
+
+  # ============================================================ common issues documented in the KB
+  # -- Docker Hub
+  - id: issue-pull-rate-limit
+    type: issue
+    name: You have reached your pull rate limit
+    symptoms: ["docker pull fails with 429", "you have reached your pull rate limit", "pull rate limit exceeded", "toomanyrequests pull rate limit"]
+    errors: ["You have reached your pull rate limit", "toomanyrequests"]
+    affects: [docker-hub]
+    confused_with:
+      - {id: issue-too-many-requests, differs: "This one is the pull rate limit for unauthenticated or personal accounts; the other is the abuse rate limit for too many requests in a short time."}
+    kb: [{path: "docker-hub/troubleshoot.md", issue: "You have reached your pull rate limit"}]
+    provenance: kb
+  - id: issue-too-many-requests
+    type: issue
+    name: Too many requests (429 response code)
+    symptoms: ["too many requests error from docker hub", "429 too many requests when pulling", "abuse rate limit docker hub"]
+    errors: ["Too Many Requests"]
+    affects: [docker-hub]
+    confused_with:
+      - {id: issue-pull-rate-limit, differs: "The abuse rate limit (too many requests in a short time) versus the per-account pull rate limit."}
+    kb: [{path: "docker-hub/troubleshoot.md", issue: "Too many requests"}]
+    provenance: kb
+  - id: issue-hub-500
+    type: issue
+    name: 500 response code
+    symptoms: ["docker hub returns 500 on pull", "pulling from docker hub gives a 500 error", "internal server error from docker hub"]
+    affects: [docker-hub]
+    kb: [{path: "docker-hub/troubleshoot.md", issue: "500 response code"}]
+    provenance: kb
+  # -- Docker Engine daemon
+  - id: issue-daemon-unreachable
+    type: issue
+    name: Unable to connect to the Docker daemon
+    symptoms: ["cannot connect to the docker daemon", "docker commands fail cannot connect to daemon", "is the docker daemon running", "docker daemon is not running"]
+    errors: ["Cannot connect to the Docker daemon", "Is the docker daemon running"]
+    affects: [dockerd, docker-socket]
+    kb: [{path: "engine/daemon/troubleshoot.md", issue: "Unable to connect to the Docker daemon"}]
+    provenance: kb
+  - id: issue-daemon-json-conflict
+    type: issue
+    name: Troubleshoot conflicts between the daemon.json and startup scripts
+    symptoms: ["docker daemon fails to start after editing daemon.json", "daemon.json conflicts with startup flags", "unable to configure the docker daemon with file and flags"]
+    errors: ["the following directives are specified both as a flag and in the configuration file"]
+    affects: [daemon-json, dockerd]
+    kb: [{path: "engine/daemon/troubleshoot.md", issue: "Troubleshoot conflicts between the daemon.json"}]
+    provenance: kb
+  - id: issue-out-of-memory
+    type: issue
+    name: Out of memory issues
+    symptoms: ["container killed out of memory", "containers keep getting killed oom", "my containers run out of memory", "docker oom killed"]
+    affects: [oom-kill, cgroups]
+    kb: [{path: "engine/daemon/troubleshoot.md", issue: "Out of memory issues"}]
+    provenance: kb
+  - id: issue-ip-forwarding
+    type: issue
+    name: IP forwarding problems
+    symptoms: ["containers cannot reach the internet", "ip forwarding disabled containers no network", "container has no outbound connectivity"]
+    errors: ["IPv4 forwarding is disabled"]
+    affects: [ip-forwarding, docker-network]
+    kb: [{path: "engine/daemon/troubleshoot.md", issue: "IP forwarding problems"}]
+    provenance: kb
+  - id: issue-dns-resolver
+    type: issue
+    name: DNS resolver issues
+    symptoms: ["containers cannot resolve hostnames", "dns lookups fail inside container", "no such host in container", "temporary failure in name resolution"]
+    errors: ["Temporary failure in name resolution"]
+    affects: [dns, docker-network]
+    kb: [{path: "engine/daemon/troubleshoot.md", issue: "DNS resolver issues"}]
+    provenance: kb
+  - id: issue-networks-disappearing
+    type: issue
+    name: Docker networks disappearing
+    symptoms: ["docker networks disappear after reboot", "docker network missing after restart", "bridge network vanished"]
+    affects: [docker-network, netplan]
+    kb: [{path: "engine/daemon/troubleshoot.md", issue: "Docker networks disappearing"}, {path: "engine/daemon/troubleshoot.md", issue: "Prevent Netplan"}]
+    provenance: kb
+  - id: issue-unable-remove-filesystem
+    type: issue
+    name: Unable to remove filesystem
+    symptoms: ["cannot remove docker volume unable to remove filesystem", "error removing container unable to remove filesystem", "device or resource busy removing container"]
+    errors: ["Unable to remove filesystem"]
+    affects: [volumes, storage-driver]
+    kb: [{path: "engine/daemon/troubleshoot.md", issue: "Unable to remove filesystem"}]
+    provenance: kb
+  # -- rootless
+  - id: issue-rootless-daemon-start
+    type: issue
+    name: Errors when starting the Docker daemon (rootless)
+    symptoms: ["rootless docker daemon fails to start", "dockerd rootless setup fails", "rootlesskit error starting daemon", "newuidmap not found rootless"]
+    errors: ["[rootlesskit:parent] error"]
+    affects: [rootless-mode, dockerd]
+    kb: [{path: "rootless/troubleshoot.md", issue: "Errors when starting the Docker daemon"}]
+    provenance: kb
+  - id: issue-rootless-pull
+    type: issue
+    name: docker pull errors (rootless)
+    symptoms: ["docker pull fails on rootless docker", "pull errors with rootless docker", "failed to register layer rootless", "lchown invalid argument pulling image"]
+    errors: ["failed to register layer", "lchown"]
+    affects: [rootless-mode, docker-hub]
+    kb: [{path: "rootless/troubleshoot.md", issue: "docker pull errors"}]
+    provenance: kb
+  - id: issue-rootless-run
+    type: issue
+    name: docker run errors (rootless)
+    symptoms: ["docker run fails on rootless docker", "rootless container will not start", "cgroup error rootless docker run"]
+    affects: [rootless-mode, cgroups]
+    kb: [{path: "rootless/troubleshoot.md", issue: "docker run errors"}]
+    provenance: kb
+  - id: issue-rootless-networking
+    type: issue
+    name: Networking errors (rootless)
+    symptoms: ["rootless docker networking is slow", "rootless container cannot bind port", "rootless docker source ip wrong"]
+    affects: [rootless-mode, docker-network]
+    kb: [{path: "rootless/troubleshoot.md", issue: "Networking errors"}]
+    provenance: kb
+  # -- Docker Desktop topics
+  - id: issue-port-allocated
+    type: issue
+    name: port already allocated errors
+    symptoms: ["port is already allocated", "port already in use when starting container", "bind for 0.0.0.0 failed port is already allocated", "address already in use docker"]
+    errors: ["port is already allocated", "Bind for 0.0.0.0"]
+    affects: [port-mapping, docker-desktop]
+    kb: [{path: "troubleshoot/topics.md", issue: "port already allocated"}]
+    provenance: kb
+  - id: issue-incompatible-cpu
+    type: issue
+    name: Incompatible CPU detected
+    symptoms: ["docker desktop says my cpu is incompatible", "incompatible cpu detected on mac", "docker desktop will not start incompatible cpu"]
+    errors: ["Incompatible CPU detected"]
+    affects: [docker-desktop, apple-silicon]
+    kb: [{path: "troubleshoot/topics.md", issue: "Incompatible CPU detected"}]
+    provenance: kb
+  - id: issue-app-damaged
+    type: issue
+    name: Docker.app is damaged and can't be opened
+    symptoms: ["docker app is damaged and cannot be opened on mac", "macos says docker is damaged", "docker desktop will not open damaged"]
+    errors: ["Docker.app is damaged"]
+    affects: [docker-desktop, mac]
+    kb: [{path: "troubleshoot/topics.md", issue: "Docker.app is damaged"}]
+    provenance: kb
+  - id: issue-antivirus
+    type: issue
+    name: Docker Desktop fails to start when anti-virus software is installed
+    symptoms: ["docker desktop will not start with antivirus", "antivirus blocks docker desktop", "docker desktop hangs starting windows antivirus"]
+    affects: [docker-desktop, windows]
+    kb: [{path: "troubleshoot/topics.md", issue: "Docker Desktop fails to start when anti-virus"}]
+    provenance: kb
+  - id: issue-virtualization
+    type: issue
+    name: Docker Desktop fails due to Virtualization not working
+    symptoms: ["docker desktop fails virtualization not enabled", "virtualization is disabled in the bios docker", "hardware assisted virtualization not enabled docker desktop", "docker desktop wsl hyper-v will not start"]
+    errors: ["Virtualization not working"]
+    affects: [docker-desktop, virtualization, hyper-v, wsl2]
+    kb: [{path: "troubleshoot/topics.md", issue: "Docker Desktop fails due to Virtualization"}]
+    provenance: kb
+  - id: issue-line-endings
+    type: issue
+    name: Unexpected syntax errors, use Unix style line endings for files in containers
+    symptoms: ["shell script fails with syntax errors in container windows", "crlf line endings break script in container", "bad interpreter windows line endings", "scripts mounted into containers fail with weird syntax errors"]
+    errors: ["bad interpreter", "\\r': command not found"]
+    affects: [windows, bind-mount]
+    kb: [{path: "troubleshoot/topics.md", issue: "Unexpected syntax errors"}]
+    provenance: kb
+  - id: issue-path-conversion
+    type: issue
+    name: Path conversion errors on Windows
+    symptoms: ["path conversion error docker windows", "docker run volume path wrong on windows git bash", "invalid mount path windows"]
+    affects: [windows, git-bash, bind-mount]
+    kb: [{path: "troubleshoot/topics.md", issue: "Path conversion errors"}]
+    provenance: kb
+  - id: issue-git-bash
+    type: issue
+    name: Docker commands failing in Git Bash
+    symptoms: ["docker commands fail in git bash", "the input device is not a tty git bash", "docker run -it does not work in git bash"]
+    errors: ["the input device is not a TTY"]
+    affects: [git-bash, windows]
+    kb: [{path: "troubleshoot/topics.md", issue: "Docker commands failing in Git Bash"}]
+    provenance: kb
+  - id: issue-certificates
+    type: issue
+    name: Certificates not set up correctly
+    symptoms: ["docker pull fails certificate error", "tls handshake error pulling from private registry", "x509 certificate signed by unknown authority", "private registry certificate not trusted"]
+    errors: ["x509: certificate signed by unknown authority", "certificate signed by unknown authority"]
+    affects: [certificates, registry, docker-desktop]
+    kb: [{path: "troubleshoot/topics.md", issue: "Certificates not set up correctly"}]
+    provenance: kb
+  - id: issue-ui-glitch
+    type: issue
+    name: Docker Desktop's UI appears green, distorted, or has visual artifacts
+    symptoms: ["docker desktop window is green", "docker desktop ui distorted glitchy", "docker desktop visual artifacts blank screen"]
+    affects: [docker-desktop]
+    kb: [{path: "troubleshoot/topics.md", issue: "Docker Desktop's UI appears green"}]
+    provenance: kb
+  - id: issue-volume-permissions
+    type: issue
+    name: Permissions errors on data directories for shared volumes
+    symptoms: ["permission denied on mounted volume data directory", "shared volume permission errors database data directory", "chown failed on mounted volume"]
+    affects: [volumes, bind-mount, file-sharing]
+    kb: [{path: "troubleshoot/topics.md", issue: "Permissions errors on data directories"}]
+    provenance: kb
+  - id: issue-mounted-volume-not-found
+    type: issue
+    name: Using mounted volumes and getting runtime errors indicating an application file is not found
+    symptoms: ["mounted volume file not found runtime error", "bind mount file not found in container", "volume mount access denied runtime error"]
+    affects: [bind-mount, file-sharing]
+    kb: [{path: "troubleshoot/topics.md", issue: "Using mounted volumes and getting runtime errors"}]
+    provenance: kb
+  - id: issue-upgrade-admin
+    type: issue
+    name: Upgrade requires administrator privileges
+    symptoms: ["docker desktop upgrade asks for administrator", "cannot upgrade docker desktop without admin rights"]
+    affects: [docker-desktop]
+    kb: [{path: "troubleshoot/topics.md", issue: "Upgrade requires administrator privileges"}]
+    provenance: kb
+  - id: issue-desktop-access-denied
+    type: issue
+    name: Docker Desktop Access Denied error message when starting Docker Desktop
+    symptoms: ["docker desktop access denied when starting", "docker desktop access denied windows users group"]
+    errors: ["Docker Desktop Access Denied"]
+    affects: [docker-desktop, windows]
+    kb: [{path: "troubleshoot/topics.md", issue: "Docker Desktop Access Denied"}]
+    provenance: kb
+  - id: issue-windows-containers-media
+    type: issue
+    name: Docker Desktop with Windows Containers fails with media is write protected
+    symptoms: ["windows containers media is write protected", "docker desktop windows containers fails write protected"]
+    errors: ["The media is write protected"]
+    affects: [windows-containers, windows]
+    kb: [{path: "troubleshoot/topics.md", issue: "Docker Desktop with Windows Containers fails"}]
+    provenance: kb
+  - id: issue-vmnetd
+    type: issue
+    name: com.docker.vmnetd is still running after I quit the app
+    symptoms: ["com.docker.vmnetd still running after quitting docker", "docker desktop helper process stays running mac"]
+    errors: ["com.docker.vmnetd"]
+    affects: [docker-desktop, mac]
+    kb: [{path: "troubleshoot/topics.md", issue: "com.docker.vmnetd"}]
+    provenance: kb
+  # -- Docker Desktop FAQs
+  - id: issue-desktop-windows-server
+    type: issue
+    name: Can I run Docker Desktop on Windows Server?
+    symptoms: ["docker desktop on windows server", "install docker desktop windows server 2019 2022"]
+    affects: [docker-desktop, windows-server]
+    kb: [{path: "faqs/windowsfaqs.md", issue: "Can I run Docker Desktop on Windows Server"}]
+    provenance: kb
+  - id: issue-desktop-virtualbox
+    type: issue
+    name: Can I use VirtualBox alongside Docker Desktop?
+    symptoms: ["virtualbox and docker desktop together", "docker desktop conflicts with virtualbox vms"]
+    affects: [docker-desktop, virtualbox, windows]
+    kb: [{path: "faqs/windowsfaqs.md", issue: "Can I use VirtualBox alongside Docker Desktop"}]
+    provenance: kb
+  - id: issue-host-from-container
+    type: issue
+    name: How do I connect from a container to a service on the host?
+    symptoms: ["container cannot reach service running on the host", "connect to localhost from inside a container", "access host database from container", "host.docker.internal not working"]
+    affects: [host-internal, docker-network, docker-desktop]
+    kb: [{path: "faqs/general.md", issue: "How do I connect from a container to a service on the host"}]
+    provenance: kb
+  - id: issue-desktop-offline
+    type: issue
+    name: Can I use Docker Desktop offline?
+    symptoms: ["use docker desktop offline", "docker desktop without internet connection"]
+    affects: [docker-desktop]
+    kb: [{path: "faqs/general.md", issue: "Can I use Docker Desktop offline"}]
+    provenance: kb
+  - id: issue-desktop-usb
+    type: issue
+    name: Can I pass through a USB device to a container?
+    symptoms: ["pass usb device to container", "usb device in docker desktop container"]
+    affects: [docker-desktop]
+    kb: [{path: "faqs/general.md", issue: "Can I pass through a USB device"}]
+    provenance: kb
+  - id: issue-desktop-proxy
+    type: issue
+    name: How do I verify Docker Desktop is using a proxy server?
+    symptoms: ["verify docker desktop proxy settings", "docker desktop behind corporate proxy not working"]
+    affects: [docker-desktop, proxy]
+    kb: [{path: "faqs/general.md", issue: "How do I verify Docker Desktop is using a proxy"}]
+    provenance: kb
+  - id: issue-desktop-no-admin
+    type: issue
+    name: How do I run Docker Desktop without administrator privileges?
+    symptoms: ["run docker desktop without admin rights", "install docker desktop as a standard user"]
+    affects: [docker-desktop]
+    kb: [{path: "faqs/general.md", issue: "How do I run Docker Desktop without administrator"}]
+    provenance: kb
+  # -- SSO and SCIM
+  - id: issue-sso-groups
+    type: issue
+    name: Groups are not formatted correctly
+    symptoms: ["sso groups not formatted correctly", "sso group claim wrong format"]
+    affects: [sso, idp]
+    kb: [{path: "troubleshoot-sso.md", issue: "Groups are not formatted correctly"}]
+    provenance: kb
+  - id: issue-sso-not-assigned
+    type: issue
+    name: User is not assigned to the organization
+    symptoms: ["sso user is not assigned to the organization", "sso sign in says user not in organization"]
+    affects: [sso, organization]
+    kb: [{path: "troubleshoot-sso.md", issue: "User is not assigned to the organization"}]
+    provenance: kb
+  - id: issue-sso-idp-initiated
+    type: issue
+    name: IdP-initiated sign in is not enabled for connection
+    symptoms: ["idp initiated sign in not enabled", "sso login from identity provider portal fails"]
+    errors: ["IdP-initiated sign in is not enabled"]
+    affects: [sso, idp]
+    kb: [{path: "troubleshoot-sso.md", issue: "IdP-initiated sign in"}]
+    provenance: kb
+  - id: issue-sso-seats
+    type: issue
+    name: Not enough seats in organization
+    symptoms: ["sso sign in not enough seats", "users cannot sign in organization out of seats", "sso login not working for my team seats"]
+    errors: ["Not enough seats"]
+    affects: [sso, seats, organization]
+    kb: [{path: "troubleshoot-sso.md", issue: "Not enough seats in organization"}]
+    provenance: kb
+  - id: issue-sso-domain
+    type: issue
+    name: Domain is not verified for SSO connection
+    symptoms: ["sso says domain is not verified", "sso domain verification failed", "cannot enable sso domain not verified"]
+    errors: ["Domain is not verified"]
+    affects: [sso, domain-verification]
+    kb: [{path: "troubleshoot-sso.md", issue: "Domain is not verified"}]
+    provenance: kb
+  - id: issue-sso-session
+    type: issue
+    name: Unable to find session
+    symptoms: ["sso unable to find session", "sso login session error"]
+    errors: ["Unable to find session"]
+    affects: [sso]
+    kb: [{path: "troubleshoot-sso.md", issue: "Unable to find session"}]
+    provenance: kb
+  - id: issue-sso-nameid
+    type: issue
+    name: Name ID is not an email address
+    symptoms: ["sso name id is not an email address", "saml name id format error"]
+    errors: ["Name ID is not an email address"]
+    affects: [sso, idp]
+    kb: [{path: "troubleshoot-sso.md", issue: "Name ID is not an email address"}]
+    provenance: kb
+  - id: issue-scim-overwritten
+    type: issue
+    name: SCIM attribute values are overwritten or ignored
+    symptoms: ["scim attribute values overwritten", "scim attributes ignored", "scim roles or teams wrong after sync"]
+    affects: [scim, idp]
+    confused_with:
+      - {id: issue-scim-existing, differs: "Attributes sent are ignored or overwritten, versus updates not applying to users that already exist."}
+    kb: [{path: "troubleshoot-provisioning.md", issue: "SCIM attribute values are overwritten"}]
+    provenance: kb
+  - id: issue-scim-existing
+    type: issue
+    name: SCIM updates don't apply to existing users
+    symptoms: ["scim provisioning is not updating existing users", "scim updates do not apply to users that already existed", "scim changes not syncing to existing accounts"]
+    affects: [scim, idp]
+    confused_with:
+      - {id: issue-scim-overwritten, differs: "Updates not applied to existing users, versus attribute values being overwritten or ignored."}
+    kb: [{path: "troubleshoot-provisioning.md", issue: "SCIM updates don't apply"}]
+    provenance: kb
+  # -- Sandboxes
+  - id: issue-sandbox-disk
+    type: issue
+    name: Sandbox runs out of disk space
+    symptoms: ["docker sandbox ran out of disk space", "sandbox no space left on device"]
+    affects: [docker-sandboxes]
+    kb: [{path: "sandboxes/troubleshooting.md", issue: "Sandbox runs out of disk space"}]
+    provenance: kb
+  - id: issue-sandbox-network
+    type: issue
+    name: Agent can't install packages or reach an API
+    symptoms: ["sandbox agent cannot install packages", "sandbox cannot reach api", "sandbox network policy blocks requests"]
+    affects: [docker-sandboxes]
+    kb: [{path: "sandboxes/troubleshooting.md", issue: "Agent can't install packages"}]
+    provenance: kb
+  - id: issue-sandbox-cert
+    type: issue
+    name: API calls fail with a certificate error
+    symptoms: ["sandbox api calls fail certificate error", "sandbox tls certificate error behind proxy"]
+    affects: [docker-sandboxes, certificates]
+    kb: [{path: "sandboxes/troubleshooting.md", issue: "API calls fail with a certificate error"}]
+    provenance: kb
+  - id: issue-sandbox-slow-fs
+    type: issue
+    name: Filesystem operations are slow in large repositories
+    symptoms: ["sandbox filesystem slow large repository", "sandbox slow file operations"]
+    affects: [docker-sandboxes]
+    kb: [{path: "sandboxes/troubleshooting.md", issue: "Filesystem operations are slow"}]
+    provenance: kb
+
+  # ============================================================ common community issues the KB does NOT document (kb: [])
+  - id: issue-exec-format-error
+    type: issue
+    name: exec format error (CPU architecture mismatch)
+    symptoms: ["container exits immediately with exec format error", "image built on my mac does not run on the server", "arm image will not run on amd64 host", "no matching manifest for linux/arm64"]
+    errors: ["exec format error", "exec user process caused", "no matching manifest for"]
+    affects: [cpu-architecture, apple-silicon]
+    summary: "The image's CPU architecture differs from the host's (for example arm64 built on Apple silicon, run on amd64)."
+    kb: []
+    provenance: tickets
+  - id: issue-socket-permission
+    type: issue
+    name: permission denied connecting to the Docker socket
+    symptoms: ["permission denied while trying to connect to the docker daemon socket", "docker needs sudo", "got permission denied docker.sock"]
+    errors: ["permission denied while trying to connect to the Docker daemon socket"]
+    affects: [docker-socket, docker-group, linux]
+    summary: "On Linux the user is not allowed to use the Docker socket (not in the docker group)."
+    kb: []
+    provenance: tickets
+  - id: issue-no-space
+    type: issue
+    name: no space left on device
+    symptoms: ["docker no space left on device", "docker build fails disk full", "docker images and volumes fill the disk"]
+    errors: ["no space left on device"]
+    affects: [storage-driver, volumes]
+    summary: "The disk holding Docker's data (images, layers, volumes, build cache) is full."
+    kb: []
+    provenance: tickets
+  - id: issue-pull-access-denied
+    type: issue
+    name: pull access denied / repository does not exist
+    symptoms: ["pull access denied for image", "docker pull repository does not exist or may require login", "denied requested access to the resource is denied"]
+    errors: ["pull access denied", "repository does not exist or may require", "denied: requested access to the resource is denied"]
+    affects: [docker-hub, registry, docker-id]
+    summary: "The image name is wrong or private, or the user is not signed in to the registry."
+    kb: []
+    provenance: tickets
+  - id: issue-compose-v1-not-found
+    type: issue
+    name: docker-compose command not found
+    symptoms: ["docker-compose command not found", "docker-compose is not recognized", "unknown shorthand flag compose"]
+    errors: ["docker-compose: command not found"]
+    affects: [docker-compose]
+    summary: "Compose v2 is invoked as `docker compose` (a CLI plugin); the standalone `docker-compose` v1 binary is no longer installed by default."
+    kb: []
+    provenance: general

@@ -263,6 +263,7 @@ class ConversationService:
                     "feedback": {"rating": c.rating, "helpful": c.helpful, "comment": c.feedback_text},
                     "messages": [self._message_out(m, names, engineer=True) for m in msgs],
                     "agent": {"signature": summary.get("signature"), "hypotheses": (summary.get("signature") or {}).get("hypotheses", []),
+                              "entities": (summary.get("signature") or {}).get("entities", []),
                               "clarifier": (summary.get("signature") or {}).get("clarifier", {}), "confidence": summary.get("confidence"),
                               "gate": summary.get("gate"), "gate_decision": summary.get("gate_decision"), "cache_status": summary.get("cache_status"),
                               "attempts": summary.get("attempts", []), "evidence": summary.get("evidence", []),

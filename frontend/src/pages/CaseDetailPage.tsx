@@ -152,6 +152,12 @@ export default function CaseDetailPage() {
             <p className="mt-3 text-xs text-slate-400">The gate score is a heuristic, not a probability.</p>
           </Card>
 
+          {a.entities && a.entities.length > 0 && (
+            <Card title="Recognised in the request" action={<span className="text-xs text-slate-400" title="From the Docker ontology (aliases resolved to canonical names)">ontology</span>}>
+              <div className="flex flex-wrap gap-1.5">{a.entities.map((e) => <Badge key={e.id} tone={e.type === "platform" ? "blue" : e.type === "issue" ? "amber" : "slate"} title={`${e.type} · ${e.id}`}>{e.name}</Badge>)}</div>
+            </Card>
+          )}
+
           {a.hypotheses.length > 0 && (
             <Card title="Causes the agent considered">
               <ul className="space-y-2.5">

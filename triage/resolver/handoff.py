@@ -94,7 +94,7 @@ def to_resolver_signature(result: ClarifierResult, session: SessionMemory) -> Pr
         severity=_SEVERITY.get(str(f.severity).lower(), Severity.MEDIUM),
         missing_fields=[g.field for g in U.detect_gaps(f)],
         completeness=completeness_of(result), clarify_turns=result.questions_asked,
-        hypotheses=top,
+        hypotheses=top, entities=[dict(e) for e in sig.entities],
         clarifier={"status": result.status.value, "reason": result.reason, "p_top": round(sig.confidence.p_top, 4),
                    "margin": round(sig.confidence.margin, 4), "uncovered_terms": list(result.meta.get("uncovered_terms") or []),
                    "questions_asked": result.questions_asked, "canonical_string": sig.canonical_string})

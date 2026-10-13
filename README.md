@@ -12,9 +12,10 @@ instead of guessing) and **soft signals, never hard filters** (metadata re-weigh
 | Area | State |
 |---|---|
 | Tier 1 knowledge base (`docker/docs`) — pipeline + vector/BM25 store | **Built**: 961 docs → 11,440 token-capped chunks (rebuilt 2026-10-07) |
-| Clarifier agent (understanding, differential diagnosis, session memory, reflection, tools) | **Built, verified**: 281 tests, offline evaluation |
+| Clarifier agent (understanding, differential diagnosis, session memory, reflection, tools) | **Built, verified**: 303 tests, offline evaluation |
 | Hybrid KB retrieval (`triage/hybrid.py`: BM25 + vector + RRF) and ticket retrieval (`TicketRetriever`) | **Built**; the KB one is the Clarifier's default. No cross-encoder rerank; ticket retrieval unmeasured |
 | Resolver (Member B: guard, cache, gate, draft, verify, retry, escalation) merged with the Clarifier into one graph | **Integrated** (`triage/resolver/`, `triage/joint.py`); first end-to-end run with the offline FakeLLM only. See [docs/INTEGRATION.md](docs/INTEGRATION.md) |
+| Docker ontology (lightweight KG: aliases, issues, platforms) on top of RAG | **Built on branch `feature/docker-ontology`**, measured on a same-author eval (upper bound); see [docs/ONTOLOGY.md](docs/ONTOLOGY.md) |
 | Backend API (FastAPI + SQLite: conversations, engineer cases, analytics, token cost) | **Built** (`triage/api/`, [docs/BACKEND.md](docs/BACKEND.md)) |
 | Web UI: customer chat + engineer console (React) | **Built** (`frontend/`, [frontend/README.md](frontend/README.md)); checked by hand against the running backend, no browser E2E tests |
 | Router, real-LLM runs, calibrated Resolver thresholds | Not done |
@@ -46,7 +47,7 @@ scripts/      numbered data pipeline 01–09 (profile → filter → clean → c
 triage/       the agent layer: state (shared contracts), understand, clarifier, differential, session memory, reflection,
               tools, retrieval interface, simulated customer (sim/), evaluation + guardrails (eval/), cli
 frontend/     React app: customer chat + engineer console (19 Vitest tests)
-tests/        281 tests (those needing the real tokenizer, KB store or ticket CSV auto-skip if absent)
+tests/        303 tests (those needing the real tokenizer, KB store or ticket CSV auto-skip if absent)
 notebooks/    Colab notebooks 01–09 that build the Tier 2 ticket dataset
 reports/      generated evaluation report
 docs/         ARCHITECTURE, MEMBER_A_HANDBOOK, DOCKER_KB_BUILD, DATA_SOURCES, DATASET_QUALITY_REPORT

@@ -1,0 +1,42 @@
+{"id": "P01", "query": "docker for mac says the app is damaged and wont open", "gold": [{"path": "troubleshoot/topics.md", "issue": "Docker.app is damaged"}]}
+{"id": "P02", "query": "my macbook m1 docker desktop wont launch says the cpu is not supported", "gold": [{"path": "troubleshoot/topics.md", "issue": "Incompatible CPU detected"}]}
+{"id": "P03", "query": "hyper-v virtualization is disabled in the bios so docker for windows wont start", "gold": [{"path": "troubleshoot/topics.md", "issue": "fails due to Virtualization"}]}
+{"id": "P04", "query": "mcafee antivirus stops docker desktop from starting up", "gold": [{"path": "troubleshoot/topics.md", "issue": "fails to start when anti-virus"}]}
+{"id": "P05", "query": "docker for windows says access denied when i launch it", "gold": [{"path": "troubleshoot/topics.md", "issue": "Access Denied"}]}
+{"id": "P06", "query": "windows containers mode errors out the media is write protected", "gold": [{"path": "troubleshoot/topics.md", "issue": "Windows Containers fails"}]}
+{"id": "P07", "query": "bind for 0.0.0.0:8080 failed the port is already in use when i run compose", "gold": [{"path": "troubleshoot/topics.md", "issue": "port already allocated"}]}
+{"id": "P08", "query": "my shell script copied from windows throws weird errors inside the container crlf", "gold": [{"path": "troubleshoot/topics.md", "issue": "Unexpected syntax errors"}]}
+{"id": "P09", "query": "docker volume path with backslashes breaks when i use git bash on windows", "gold": [{"path": "troubleshoot/topics.md", "issue": "Path conversion errors"}, {"path": "troubleshoot/topics.md", "issue": "Git Bash"}]}
+{"id": "P10", "query": "docker run -it says the input device is not a tty in mintty", "gold": [{"path": "troubleshoot/topics.md", "issue": "Git Bash"}]}
+{"id": "P11", "query": "pulling from our private registry fails x509 signed by unknown authority on docker desktop", "gold": [{"path": "troubleshoot/topics.md", "issue": "Certificates not set up"}]}
+{"id": "P12", "query": "the docker desktop window is all green and glitchy", "gold": [{"path": "troubleshoot/topics.md", "issue": "UI appears green"}]}
+{"id": "P13", "query": "permission denied chown on the mounted database folder", "gold": [{"path": "troubleshoot/topics.md", "issue": "Permissions errors on data directories"}]}
+{"id": "P14", "query": "cant upgrade docker desktop because im a standard user without admin", "gold": [{"path": "troubleshoot/topics.md", "issue": "Upgrade requires administrator"}]}
+{"id": "P15", "query": "com.docker.vmnetd process is still alive after i quit docker on my mac", "gold": [{"path": "troubleshoot/topics.md", "issue": "vmnetd"}]}
+{"id": "P16", "query": "cannot connect to the docker daemon at unix:///var/run/docker.sock is the daemon running", "gold": [{"path": "engine/daemon/troubleshoot.md", "issue": "Unable to connect to the Docker daemon"}]}
+{"id": "P17", "query": "dockerd wont start after i added hosts to daemon.json", "gold": [{"path": "engine/daemon/troubleshoot.md", "issue": "conflicts between the"}]}
+{"id": "P18", "query": "my containers get killed with exit code 137", "gold": [{"path": "engine/daemon/troubleshoot.md", "issue": "Out of memory"}]}
+{"id": "P19", "query": "containers have no internet access ip forwarding is off", "gold": [{"path": "engine/daemon/troubleshoot.md", "issue": "IP forwarding"}]}
+{"id": "P20", "query": "container cant resolve hostnames resolv.conf looks wrong", "gold": [{"path": "engine/daemon/troubleshoot.md", "issue": "DNS resolver"}]}
+{"id": "P21", "query": "docker0 bridge disappears after reboot on ubuntu with netplan", "gold": [{"path": "engine/daemon/troubleshoot.md", "issue": "networks disappearing"}, {"path": "engine/daemon/troubleshoot.md", "issue": "Netplan"}]}
+{"id": "P22", "query": "cant delete a container device or resource busy unable to remove filesystem", "gold": [{"path": "engine/daemon/troubleshoot.md", "issue": "Unable to remove filesystem"}]}
+{"id": "P23", "query": "rootless dockerd fails to start rootlesskit error newuidmap", "gold": [{"path": "rootless/troubleshoot.md", "issue": "Errors when starting the Docker daemon"}]}
+{"id": "P24", "query": "pulling images fails with lchown invalid argument on rootless docker", "gold": [{"path": "rootless/troubleshoot.md", "issue": "docker pull"}]}
+{"id": "P25", "query": "pulls from docker hub fail toomanyrequests you have reached your pull rate limit", "gold": [{"path": "docker-hub/troubleshoot.md", "issue": "pull rate limit"}]}
+{"id": "P26", "query": "docker hub abuse rate limit too many requests in a short time", "gold": [{"path": "docker-hub/troubleshoot.md", "issue": "Too many requests"}]}
+{"id": "P27", "query": "docker hub returns an internal server error 500 when pulling", "gold": [{"path": "docker-hub/troubleshoot.md", "issue": "500 response code"}]}
+{"id": "P28", "query": "saml sso says the name id is not an email", "gold": [{"path": "troubleshoot-sso.md", "issue": "Name ID is not an email"}]}
+{"id": "P29", "query": "login from the okta tile fails idp initiated is not enabled", "gold": [{"path": "troubleshoot-sso.md", "issue": "IdP-initiated"}]}
+{"id": "P30", "query": "our org is out of seats so sso users cannot log in", "gold": [{"path": "troubleshoot-sso.md", "issue": "Not enough seats"}]}
+{"id": "P31", "query": "i added the dns txt record but sso still says the domain is not verified", "gold": [{"path": "troubleshoot-sso.md", "issue": "Domain is not verified"}]}
+{"id": "P32", "query": "entra id group claims are the wrong format for docker sso", "gold": [{"path": "troubleshoot-sso.md", "issue": "Groups are not formatted"}]}
+{"id": "P33", "query": "scim isnt syncing attribute changes for users that already exist", "gold": [{"path": "troubleshoot-provisioning.md", "issue": "SCIM updates don't apply"}]}
+{"id": "P34", "query": "scim keeps ignoring the attributes i send from okta", "gold": [{"path": "troubleshoot-provisioning.md", "issue": "SCIM attribute values are overwritten"}]}
+{"id": "P35", "query": "can docker desktop be installed on windows server 2022", "gold": [{"path": "faqs/windowsfaqs.md", "issue": "Windows Server"}]}
+{"id": "P36", "query": "virtualbox vms and docker for windows at the same time", "gold": [{"path": "faqs/windowsfaqs.md", "issue": "VirtualBox"}]}
+{"id": "P37", "query": "reach postgres running on my laptop from inside a container host.docker.internal", "gold": [{"path": "faqs/general.md", "issue": "connect from a container to a service on the host"}]}
+{"id": "P38", "query": "docker desktop behind a corporate proxy how do i check it is really using it", "gold": [{"path": "faqs/general.md", "issue": "verify Docker Desktop is using a proxy"}]}
+{"id": "P39", "query": "my docker sandbox disk is full no space left", "gold": [{"path": "sandboxes/troubleshooting.md", "issue": "runs out of disk space"}]}
+{"id": "P40", "query": "can i attach a usb stick to a container", "gold": [{"path": "faqs/general.md", "issue": "USB device"}]}
+{"id": "P41", "query": "install docker desktop without being an administrator", "gold": [{"path": "faqs/general.md", "issue": "without administrator"}]}
+{"id": "P42", "query": "sbx agent cannot pip install packages because of the network policy", "gold": [{"path": "sandboxes/troubleshooting.md", "issue": "install packages"}]}

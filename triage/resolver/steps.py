@@ -44,8 +44,13 @@ def format_evidence(evidence: list[Evidence], max_chars: int = 1800) -> str:
 
 
 def draft_resolution(llm: LLM, signature: ProblemSignature, evidence: list[Evidence],
-                     tried_fixes: list[str], last_reply: Optional[str] = None) -> dict[str, Any]:
-    user = (
+                     tried_fixes: list[str], last_reply: Optional[str] = None,
+                     background: Optional[list[str]] = None) -> dict[str, Any]:
+    glossary = ""
+    if background:                      # definitions of names only; the model is told it is not evidence
+        glossary = ("BACKGROUND (what the names in the problem mean. This is NOT evidence: never cite it, never copy a command, "
+                    "URL or fix from it):\n" + "\n".join(f"- {line}" for line in background) + "\n\n")
+    user = glossary + (
         f"PROBLEM SIGNATURE:\n{signature.to_dict()}\n\n"
         f"ALREADY TRIED (do not repeat):\n{tried_fixes or 'nothing yet'}\n\n"
         f"CUSTOMER'S LAST REPLY:\n{last_reply or 'n/a'}\n\n"

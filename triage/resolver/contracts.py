@@ -97,6 +97,8 @@ class ProblemSignature:
     # ranked differential from the Clarifier: [{"label","issue","weight","chunk_ids","grounding","missing_terms"}], best first
     clarifier: dict[str, Any] = field(default_factory=dict)
     # {"status","reason","p_top","margin","uncovered_terms","questions_asked","canonical_string"}
+    entities: list[dict[str, Any]] = field(default_factory=list)
+    # ontology nodes recognised in the customer's words: [{"id","name","type"}] (triage/ontology)
 
     def search_text(self) -> str:
         """Text used for retrieval. Error strings first: BM25 loves exact codes."""

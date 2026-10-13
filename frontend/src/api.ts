@@ -28,7 +28,7 @@ export interface Usage { input_tokens: number; output_tokens: number; cost_usd: 
 export interface CaseDetail extends CaseRow {
   customer: string; resolution_text: string | null; promote_to_kb: boolean; feedback: Feedback; messages: Message[];
   agent: {
-    signature: Record<string, any> | null; hypotheses: Hypothesis[]; confidence: number | null; // eslint-disable-line @typescript-eslint/no-explicit-any
+    signature: Record<string, any> | null; hypotheses: Hypothesis[]; entities?: { id: string; name: string; type: string }[]; confidence: number | null; // eslint-disable-line @typescript-eslint/no-explicit-any
     clarifier: { status?: string; reason?: string; p_top?: number; margin?: number; uncovered_terms?: string[]; questions_asked?: number };
     gate: { confidence?: number; strong?: boolean; top?: number; margin?: number; agreement?: number; completeness?: number; reasons?: string[]; tier?: string } | null;
     gate_decision: string | null; cache_status: string | null; attempts: Attempt[]; evidence: EvidenceRow[];

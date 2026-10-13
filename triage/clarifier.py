@@ -22,6 +22,7 @@ cfg.llm_phrase_questions is on.
 
 from __future__ import annotations
 
+import os
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -152,8 +153,13 @@ def _is_menu_pick(reply: str) -> bool:
 
 class Clarifier:
     def __init__(self, llm: LLM | None, retriever: Retriever, cfg: ClarifierConfig | None = None,
-                 embedder: U.Embedder | None = None, known_products: list[str] | None = None) -> None:
+                 embedder: U.Embedder | None = None, known_products: list[str] | None = None, ontology=None) -> None:
+        """ontology: a triage.ontology.Ontology, None = the packaged one unless ONTOLOGY_MODE=off, False = never."""
         self.llm = llm
+        if ontology is None and os.environ.get("ONTOLOGY_MODE", "both") != "off":
+            from triage.ontology import load_ontology
+            ontology = load_ontology()
+        self.ontology = ontology or None
         self.cfg = cfg or ClarifierConfig()
         self.embedder = embedder
         self.known_products = known_products or U.load_known_products()
@@ -232,7 +238,34 @@ class Clarifier:
             s.field_sources["error_messages"] = ctx.turn_idx
         for feature, value in ctx.notes.get("answered", {}).items():
             self._apply_answer_to_fields(s, feature, value, ctx.turn_idx)
+        self._fill_from_ontology(s, reply, ctx)
         ctx.hard_gaps = [g for g in U.detect_gaps(s.fields) if g.hard]
+
+    def _fill_from_ontology(self, session: SessionMemory, text: str, ctx: TurnContext) -> None:
+        """Fill platform / product the wording IMPLIES ("wsl 2" means Windows, "docker for mac" means Docker Desktop on macOS). Only
+        fills a gap: whatever the customer or an earlier answer already set is never overridden."""
+        if self.ontology is None or (ctx.notes.get("answered") and _is_menu_pick(text)):
+            return
+        implied = self.ontology.infer(text)
+        f = session.fields
+        if not f.platform and implied["platform"]:
+            f.platform = implied["platform"]
+            session.field_sources["platform"] = ctx.turn_idx
+            ctx.notes.setdefault("ontology_filled", {})["platform"] = implied["platform"]
+        if not f.product_area and implied["product_area"]:
+            product = U.normalize_product(implied["product_area"], self.known_products)
+            if product:
+                f.product_area = product
+                session.field_sources["product_area"] = ctx.turn_idx
+                ctx.notes.setdefault("ontology_filled", {})["product_area"] = product
+
+    def _entities(self, session: SessionMemory) -> list[dict]:
+        """The specific ontology nodes in everything the customer has said (for the signature, the engineer and the cache)."""
+        if self.ontology is None:
+            return []
+        text = " ".join(t.text for t in session.customer_turns())
+        return [{"id": e.id, "name": e.name, "type": e.type} for e in self.ontology.entities_in(text, include_generic=False)
+                if e.type != "error"][:10]
 
     def _ask_gap(self, ctx: TurnContext) -> None:
         s = ctx.session
@@ -318,6 +351,8 @@ class Clarifier:
     def _finish(self, ctx: TurnContext) -> ClarifierResult:
         r = ctx.result
         r.questions_asked = ctx.session.questions_asked
+        if ctx.notes.get("ontology_filled"):
+            r.meta["ontology_filled"] = dict(ctx.notes["ontology_filled"])      # what the ontology implied and the customer did not say
         r.meta.update({
             "extraction_source": ctx.extraction.source if ctx.extraction else None,
             "extraction_error": ctx.extraction.error if ctx.extraction else None,
@@ -376,10 +411,12 @@ class Clarifier:
                 session.fields.product_area = inferred
                 meta["inferred"] = {"product_area": inferred}
         sig = U.build_signature(session.fields, amb.confidence, amb.hypotheses[:3], self.embedder)
+        sig.entities = self._entities(session)
         return ClarifierResult(status, signature=sig, reason=reason, meta=meta)
 
     def _unresolved(self, session: SessionMemory, reason: str, meta: dict) -> ClarifierResult:
         sig = U.build_signature(session.fields, SignatureConfidence(0, 0, 0, True, reason), [], self.embedder)
+        sig.entities = self._entities(session)
         return ClarifierResult(ClarifierStatus.UNRESOLVED, signature=sig, reason=reason,
                                questions_asked=session.questions_asked, meta=dict(meta))
 

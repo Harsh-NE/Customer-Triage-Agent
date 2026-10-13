@@ -37,6 +37,8 @@ class ResolverConfig:
     max_attempts: int = 2              # fixes tried before RETRY_EXHAUSTED
     max_clarify_returns: int = 2       # times we may bounce back to the Clarifier
     use_ticket_fallback: bool = True
+    use_background: bool = False       # give the drafting model one-line ontology definitions of the names the customer used
+                                       # (background only: not evidence, never citable). Off until measured with a real model.
     gate: GateConfig = field(default_factory=GateConfig)
     cache: CacheConfig = field(default_factory=CacheConfig)
 

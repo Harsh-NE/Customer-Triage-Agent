@@ -23,6 +23,7 @@ fused order needs it.
 from __future__ import annotations
 
 import json
+import os
 import pickle
 import re
 import sqlite3
@@ -42,12 +43,13 @@ def tokenize(text: str) -> list[str]:
     return _TOKEN.findall(text.lower())
 
 
-def rrf_fuse(ranked_lists: list[list[str]], k: int = RRF_K) -> dict[str, float]:
-    """Reciprocal rank fusion: score(id) = sum over lists of 1 / (k + rank), rank starting at 1."""
+def rrf_fuse(ranked_lists: list[list[str]], k: int = RRF_K, weights: list[float] | None = None) -> dict[str, float]:
+    """Reciprocal rank fusion: score(id) = sum over lists of weight / (k + rank), rank starting at 1 (weights default to 1)."""
     fused: dict[str, float] = {}
-    for ranked in ranked_lists:
+    for n, ranked in enumerate(ranked_lists):
+        w = 1.0 if weights is None else weights[n]
         for rank, item in enumerate(ranked, start=1):
-            fused[item] = fused.get(item, 0.0) + 1.0 / (k + rank)
+            fused[item] = fused.get(item, 0.0) + w / (k + rank)
     return fused
 
 
@@ -78,12 +80,42 @@ def _load_bm25(path: Path, id_key: str):
 class HybridKBRetriever(ChromaRetriever):
     """Dense + BM25 + RRF over the KB, then the same sibling expansion as ChromaRetriever."""
 
-    def __init__(self, bm25_path: str | None = None, pool: int = 30, **kwargs) -> None:
+    ENTITY_LIST_WEIGHT = 0.5      # shared entities are a supporting signal: half the vote of the dense and keyword rankings
+    KNOWN_ISSUE_WEIGHT = 2.0      # a confident match to a curated known issue is as strong as ranking first in BOTH other lists
+
+    def __init__(self, bm25_path: str | None = None, pool: int = 30, ontology=None, ontology_mode: str | None = None, **kwargs) -> None:
+        """ontology_mode: off | expand (alias terms added to the BM25 query) | entities (a third ranked list of chunks that share the
+        query's specific entities or belong to a matched known issue, fused by RRF) | both."""
         super().__init__(**kwargs)
         self._bm25_path = Path(bm25_path or config.PROJECT_ROOT / config.get_env()["BM25_PATH"])
         self._pool = pool
         self._bm25 = None
         self._bm25_ids: list[str] = []
+        if ontology_mode is None:                      # the environment decides when the caller does not (ONTOLOGY_MODE=off to disable)
+            ontology_mode = os.environ.get("ONTOLOGY_MODE", "both")
+        if ontology_mode not in ("off", "expand", "entities", "both"):
+            raise ValueError(f"ontology_mode must be off|expand|entities|both, got '{ontology_mode}'")
+        self._mode = ontology_mode
+        self._ontology = ontology
+        if self._mode != "off" and self._ontology is None:
+            from triage.ontology import load_ontology
+            self._ontology = load_ontology()
+        self._entity_index = None
+
+    @property
+    def ontology(self):
+        return self._ontology if self._mode != "off" else None
+
+    def entity_index(self):
+        """Entities per chunk, built once from the stored chunks (the same matcher tags queries, so nothing needs re-indexing)."""
+        if self._entity_index is None:
+            from triage.ontology import EntityIndex
+            self._ensure()
+            got = self._collection.get(include=["documents", "metadatas"])
+            rows = [(cid, doc, [p for p in (meta.get("heading_path") or "").split(" > ") if p], meta.get("rel_path", ""))
+                    for cid, doc, meta in zip(got["ids"], got["documents"], got["metadatas"])]
+            self._entity_index = EntityIndex.build(self._ontology, rows)
+        return self._entity_index
 
     def fetch(self, chunk_ids: list[str]) -> list[Candidate]:
         """Chunks by id (optional retriever capability; the Resolver adapter uses it to re-load the Clarifier's leading issue)."""
@@ -105,11 +137,26 @@ class HybridKBRetriever(ChromaRetriever):
             cid: self._to_candidate(cid, doc, meta, 1.0 / (1.0 + float(dist)))
             for cid, doc, meta, dist in zip(res["ids"][0], res["documents"][0], res["metadatas"][0], res["distances"][0])}
         vector_ranked = list(res["ids"][0])
-        lexical_ranked = bm25_top(self._bm25, self._bm25_ids, query, self._pool)
+        bm25_query = query
+        if self._mode in ("expand", "both"):
+            extra = self._ontology.expand(query)
+            bm25_query = f"{query} {' '.join(extra)}" if extra else query
+        lexical_ranked = bm25_top(self._bm25, self._bm25_ids, bm25_query, self._pool)
+        lists, weights = [vector_ranked, lexical_ranked], [1.0, 1.0]
+        if self._mode in ("entities", "both"):
+            index = self.entity_index()
+            known = index.known_issue_chunks(query)
+            if known:
+                lists.append(known)
+                weights.append(self.KNOWN_ISSUE_WEIGHT)
+            entity_ranked = index.rank(query, limit=self._pool)
+            if entity_ranked:
+                lists.append(entity_ranked)
+                weights.append(self.ENTITY_LIST_WEIGHT)
 
-        chosen = [cid for cid, _ in sorted(rrf_fuse([vector_ranked, lexical_ranked]).items(), key=lambda kv: -kv[1])][:top_k]
+        chosen = [cid for cid, _ in sorted(rrf_fuse(lists, weights=weights).items(), key=lambda kv: -kv[1])][:top_k]
 
-        lexical_only = [cid for cid in chosen if cid not in by_id]       # found by BM25 but not by dense search
+        lexical_only = [cid for cid in chosen if cid not in by_id]       # found by BM25 / the ontology but not by dense search
         if lexical_only:
             got = self._collection.get(ids=lexical_only, include=["documents", "metadatas", "embeddings"])
             for cid, doc, meta, emb in zip(got["ids"], got["documents"], got["metadatas"], got["embeddings"]):
@@ -224,7 +271,15 @@ def rank_tickets(rows: list[dict], fused: dict[str, float], query: str, top_k: i
 class TicketRetriever:
     """Hybrid search over the ticket store (Chroma + BM25 + SQLite docstore built by scripts/10_tickets.py)."""
 
-    def __init__(self, store_root: str | None = None, model_name: str | None = None, model=None, pool: int = 30) -> None:
+    def __init__(self, store_root: str | None = None, model_name: str | None = None, model=None, pool: int = 30,
+                 ontology=None, use_ontology: bool = False) -> None:
+        """use_ontology: add alias terms to the BM25 query. OFF by default: unlike the KB there is no labelled set to show it helps
+        tickets, so it stays opt-in until one exists."""
+        self._ontology = ontology
+        if use_ontology and self._ontology is None:
+            from triage.ontology import load_ontology
+            self._ontology = load_ontology()
+        self._use_ontology = use_ontology
         env = config.get_env()
         self._root = Path(store_root or config.PROJECT_ROOT / env["TICKETS_STORE_PATH"])
         self._model_name = model_name or env["EMBEDDING_MODEL"]
@@ -268,7 +323,11 @@ class TicketRetriever:
         self._ensure()
         q_emb = self._model.encode([BGE_QUERY_INSTRUCTION + query]).tolist()
         vector_ranked = self._collection.query(query_embeddings=q_emb, n_results=self._pool)["ids"][0]
-        lexical_ranked = bm25_top(self._bm25, self._ids, query, self._pool)
+        bm25_query = query
+        if self._use_ontology:
+            extra = self._ontology.expand(query)
+            bm25_query = f"{query} {' '.join(extra)}" if extra else query
+        lexical_ranked = bm25_top(self._bm25, self._ids, bm25_query, self._pool)
         fused = rrf_fuse([vector_ranked, lexical_ranked])
         rows = self._rows(list(fused))
         codes = query_exit_codes(query) | set(exit_codes or [])

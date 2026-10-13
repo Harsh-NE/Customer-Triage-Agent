@@ -13,6 +13,7 @@ B's event log. For offline development pass `retriever=` (e.g. MockRetriever-bac
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 from typing import Any, Optional
@@ -81,9 +82,12 @@ def build_default_deps(llm: Optional[LLM] = None, *, cache_path: Optional[Path] 
     chunks = config.PROJECT_ROOT / "data" / "processed" / "docker" / "chunks_metadata.jsonl"
     if chunks.exists():
         cache.invalidate_stale({"doc_hashes": kb_doc_hashes(chunks)})       # answers whose evidence changed are dropped
+    cfg = resolver_cfg or ResolverConfig()
+    if os.environ.get("ONTOLOGY_BACKGROUND") == "1":
+        cfg.use_background = True
     deps = ResolverDeps(retriever=TieredRetriever(KBEvidenceRetriever(kb), TicketEvidenceRetriever(tickets)),
                         llm=llm, cache=cache, logger=logger or EventLogger(log_path or root / "events.jsonl"),
-                        cfg=resolver_cfg or ResolverConfig())
+                        cfg=cfg, ontology=kb.ontology)
     return kb, deps
 
 

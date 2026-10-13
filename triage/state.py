@@ -152,6 +152,8 @@ class ProblemSignature:
     hypotheses: list[Hypothesis] = field(default_factory=list)  # ranked differential, best first
     embedding: list[float] | None = None
     schema_version: str = SCHEMA_VERSION
+    entities: list[dict[str, Any]] = field(default_factory=list)   # ontology nodes recognised in the customer's words:
+                                                                    # [{"id","name","type"}]; optional, added after 1.0.0
 
     # Cache-key rule (agreed in the design): ONLY product|component|symptoms. Tone
     # (frustration) and blast radius (impact_scope) describe the ticket instance, not the

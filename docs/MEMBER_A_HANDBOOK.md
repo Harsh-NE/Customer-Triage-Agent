@@ -33,7 +33,7 @@ what was and was not verified, and how to plug your work in. Written against the
 
 | Metric | Value |
 |---|---|
-| Tests | **281 pass** (incl. chunker, store-guard and ticket-pipeline tests, and 12 against the real Docker store) |
+| Tests | **303 pass** (incl. chunker, store-guard and ticket-pipeline tests, and 12 against the real Docker store) |
 | Gold issue is the Clarifier's #1 hypothesis | **0.85** (17 of 20 labeled scenarios) |
 | READY precision (READY *and* correct) | **1.00** (hybrid retriever; 0.94 vector-only) |
 | Wrong-READY rate | **0.00** (hybrid; vector-only 0.05 = S07) |
@@ -48,7 +48,7 @@ what was and was not verified, and how to plug your work in. Written against the
 
 ```bash
 pip install -r requirements.txt          # adds langgraph + pytest to the existing deps
-python -m pytest                          # 281 tests; those needing the store/tokenizer/CSV skip if absent
+python -m pytest                          # 303 tests; those needing the store/tokenizer/CSV skip if absent
 python -m pytest -m real_store -s         # only the real-store tests (~1.5 min: each runs full dialogues on the real store)
 ```
 

@@ -52,13 +52,24 @@ def _set_usage(input_tokens: int, output_tokens: int) -> None:
     _tls.usage = {"input_tokens": int(input_tokens or 0), "output_tokens": int(output_tokens or 0)}
 
 
+GEMINI_TIMEOUT_S = 90
+
+
 def _call_gemini(prompt: str, model: str, api_key: str) -> str:
     import logging
 
     from google import genai
     logging.getLogger("google_genai.models").setLevel(logging.ERROR)    # silences the harmless "automatic function calling" notice
-    client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(model=model, contents=prompt)
+    from google.genai import types
+    # A request with no timeout can hang for many minutes and stall a whole evaluation run: bound it, retry once.
+    client = genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_S * 1000))
+    for attempt in (1, 2):
+        try:
+            response = client.models.generate_content(model=model, contents=prompt)
+            break
+        except Exception:  # noqa: BLE001 -- timeouts / transient 5xx / 429; a second failure propagates
+            if attempt == 2:
+                raise
     meta = getattr(response, "usage_metadata", None)
     if meta is not None:     # thinking tokens are billed as output tokens
         _set_usage(getattr(meta, "prompt_token_count", 0),
