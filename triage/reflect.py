@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from triage.answers import value_in_text
+from triage.answers import is_pick_feature, is_yes_no_feature, value_in_text
 from triage.context_session import SessionMemory
 from triage.state import ExtractedFields, QuestionPlan
 from triage.understand import is_vague_symptom
@@ -58,10 +58,11 @@ def reflect_question(plan: QuestionPlan, session: SessionMemory) -> ReflectionVe
     if field_value(session.fields, plan.feature):
         return ReflectionVerdict(False, "already_known")
 
-    for turn in session.customer_turns():
-        value = value_in_text(plan.feature, turn.text, plan.options)
-        if value:
-            return ReflectionVerdict(False, "stated_earlier", filled_value=value)
+    if not (is_yes_no_feature(plan.feature) or is_pick_feature(plan.feature)):      # an earlier "no" or "yes" in free text answers nothing about this specific cause
+        for turn in session.customer_turns():
+            value = value_in_text(plan.feature, turn.text, plan.options)
+            if value:
+                return ReflectionVerdict(False, "stated_earlier", filled_value=value)
 
     previous = [q for q in session.questions if q.feature == plan.feature]
     if len(previous) >= MAX_ASKS_PER_FEATURE:

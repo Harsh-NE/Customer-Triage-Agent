@@ -14,7 +14,7 @@ from triage.state import Candidate
 FIELD_SUBSECTIONS = {
     "overview", "error message", "error messages", "possible causes", "causes", "cause",
     "solution", "solutions", "resolution", "workaround", "symptoms", "affected environments",
-    "steps to replicate", "prerequisites",
+    "steps to replicate", "prerequisites", "install", "installation",     # structural sections: what to do, not a cause a customer has
 }
 
 

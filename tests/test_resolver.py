@@ -218,3 +218,10 @@ def test_joint_graph_with_stub_clarifier(deps):
     st = app.get_state(cfg).values
     assert st["outcome"] == "resolved"
     assert st["signature"]["component"] == "networking"
+
+
+def test_the_chat_buttons_are_classified_without_a_model_call_and_match_what_the_api_sends():
+    from triage.api.service import ACTION_TEXT
+    from triage.resolver.contracts import ReplyLabel
+    from triage.resolver.steps import BUTTON_REPLY_LABELS
+    assert BUTTON_REPLY_LABELS == {ACTION_TEXT["resolved"]: ReplyLabel.RESOLVED, ACTION_TEXT["not_fixed"]: ReplyLabel.NOT_FIXED}

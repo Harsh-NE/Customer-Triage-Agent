@@ -63,6 +63,10 @@ def classify_question(text: str) -> tuple[str, list[str]]:
     read the Clarifier's internal plan -- only the words a real customer would see."""
     options = [m.group(2) for m in _NUMBERED.finditer(text)]
     t = text.lower()
+    if "pick more than one" in t:                   # "which of these are you seeing?": a list of symptoms
+        return "pick", options
+    if "(yes, no, or not sure)" in t:               # a yes/no question about one possible cause
+        return "trait", ["Yes", "No", "Not sure"]
     if "closest to your problem" in t or "closest to one of these" in t:
         return "issue", options
     if "going wrong" in t or "more detail" in t:      # before the error check: this question also mentions "error message"
@@ -74,6 +78,10 @@ def classify_question(text: str) -> tuple[str, list[str]]:
     if "which docker product" in t or "which of these are you using" in t:
         return "product_area", options
     return "other", options
+
+
+_TRAIT_FILLER = set("does this happen when whenever if while once did start after before could be related to are you using behind with "
+                    "your problem describe the a an is it on in of at for and or".split())
 
 
 class RuleBasedCustomer:
@@ -91,6 +99,25 @@ class RuleBasedCustomer:
     def reply(self, question_text: str) -> str:
         feature, options = classify_question(question_text)
         h = self.s.hidden
+
+        if feature == "pick":
+            # the customer recognises what they are seeing: the listed symptom closest to their own hidden description, else describes it
+            truth = " ".join(x for x in (h.get("symptom_detail"), h.get("error_text"), (self.s.gold or {}).get("issue_contains")) if x)
+            scored = sorted(((overlap_coefficient(o, truth), i) for i, o in enumerate(options, 1)), reverse=True) if truth else []
+            if scored and scored[0][0] >= 0.4 and (len(scored) == 1 or scored[0][0] > scored[1][0]):
+                return str(scored[0][1]) if self._pick_number_style() else options[scored[0][1] - 1]
+            return "None of these, let me describe it. " + (h.get("symptom_detail") or "It just doesn't work.")
+
+        if feature == "trait":
+            # The customer knows their own situation: the condition asked about is true when it describes the hidden real cause.
+            truth = (self.s.gold or {}).get("issue_contains", "")
+            asked = {w for w in re.findall(r"[a-z0-9][a-z0-9.\-]{2,}", question_text.splitlines()[0].lower()) if w not in _TRAIT_FILLER}
+            if not truth or not asked:
+                return "I'm not sure."
+            real = set(re.findall(r"[a-z0-9][a-z0-9.\-]{2,}", truth.lower()))
+            common = len(asked & real)
+            hit = max(common / len(real), common / len(asked)) if real else 0.0     # the asked clause holds the real cause, or is inside it
+            return ("Yes." if hit >= 0.6 else "No.") if self._rng.random() < 0.5 else ("Yes, that's right." if hit >= 0.6 else "No, not really.")
 
         if feature == "platform":
             p = h.get("platform")

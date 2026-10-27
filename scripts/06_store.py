@@ -127,7 +127,7 @@ def article_id_from_rel_path(rel_path: str) -> str:
 def chunk_metadata(chunk: dict) -> dict:
     """Sanitized for Chroma: all values must be str/int/float/bool, never None or a list."""
     md = chunk.get("metadata") or {}
-    return {
+    out = {
         "chunk_id": chunk["chunk_id"],
         "article_id": article_id_from_rel_path(chunk.get("source_path", "")),
         "title": chunk.get("article_title") or "",
@@ -142,6 +142,10 @@ def chunk_metadata(chunk: dict) -> dict:
         "doc_kind": md.get("doc_kind") or "",
         "error_signals": ", ".join(md.get("error_signals") or []),
     }
+    if md.get("source_tier"):      # third-party chunks (scripts/11_supplementary.py) carry their own provenance; official chunks are unchanged
+        out.update({"source_tier": md["source_tier"], "source_name": md.get("source_name") or "",
+                    "source_url": md.get("source_url") or "", "license": md.get("license") or ""})
+    return out
 
 
 def tokenize(text: str) -> list[str]:

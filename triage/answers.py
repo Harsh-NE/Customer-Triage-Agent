@@ -18,6 +18,8 @@ from triage.understand import PRODUCT_ALIASES, detect_platform
 NONE_OF_ABOVE = "unknown"
 _NONE_RE = re.compile(r"(?i)\b(none of (these|them|those)|something else|neither|not sure|"
                       r"don'?t know|do not know|no idea|unsure|can'?t tell|not applicable)\b")
+_YES_RE = re.compile(r"(?i)\b(yes|yeah|yep|yup|correct|exactly|indeed|that'?s right|it does|i do|i am|affirmative)\b")
+_NO_RE = re.compile(r"(?i)\b(no|nope|nah|never|negative|not really|it doesn'?t|i don'?t|i do not|i'?m not|i am not|doesn'?t|isn'?t|is not)\b")
 _TOKEN = re.compile(r"[a-z0-9]+")
 _STOP = set("a an the is are was were be to of in on at for and or it this that i you my we your "
             "with by as from if when then so do does did not no can could would will".split())
@@ -36,6 +38,17 @@ def overlap_coefficient(a: str, b: str) -> float:
     if min(len(ta), len(tb)) < 3:
         return 1.0 if ta == tb or (min(len(ta), len(tb)) >= 2 and (ta <= tb or tb <= ta)) else 0.0
     return len(ta & tb) / min(len(ta), len(tb))
+
+
+YES_NO_PREFIXES = ("trait:", "confirm:")     # trait: a condition that sets a cause apart; confirm: the cause described in its own words
+
+
+def is_yes_no_feature(feature: str) -> bool:
+    return feature.startswith(YES_NO_PREFIXES)
+
+
+def is_pick_feature(feature: str) -> bool:
+    return feature.startswith("pick:")             # "which of these symptoms are you seeing?" (several may be picked)
 
 
 def is_none_of_above(text: str) -> bool:
@@ -58,6 +71,35 @@ def _ordinal_choice(reply: str, options: list[str]) -> str | None:
     return None
 
 
+_NONE_THESE = re.compile(r"(?i)\b(none of (these|them|those)|something else|neither|not any of)\b")
+
+
+def _pick_choice(reply: str, options: list[str]) -> str | None:
+    """Which listed symptoms the reply selects, as '1,3' (1-based); 'none' for none of them (or a description of something else);
+    NONE_OF_ABOVE for 'not sure'; None when it says nothing usable. Accepts numbers and ordinals ('1 and 3', 'the second one') and the
+    symptom wording itself, which is what the chat buttons send."""
+    symptoms = [o for o in options if not o.lower().startswith("none of these")]
+    words = re.findall(r"[a-z0-9]+", reply.lower())
+    chosen: set[int] = set()
+    if words and len(words) <= 8:
+        for w in words:
+            n = int(w) if w.isdigit() and len(w) == 1 else _ORDINALS.get(w)
+            if n and 1 <= n <= len(symptoms):
+                chosen.add(n)
+    said = _tokens(reply)
+    for i, option in enumerate(symptoms, 1):
+        wanted = _tokens(option)
+        if wanted and said and len(wanted & said) / len(wanted) >= 0.7:
+            chosen.add(i)
+    if chosen:
+        return ",".join(str(i) for i in sorted(chosen))
+    if _NONE_THESE.search(reply):
+        return "none"
+    if is_none_of_above(reply):
+        return NONE_OF_ABOVE
+    return "none" if len(words) >= 3 else None       # a description of something else counts as "none of these" (the text is evidence)
+
+
 def match_option(feature: str, reply: str, options: list[str]) -> str | None:
     """Returns the option the reply selects, NONE_OF_ABOVE if the customer says they don't
     know / none apply, or None if nothing matches (caller treats it as unanswered)."""
@@ -68,6 +110,17 @@ def match_option(feature: str, reply: str, options: list[str]) -> str | None:
         platform = detect_platform(reply)
         if platform and (not options or platform in options):
             return platform
+
+    elif is_pick_feature(feature):
+        return _pick_choice(reply, options)
+
+    elif is_yes_no_feature(feature):               # a yes/no about one cause; "not sure" falls through to NONE_OF_ABOVE
+        if is_none_of_above(reply):
+            return NONE_OF_ABOVE
+        if _NO_RE.search(reply):
+            return "no"
+        if _YES_RE.search(reply):
+            return "yes"
 
     elif feature in ("error_message", "issue"):
         chosen = _ordinal_choice(reply, options)

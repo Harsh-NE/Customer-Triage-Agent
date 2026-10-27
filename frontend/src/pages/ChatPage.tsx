@@ -44,6 +44,9 @@ export default function ChatPage() {
   const busy = start.isPending || send.isPending;
   const pendingText = send.isPending ? send.variables?.text ?? (send.variables?.action === "resolved" ? "That fixed it, thanks." : "I tried that but it is still the same error.") : start.isPending ? start.variables : null;
 
+  const lastMessage = view?.messages[view.messages.length - 1];
+  const alreadyShown = !!pendingText && lastMessage?.role === "customer" && lastMessage.content === pendingText;      // the 3 s refresh got there first
+
   useEffect(() => { bottom.current?.scrollIntoView?.({ behavior: "smooth", block: "end" }); }, [view?.messages.length, busy]);
   useEffect(() => { setDraft(""); start.reset(); send.reset(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -84,7 +87,7 @@ export default function ChatPage() {
             <MessageView key={m.id} message={m} isLast={i === view.messages.length - 1 && !busy} active={view.status === "active"} busy={busy}
               onChoose={(text) => send.mutate({ text })} onAction={(action) => send.mutate({ action })} />
           ))}
-          {pendingText && <div className="flex justify-end"><div className="max-w-[34rem] rounded-2xl rounded-tr-sm bg-brand-600/70 px-4 py-2.5 text-sm text-white">{pendingText}</div></div>}
+          {pendingText && !alreadyShown && <div className="flex justify-end"><div className="max-w-[34rem] rounded-2xl rounded-tr-sm bg-brand-600/70 px-4 py-2.5 text-sm text-white">{pendingText}</div></div>}
           {busy && <div className="flex items-center gap-2 text-sm text-slate-500" role="status"><span className="h-3 w-3 animate-pulse rounded-full bg-brand-500" />Checking the documentation…</div>}
           {view && <Banner view={view} />}
           {view && view.status === "resolved" && !busy && <FeedbackBox key={view.id} conversationId={view.id} existing={view.feedback} />}

@@ -39,7 +39,7 @@ from triage.resolver.guardrails import check_input, hard_escalation
 from triage.resolver.llm import LLM, FakeLLM
 from triage.resolver.oplog import NULL_LOGGER, EventLogger, estimate_cost
 from triage.resolver.gate import assess
-from triage.resolver.steps import classify_reply, draft_resolution, render_message, verify_draft
+from triage.resolver.steps import BUTTON_REPLY_LABELS, classify_reply, draft_resolution, render_message, verify_draft
 from triage.resolver.interface import Retriever
 
 
@@ -237,7 +237,9 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
         by_id = {e["evidence_id"]: e for e in state.get("evidence") or []}
         cited = sorted({i for s in d.get("steps") or [] for i in s.get("evidence_ids", [])}, key=lambda x: int(x[1:]))
         sources = [{"id": i, "title": (by_id[i].get("metadata") or {}).get("issue") or by_id[i]["text"].splitlines()[0][:90],
-                    "url": by_id[i].get("url", ""), "tier": by_id[i]["tier"], "official": by_id[i]["tier"] == "kb",
+                    "url": by_id[i].get("url", ""), "tier": by_id[i]["tier"],
+                    "official": by_id[i]["tier"] == "kb" and (by_id[i].get("metadata") or {}).get("source_tier") != "supplementary",
+                    "source_tier": (by_id[i].get("metadata") or {}).get("source_tier"),
                     "license": (by_id[i].get("metadata") or {}).get("license"),
                     "trust_tier": (by_id[i].get("metadata") or {}).get("trust_tier")} for i in cited if i in by_id]
         reply = interrupt({"type": "resolver_message", "ticket_id": state.get("ticket_id"),
@@ -248,8 +250,8 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
 
     def classify(state: TriageState) -> dict[str, Any]:
         reply = state.get("customer_message", "")
-        label = _llm_logged("classify", state, classify_reply, deps.llm,
-                            state.get("last_assistant_message", ""), reply)
+        label = BUTTON_REPLY_LABELS.get(reply.strip()) or _llm_logged("classify", state, classify_reply, deps.llm,
+                                                                    state.get("last_assistant_message", ""), reply)
         attempts = [dict(a) for a in state.get("attempts") or []]
         if attempts and attempts[-1].get("customer_reply") is None:
             attempts[-1]["customer_reply"] = reply

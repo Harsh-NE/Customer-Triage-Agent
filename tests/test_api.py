@@ -174,7 +174,7 @@ def test_rejected_fixes_escalate_into_the_engineer_queue_with_the_agents_reasoni
     labels = [a["label"] for a in case["activity"]]
     assert any(l.startswith("Clarifier") for l in labels) and any(l.startswith("Evidence gate") for l in labels)
     assert any(l.startswith("Escalated") for l in labels) and any(l.startswith("LLM draft") for l in labels)
-    assert case["usage"]["llm_calls"] >= 3 and case["usage"]["unpriced_calls"] == 0
+    assert case["usage"]["llm_calls"] >= 2 and case["usage"]["unpriced_calls"] == 0     # scope + draft; the chat buttons need no classify call
 
 
 def test_engineer_actions_reply_assign_priority_notes_resolve_reopen(client):
@@ -251,7 +251,7 @@ def test_cost_is_computed_from_the_price_table_per_call_and_per_conversation(cli
     usage = client.get(f"/api/cases/{cid}", headers=eng).json()["usage"]
     per_call = pricing.cost_usd("gemini-3.5-flash-lite", {"input_tokens": IN_TOK, "output_tokens": OUT_TOK})
     assert per_call == pytest.approx((IN_TOK * 0.30 + OUT_TOK * 2.50) / 1e6)
-    assert usage["llm_calls"] >= 3                                                          # scope + draft + classify
+    assert usage["llm_calls"] >= 2                                                          # scope + draft (the buttons are classified without a model call)
     assert usage["input_tokens"] == usage["llm_calls"] * IN_TOK and usage["output_tokens"] == usage["llm_calls"] * OUT_TOK
     assert usage["cost_usd"] == pytest.approx(usage["llm_calls"] * per_call) and usage["unpriced_calls"] == 0
 
@@ -288,7 +288,7 @@ def test_dashboard_numbers_follow_the_stored_rows(client):
     assert s["timing"]["avg_time_to_resolution_s"] is not None and "resolution_rate" in s["definitions"]
     cost = client.get("/api/analytics/cost", headers=eng).json()
     assert cost["overall"]["total_cost_usd"] == pytest.approx(s["cost"]["total_cost_usd"]) and cost["overall"]["unpriced_calls"] == 0
-    assert set(cost["by_node"]) >= {"scope", "draft", "classify"} and "gemini-3.5-flash-lite" in cost["by_model"]
+    assert set(cost["by_node"]) >= {"scope", "draft"} and "gemini-3.5-flash-lite" in cost["by_model"]
     assert cost["by_model"]["gemini-3.5-flash-lite"]["calls"] == cost["overall"]["llm_calls"]
     series = client.get("/api/analytics/timeseries", headers=eng).json()["days"]
     assert sum(d["created"] for d in series) == 4
@@ -322,8 +322,14 @@ def test_real_stores_through_the_api(tmp_path):
     try:
         h = login(client, "alice")
         view = client.post("/api/conversations", json={"message": "docker commands fail and say they cannot connect to the docker daemon on linux"}, headers=h).json()
-        assert last(view)["kind"] == "question" and last(view)["payload"]["options"]                  # the menu arrives as buttons
-        view = client.post(f"/api/conversations/{view['id']}/messages", json={"text": "1"}, headers=h).json()
+        assert last(view)["kind"] == "question" and "closest" not in last(view)["content"].lower()    # no "which sounds closest to your problem" menu
+        for _ in range(4):                                                                          # answer whatever is asked, as a customer would
+            if last(view)["kind"] != "question":
+                break
+            feature, options = last(view)["payload"].get("feature", ""), last(view)["payload"].get("options") or []
+            reply = ("yes" if feature.startswith(("trait:", "confirm:")) else options[0] if feature.startswith("pick:")
+                     else "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?")
+            view = client.post(f"/api/conversations/{view['id']}/messages", json={"text": reply}, headers=h).json()
         fix = last(view)
         assert fix["kind"] == "fix" and fix["payload"]["sources"][0]["official"]
         assert "engine/daemon/troubleshoot.md" in fix["payload"]["sources"][0]["url"]

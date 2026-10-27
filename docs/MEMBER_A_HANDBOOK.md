@@ -33,7 +33,7 @@ what was and was not verified, and how to plug your work in. Written against the
 
 | Metric | Value |
 |---|---|
-| Tests | **303 pass** (incl. chunker, store-guard and ticket-pipeline tests, and 12 against the real Docker store) |
+| Tests | **356 pass** (incl. chunker, store-guard and ticket-pipeline tests, and 12 against the real Docker store) |
 | Gold issue is the Clarifier's #1 hypothesis | **0.85** (17 of 20 labeled scenarios) |
 | READY precision (READY *and* correct) | **1.00** (hybrid retriever; 0.94 vector-only) |
 | Wrong-READY rate | **0.00** (hybrid; vector-only 0.05 = S07) |
@@ -48,7 +48,7 @@ what was and was not verified, and how to plug your work in. Written against the
 
 ```bash
 pip install -r requirements.txt          # adds langgraph + pytest to the existing deps
-python -m pytest                          # 303 tests; those needing the store/tokenizer/CSV skip if absent
+python -m pytest                          # 356 tests; those needing the store/tokenizer/CSV skip if absent
 python -m pytest -m real_store -s         # only the real-store tests (~1.5 min: each runs full dialogues on the real store)
 ```
 
@@ -238,7 +238,7 @@ result: ready  gold_rank=1  questions=1
 ```
 The KB has *two* near-identical 429 entries; only the error text separates them.
 
-Question features: `symptoms` (open), `platform`, `error_message` (menu), `issue` (menu: "which sounds closest?"),
+Question features: `symptoms` (open), `platform`, `error_message` (menu), `trait:<cause>` (yes / no / not sure about the condition that sets one cause apart), `pick:<causes>` (a list of symptoms to tick, for 3+ close causes), `detail` (open: "tell me more"), `issue` (opt-in menu: "which sounds closest?"; off by default),
 `product_area`, `error_open` (open-ended last resort). Replies are matched deterministically (`answers.py`): a number
 or ordinal ("2", "the second one"), the option text, an alias, "none of these / not sure" (recorded as `unknown`
 and counted as answered, so it is never re-asked). A reply that matches no option but *looks like an error message*

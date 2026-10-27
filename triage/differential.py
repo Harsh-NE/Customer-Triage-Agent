@@ -26,6 +26,7 @@ from triage.answers import overlap_coefficient
 from triage.config import ClarifierConfig
 from triage.issues import FIELD_SUBSECTIONS, issue_key, issue_title, norm as _norm
 from triage.state import (PLATFORMS, Candidate, ExtractedFields, Hypothesis, SignatureConfidence)
+from triage.symptoms import choose_symptoms
 from triage.tools import ToolBudgetExceeded, ToolRegistry
 from triage.understand import VAGUE_STOPWORDS, retrieval_query
 
@@ -39,6 +40,7 @@ class Discriminator:
     options: list[str]
     gain: float         # expected fraction of probability mass eliminated by the answer
     coverage: float     # probability mass of hypotheses that have a known value for the feature
+    detail: dict = field(default_factory=dict)   # feature "trait:" / "confirm:<hypothesis key>": the question to ask and the cause it is about
 
 
 @dataclass
@@ -48,6 +50,7 @@ class AmbiguityResult:
     discriminators: list[Discriminator]
     candidates: list[Candidate] = field(default_factory=list)
     queries: list[str] = field(default_factory=list)
+    verbatim_error: bool = False    # the customer's pasted error matches the leading cause's documented error and no other's
 
 
 # ---------------------------------------------------------------------------
@@ -187,11 +190,29 @@ def waive_uncovered_terms(amb: "AmbiguityResult", cfg: ClarifierConfig) -> "Ambi
     if amb.confidence.reason == "uncovered_term":
         for h in amb.hypotheses:
             h.missing_terms = []
-        amb.confidence = decide(amb.hypotheses, cfg)
+        amb.confidence = decide(amb.hypotheses, cfg, amb.verbatim_error)
     return amb
 
 
-def decide(hyps: list[Hypothesis], cfg: ClarifierConfig) -> SignatureConfidence:
+def verbatim_error_leader(hyps: list[Hypothesis], error_messages: list[str], cfg: ClarifierConfig) -> bool:
+    """True when what the customer pasted matches the LEADING cause's documented error text closely, is long enough to mean something,
+    and no other cause's documented text comes close. Same match measure as apply_error_evidence."""
+    pasted = [m for m in error_messages if len(re.findall(r"[a-z0-9]+", m.lower())) >= cfg.verbatim_min_tokens]
+    if not hyps or not pasted:
+        return False
+
+    def match(h: Hypothesis) -> float:
+        documented = h.features.get("error_message")
+        return max(overlap_coefficient(documented, m) for m in pasted) if documented else 0.0
+
+    lead = match(hyps[0])
+    # another cause may share the same error text (a usage page quoting the same message): that only blocks the shortcut when it is
+    # also nearly as likely as the leader
+    return (lead >= cfg.verbatim_error_match and hyps[0].weight >= cfg.verbatim_min_p_top
+            and all(lead - match(h) >= cfg.verbatim_runner_up_gap or hyps[0].weight >= cfg.verbatim_leader_ratio * h.weight for h in hyps[1:]))
+
+
+def decide(hyps: list[Hypothesis], cfg: ClarifierConfig, verbatim: bool = False) -> SignatureConfidence:
     if not hyps:
         return SignatureConfidence(0.0, 0.0, 0.0, True, "no_candidates")
     p_top = hyps[0].weight
@@ -205,6 +226,8 @@ def decide(hyps: list[Hypothesis], cfg: ClarifierConfig) -> SignatureConfidence:
         return SignatureConfidence(p_top, margin, top_score, True, "uncovered_term")
     if p_top >= cfg.ready_p_top and margin >= cfg.ready_margin:
         return SignatureConfidence(p_top, margin, top_score, False, "clear")
+    if verbatim:           # the customer quoted the documented error of one cause and no other: nothing left to ask
+        return SignatureConfidence(p_top, margin, top_score, False, "clear")
     return SignatureConfidence(p_top, margin, top_score, True, "split")
 
 
@@ -212,8 +235,64 @@ def decide(hyps: list[Hypothesis], cfg: ClarifierConfig) -> SignatureConfidence:
 # 3. which question would separate the competing causes?
 # ---------------------------------------------------------------------------
 
+# A TRAIT question tells two similar causes apart by asking about the one condition that sets the leading cause apart ("Does
+# this happen when anti-virus software is installed?"), instead of handing the customer a list of documentation titles to pick from.
+# The condition is read from the cause's own title: a clause after when / if / after / due to / with / using, else the whole title.
+TRAIT_MIN_TOP2_SHARE = 0.6    # ask a yes/no only when the two leading causes hold at least this share of the plausible probability
+TRAIT_MIN_LEADER_SHARE = 0.3  # ...or the leader alone holds this share and is this many times likelier than the runner-up
+TRAIT_LEADER_RATIO = 1.5
+TRAIT_DOMINANT_LEADER = 0.45  # a leader holding this share is the one to confirm; no yes/no about the runner-ups
+PICK_SCORE = 5.0              # a symptom list for 3+ close causes outranks the concrete menus, which are junk when nothing leads
+DETAIL_FIRST_SCORE = 10.0     # ...unless the field is flat, when it outranks everything (even a platform question can wait one turn)
+DETAIL_SCORE = 0.05           # the open "tell me more" question ranks below every concrete discriminator
+_TRAIT_CLAUSE = re.compile(r"\b(when|whenever|if|while|once|after|before|because of|due to|caused by|with|using|behind)\b\s+(.+)$", re.I)
+_TRAIT_FORMS = {"when": "Does this happen when {}?", "whenever": "Does this happen whenever {}?", "if": "Does this happen if {}?",
+                "while": "Does this happen while {}?", "once": "Does this happen once {}?", "after": "Did this start after {}?",
+                "before": "Did this start before {}?", "because of": "Could this be related to {}?", "due to": "Could this be related to {}?",
+                "caused by": "Could this be related to {}?", "with": "Does this happen with {}?", "using": "Are you using {}?",
+                "behind": "Are you behind {}?"}
+_TRAIT_STOP = set("a an the is are was were be been to of in on at for and or it its this that these those i you my we your with by as from "
+                  "if when then so do does did not no can could would will docker desktop fails fail failing unable error errors issue "
+                  "issues problem problems cannot cant dont doesnt".split())
+_TRAIT_TOKEN = re.compile(r"[a-z0-9][a-z0-9.\-]{2,}")
+
+
+def _clean_title(title: str) -> str:
+    t = re.sub(r"\{#[^}]*\}", "", title or "")           # Hugo anchors: {#install-using-the-apt-repository}
+    t = re.sub(r"[`*_]", "", t)
+    return re.sub(r"\s+", " ", t).strip(" .:;?!-")
+
+
+def _trait_tokens(text: str) -> set[str]:
+    return {w for w in _TRAIT_TOKEN.findall(_clean_title(text).lower()) if w not in _TRAIT_STOP}
+
+
+def trait_question(title: str, others: list[str]) -> tuple[str, float] | None:
+    """(question, distinctiveness 0..1) for a cause with this title versus the other plausible causes' titles, or None when nothing
+    sets it apart (or the title is too generic to ask about). Deterministic: no model call."""
+    clean = _clean_title(title)
+    if _norm(clean) in FIELD_SUBSECTIONS or len(_trait_tokens(clean)) < 2:
+        return None
+    rest_tokens = set().union(*(_trait_tokens(o) for o in others)) if others else set()
+    m = _TRAIT_CLAUSE.search(clean)
+    clause = bool(m and len(m.group(2).split()) >= 2)
+    if clause:
+        phrase = m.group(2).strip()
+        if len(phrase) > 80:
+            phrase = phrase[:80].rsplit(" ", 1)[0]
+        tokens = _trait_tokens(phrase)
+        question = _TRAIT_FORMS[m.group(1).lower()].format(phrase)
+    else:
+        tokens, question = _trait_tokens(clean), f'Does this describe your problem: "{clean}"?'
+    if not tokens:
+        return None
+    quality = len(tokens - rest_tokens) / len(tokens)
+    # a condition must really set the cause apart; confirming the cause in its own words only has to be more than a shared phrase
+    return (question, quality) if quality >= (0.5 if clause else 0.3) else None
+
+
 def rank_discriminators(hyps: list[Hypothesis], fields: ExtractedFields, exclude: set[str],
-                        cfg: ClarifierConfig) -> list[Discriminator]:
+                        cfg: ClarifierConfig, symptoms=None) -> list[Discriminator]:
     """Expected elimination of feature f:  sum_v P(answer = v) * (mass removed by answer v).
     Hypotheses with no known value for f SURVIVE every answer, so a feature most hypotheses
     lack scores low automatically -- no separate coverage penalty is needed."""
@@ -231,7 +310,7 @@ def rank_discriminators(hyps: list[Hypothesis], fields: ExtractedFields, exclude
     if len(plausible) < 2 or pool_mass <= 0:
         return []
     for feature, answerability in cfg.feature_answerability.items():
-        if feature in exclude or already_known.get(feature):
+        if feature == "trait" or feature in exclude or already_known.get(feature):
             continue
         known = [(h, _norm(h.features[feature])) for h in plausible if h.features.get(feature)]
         values: "OrderedDict[str, float]" = OrderedDict()
@@ -253,6 +332,48 @@ def rank_discriminators(hyps: list[Hypothesis], fields: ExtractedFields, exclude
             out.append((gain * answerability, Discriminator(
                 feature, [display[v] for v in ordered][:cfg.max_options_in_question],
                 round(gain, 4), round(mass_known, 4))))
+    # SYMPTOM LIST for three or more close causes: say what each looks like and ask which the customer is seeing
+    picked = None
+    if cfg.feature_answerability.get("pick") and symptoms is not None and not any(f.startswith("pick:") for f in exclude):
+        close = [h for h in plausible if h.weight >= cfg.pick_close_ratio * plausible[0].weight][:cfg.pick_max_options]
+        if len(close) >= cfg.pick_min_close:
+            chosen = choose_symptoms(close, symptoms, cfg.pick_max_options)
+            if chosen:
+                keys = [k for _, k in chosen]
+                picked = Discriminator("pick:" + "||".join(keys), [t for t, _ in chosen], round(1.0 - 1.0 / len(chosen), 4), 1.0, {"keys": keys})
+                out.append((PICK_SCORE, picked))
+    trait_weight = None if picked else cfg.feature_answerability.get("trait")      # a symptom list replaces the yes/no for 3+ close causes
+    top2 = sum(h.weight for h in plausible[:2]) / pool_mass
+    leader = plausible[0].weight / pool_mass >= TRAIT_MIN_LEADER_SHARE and plausible[0].weight >= TRAIT_LEADER_RATIO * plausible[1].weight
+    # a few close causes, one clear front-runner worth confirming, or the customer's extra detail has already been taken in and the
+    # field is still open: then confirming the likeliest cause beats asking for yet more detail
+    close_causes = top2 >= TRAIT_MIN_TOP2_SHARE or leader
+    narrowed = close_causes or "detail" in exclude
+    if trait_weight and narrowed:
+        best: tuple[float, Discriminator] | None = None
+        for rank, h in enumerate(plausible[:3]):                   # the leading causes: asking about a long shot separates nothing
+            if f"trait:{h.key}" in exclude or f"confirm:{h.key}" in exclude:
+                continue
+            if rank > 0 and plausible[0].weight / pool_mass >= TRAIT_DOMINANT_LEADER and plausible[0].weight >= TRAIT_LEADER_RATIO * plausible[1].weight:
+                continue                                           # a clear leader: a yes about a runner-up could not be decisive
+            made = trait_question(h.features.get("issue", ""), [o.features.get("issue", "") for o in plausible if o is not h])
+            if made is None:
+                continue
+            question, quality = made
+            p = h.weight / pool_mass
+            gain = 2 * p * (1 - p)                                  # yes keeps this cause (and removes the rest), no removes it
+            if gain >= cfg.min_discriminator_gain and (best is None or gain * quality > best[0]):
+                kind = "confirm" if question.startswith("Does this describe") else "trait"
+                best = (gain * quality, Discriminator(f"{kind}:{h.key}", ["Yes", "No", "Not sure"], round(gain, 4), 1.0,
+                                                      {"question": question, "key": h.key, "label": h.label, "quality": round(quality, 3)}))
+        if best is not None:
+            out.append((best[0] * trait_weight, best[1]))
+    # Many causes and none stands out (or no condition separates the leaders): a yes/no per cause would burn the whole question
+    # budget one candidate at a time. Ask for more detail instead; it is the lowest-ranked question, so anything sharper wins.
+    if cfg.feature_answerability.get("trait") and "detail" not in exclude and not picked:
+        # With no front-runner a menu of error texts or products (drawn from unrelated pages) is noise: a person would ask what is
+        # happening first. So when the field is flat, "tell me more" goes first; otherwise it is the last-ranked fallback.
+        out.append((DETAIL_FIRST_SCORE if not close_causes else DETAIL_SCORE, Discriminator("detail", [], 0.0, 1.0)))
     out.sort(key=lambda pair: -pair[0])
     return [d for _, d in out]
 
@@ -271,6 +392,20 @@ def apply_answers(hyps: list[Hypothesis], answered: dict[str, str], cfg: Clarifi
         w = h.weight
         for feature, value in answered.items():
             if value == "unknown":
+                continue
+            if feature.startswith("pick:"):                        # a list of symptoms: picked causes up, the other listed ones down
+                keys = feature[len("pick:"):].split("||")
+                if h.key in keys:
+                    chosen = {int(i) - 1 for i in value.split(",") if i.strip().isdigit()}
+                    w *= (cfg.pick_boost if keys.index(h.key) in chosen else cfg.pick_penalty) if chosen else cfg.pick_none_penalty
+                continue
+            if feature.startswith(("trait:", "confirm:")):         # a yes/no about ONE cause: yes lifts it, no sinks it
+                kind, _, key = feature.partition(":")
+                if h.key == key:
+                    # "yes" to the cause in its own words is strong evidence; "yes" to one condition only moderate (a condition can hold
+                    # for several causes). A "no" removes the cause either way.
+                    yes = (1.0 / cfg.mismatch_penalty) if kind == "confirm" else cfg.trait_yes_boost
+                    w *= yes if value == "yes" else cfg.mismatch_penalty
                 continue
             known = h.features.get(feature)
             if known and _norm(known) != _norm(value):
@@ -308,7 +443,7 @@ def apply_error_evidence(hyps: list[Hypothesis], error_messages: list[str], cfg:
 # ---------------------------------------------------------------------------
 
 def ambiguity_check(fields: ExtractedFields, registry: ToolRegistry, answered: dict[str, str],
-                    exclude: set[str], cfg: ClarifierConfig) -> AmbiguityResult:
+                    exclude: set[str], cfg: ClarifierConfig, symptoms=None) -> AmbiguityResult:
     """Search (via the guarded tool registry), cluster, decide, and -- only if ambiguous --
     rank discriminating questions. Up to three queries, merged by best score per chunk:
       1. everything we know (product, component, symptoms, errors, platform)
@@ -340,10 +475,11 @@ def ambiguity_check(fields: ExtractedFields, registry: ToolRegistry, answered: d
     hyps = build_hypotheses(candidates, cfg, fields)
     hyps = apply_error_evidence(hyps, fields.error_messages, cfg)
     hyps = apply_answers(hyps, answered, cfg)
-    confidence = decide(hyps, cfg)
+    verbatim = verbatim_error_leader(hyps, fields.error_messages, cfg)
+    confidence = decide(hyps, cfg, verbatim)
     # A menu of causes is only worth showing when the candidates are plausible but SPLIT. For
     # no/ungrounded evidence a menu just offers junk; the Clarifier asks for the error text instead.
     # (uncovered_term also needs a question: the leader is grounded overall, so a menu of the competing issues is meaningful)
     split = confidence.ambiguous and confidence.reason in ("split", "uncovered_term")
-    discriminators = rank_discriminators(hyps, fields, exclude, cfg) if split else []
-    return AmbiguityResult(hyps, confidence, discriminators, candidates, used)
+    discriminators = rank_discriminators(hyps, fields, exclude, cfg, symptoms) if split else []
+    return AmbiguityResult(hyps, confidence, discriminators, candidates, used, verbatim)

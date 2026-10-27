@@ -5,7 +5,7 @@ export interface User { id: number; username: string; role: Role }
 export type Status = "active" | "resolved" | "escalated" | "declined";
 export type Priority = "P1" | "P2" | "P3" | "P4";
 
-export interface Source { id: string; title: string; url: string; tier: string; official: boolean; license?: string | null; trust_tier?: string | null }
+export interface Source { id: string; title: string; url: string; tier: string; official: boolean; source_tier?: string | null; license?: string | null; trust_tier?: string | null }
 export interface Step { text: string; evidence_ids: string[] }
 export interface Message {
   id: number; role: "customer" | "agent" | "engineer" | "system"; kind: string; content: string;

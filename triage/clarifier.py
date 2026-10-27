@@ -29,12 +29,13 @@ from dataclasses import dataclass, field
 from typing import Any, TypedDict
 
 from triage import understand as U
-from triage.answers import match_option
+from triage.answers import is_none_of_above, is_pick_feature, is_yes_no_feature, match_option
 from triage.config import ClarifierConfig
 from triage.context_session import SessionMemory
 from triage.differential import AmbiguityResult, Discriminator, ambiguity_check, waive_uncovered_terms
 from triage.llm import LLM
 from triage.reflect import ReflectionVerdict, reflect_question
+from triage.symptoms import NONE_OPTION, SymptomBank, enabled as symptoms_enabled
 from triage.retrieval import Retriever
 from triage.state import (PLATFORMS, ClarifierResult, ClarifierStatus, ExtractedFields, Gap, NeedClarification, QuestionPlan,
                           SignatureConfidence)
@@ -61,6 +62,11 @@ def _human_list(items: list[str], joiner: str = "or") -> str:
     if len(items) <= 1:
         return "".join(items)
     return ", ".join(items[:-1]) + f" {joiner} " + items[-1]
+
+
+def render_pick(symptoms: list[str]) -> str:
+    listed = "\n".join(f"  {i}. {s}" for i, s in enumerate(symptoms, 1))
+    return f"A few different things could be behind this. Which of these are you seeing? You can pick more than one.\n{listed}\n(or tell me if it's none of these)"
 
 
 def render_question(feature: str, options: list[str], variant: int, product: str | None = None) -> str:
@@ -93,6 +99,10 @@ def render_question(feature: str, options: list[str], variant: int, product: str
         names = _human_list([PRODUCT_DISPLAY.get(o, o) for o in options] + ["something else"])
         return (f"Which Docker product is this about: {names}?" if variant == 0
                 else f"Which of these are you using when the problem happens: {names}?")
+    if feature == "detail":
+        return ("Could you give me a bit more detail about what happens when it fails, such as which step breaks and what any "
+                "message or screen says?" if variant == 0 else
+                "Sorry, one more try: what exactly do you see at the moment it goes wrong?")
     if feature == "symptoms":
         return ("Could you describe what is going wrong, such as what you were trying to do, what happened "
                 "instead, and any error message shown." if variant == 0 else
@@ -153,13 +163,18 @@ def _is_menu_pick(reply: str) -> bool:
 
 class Clarifier:
     def __init__(self, llm: LLM | None, retriever: Retriever, cfg: ClarifierConfig | None = None,
-                 embedder: U.Embedder | None = None, known_products: list[str] | None = None, ontology=None) -> None:
-        """ontology: a triage.ontology.Ontology, None = the packaged one unless ONTOLOGY_MODE=off, False = never."""
+                 embedder: U.Embedder | None = None, known_products: list[str] | None = None, ontology=None, symptoms=None) -> None:
+        """ontology: a triage.ontology.Ontology, None = the packaged one unless ONTOLOGY_MODE=off, False = never.
+        symptoms: a triage.symptoms.SymptomBank for the "which of these are you seeing?" question; None = the packaged one unless
+        SYMPTOM_LIST=off, False = never."""
         self.llm = llm
         if ontology is None and os.environ.get("ONTOLOGY_MODE", "both") != "off":
             from triage.ontology import load_ontology
             ontology = load_ontology()
         self.ontology = ontology or None
+        if symptoms is None and symptoms_enabled():
+            symptoms = SymptomBank.load(ontology=self.ontology)
+        self.symptoms = symptoms or None
         self.cfg = cfg or ClarifierConfig()
         self.embedder = embedder
         self.known_products = known_products or U.load_known_products()
@@ -201,7 +216,10 @@ class Clarifier:
         pending = s.open_question
         if pending is not None:
             reply = s.turns[ctx.turn_idx].text
-            if pending.feature == "error_open":
+            if pending.feature == "detail":
+                # open-ended "tell me more": the reply is evidence the extractor reads; the question counts as answered either way
+                value = "unknown" if is_none_of_above(reply) and len(reply.split()) <= 4 else "provided"
+            elif pending.feature == "error_open":
                 # open-ended "paste the exact error": the whole reply IS the error text, unless
                 # the customer says there isn't one
                 if _NO_ERROR_RE.search(reply):
@@ -225,8 +243,14 @@ class Clarifier:
         # (a bare "Mac" is only meaningful next to "which operating system?").
         prev = s.turns[ctx.turn_idx - 1] if ctx.turn_idx > 0 else None
         pending_text = prev.text if prev is not None and prev.role == "assistant" else None
+        pending_feature = next(iter(ctx.notes.get("answered") or {}), "")      # the feature the customer just answered, if any
         reply = s.turns[ctx.turn_idx].text
-        if ctx.notes.get("answered") and _is_menu_pick(reply):
+        picked = ctx.notes.get("answered", {}).get(pending_feature) if is_pick_feature(pending_feature) else None
+        if picked is not None and (picked != "none" or len(reply.split()) <= 8):
+            ctx.extraction = U.ExtractionResult(ExtractedFields(), "symptom_pick")      # the chosen wording is added from the question itself
+        elif ctx.notes.get("answered", {}).get("error_open") == "unknown":
+            ctx.extraction = U.ExtractionResult(ExtractedFields(), "no_error_text")      # "there's no error text" is an answer, not a symptom
+        elif ctx.notes.get("answered") and (_is_menu_pick(reply) or (is_yes_no_feature(pending_feature) and len(reply.split()) <= 3)):
             # "1" selected a menu entry; run through the extractor it would be stored as a symptom ("...linux; 1")
             ctx.extraction = U.ExtractionResult(ExtractedFields(), "menu_reply")
         else:
@@ -345,7 +369,7 @@ class Clarifier:
         ctx.result = self._signature_result(s, amb, ClarifierStatus.UNRESOLVED, reason)
 
     def _check(self, session: SessionMemory, exclude: set[str]):
-        amb = ambiguity_check(session.fields, self.registry, session.answered, exclude, self.cfg)
+        amb = ambiguity_check(session.fields, self.registry, session.answered, exclude, self.cfg, self.symptoms)
         return waive_uncovered_terms(amb, self.cfg) if session.questions_asked > 0 else amb
 
     def _finish(self, ctx: TurnContext) -> ClarifierResult:
@@ -389,6 +413,10 @@ class Clarifier:
         return QuestionPlan(feature, text, options)
 
     def _plan_for_discriminator(self, session: SessionMemory, disc: Discriminator) -> QuestionPlan:
+        if is_pick_feature(disc.feature):            # what each close cause looks like, from the customer's side
+            return QuestionPlan(disc.feature, render_pick(disc.options), [*disc.options, NONE_OPTION])
+        if is_yes_no_feature(disc.feature):          # a question that separates similar causes, not a menu of documentation titles
+            return QuestionPlan(disc.feature, f"{disc.detail['question']}\n(yes, no, or not sure)", list(disc.options))
         text = render_question(disc.feature, disc.options, self._variant(session, disc.feature),
                                session.fields.product_area)
         return QuestionPlan(disc.feature, text, list(disc.options))
@@ -429,6 +457,12 @@ class Clarifier:
             session.field_sources[feature] = turn_idx
         if feature in ("error_message",):
             session.answered.setdefault("error_message", value)
+        if is_pick_feature(feature):                    # the symptoms the customer picked become part of what we know about the problem
+            asked = next((q for q in reversed(session.questions) if q.feature == feature), None)
+            for i in (int(x) for x in value.split(",") if x.strip().isdigit()):
+                if asked and 1 <= i <= len(asked.options) - 1 and asked.options[i - 1] not in session.fields.symptoms:
+                    session.fields.symptoms.append(asked.options[i - 1])
+                    session.field_sources["symptoms"] = turn_idx
 
     # -- LangGraph ---------------------------------------------------------------------------
     def build_graph(self):

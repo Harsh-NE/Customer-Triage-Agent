@@ -46,6 +46,9 @@ def build_joint_graph(clarifier: Clarifier, deps: ResolverDeps, checkpointer=Non
     return g.compile(checkpointer=checkpointer or MemorySaver())
 
 
+SUPPLEMENTARY_DEFAULT = "on"      # SUPPLEMENTARY_KB=on|off
+
+
 class SharedModelEmbedder:
     """B's cache embedder on the same bge model the KB and ticket stores use (normalised, no query prefix)."""
 
@@ -54,6 +57,18 @@ class SharedModelEmbedder:
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         return self.model.encode(texts, normalize_embeddings=True).tolist()
+
+
+def build_supplementary(model):
+    """The optional third-party tier (scripts/11_supplementary.py): a second hybrid retriever over its own small store, consulted only
+    when the official evidence is weak. SUPPLEMENTARY_KB=off disables it; it is also skipped when the store has not been built."""
+    if os.environ.get("SUPPLEMENTARY_KB", SUPPLEMENTARY_DEFAULT).lower() == "off":
+        return None
+    root = config.PROJECT_ROOT / "data" / "processed" / "docker" / "store" / "supplementary"
+    if not (root / "vector").exists() or not (root / "bm25" / "bm25_index.pkl").exists():
+        return None
+    from triage.hybrid import HybridKBRetriever
+    return HybridKBRetriever(model=model, vector_db_path=str(root / "vector"), bm25_path=str(root / "bm25"))
 
 
 def build_default_deps(llm: Optional[LLM] = None, *, cache_path: Optional[Path] = None, log_path: Optional[Path] = None,
@@ -79,13 +94,18 @@ def build_default_deps(llm: Optional[LLM] = None, *, cache_path: Optional[Path] 
     # customer in a run that uses a real model (and vice versa).
     tag = re.sub(r"[^a-z0-9]+", "-", str(getattr(llm, "name", "llm")).lower()).strip("-")
     cache = SemanticCache(embedder=SharedModelEmbedder(model), path=cache_path or root / f"cache__{tag}.json")
+    supplementary = build_supplementary(model)
     chunks = config.PROJECT_ROOT / "data" / "processed" / "docker" / "chunks_metadata.jsonl"
     if chunks.exists():
-        cache.invalidate_stale({"doc_hashes": kb_doc_hashes(chunks)})       # answers whose evidence changed are dropped
+        hashes = kb_doc_hashes(chunks)
+        supp_chunks = root.parent / "chunks_supplementary.jsonl"
+        if supplementary is not None and supp_chunks.exists():       # answers citing third-party chunks are checked like official ones
+            hashes.update(kb_doc_hashes(supp_chunks))
+        cache.invalidate_stale({"doc_hashes": hashes})              # answers whose evidence changed are dropped
     cfg = resolver_cfg or ResolverConfig()
     if os.environ.get("ONTOLOGY_BACKGROUND") == "1":
         cfg.use_background = True
-    deps = ResolverDeps(retriever=TieredRetriever(KBEvidenceRetriever(kb), TicketEvidenceRetriever(tickets)),
+    deps = ResolverDeps(retriever=TieredRetriever(KBEvidenceRetriever(kb, supplementary=supplementary), TicketEvidenceRetriever(tickets)),
                         llm=llm, cache=cache, logger=logger or EventLogger(log_path or root / "events.jsonl"),
                         cfg=cfg, ontology=kb.ontology)
     return kb, deps

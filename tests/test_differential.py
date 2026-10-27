@@ -88,9 +88,10 @@ def test_error_message_beats_issue_menu_for_a_near_duplicate_pair():
     assert rank_discriminators(hyps, ExtractedFields(), set(), CFG)[0].feature == "error_message"
 
 
-def test_issue_menu_is_the_fallback_and_never_offers_generic_titles():
+def test_issue_menu_is_opt_in_and_never_offers_generic_titles():
+    menu = ClarifierConfig(feature_answerability={"platform": 1.0, "error_message": 0.9, "product_area": 0.8, "issue": 0.6})
     hyps = [_h("a", 0.4, issue="Alpha"), _h("b", 0.4, issue="Beta"), _h("c", 0.2, issue="Overview")]
-    ranked = rank_discriminators(hyps, ExtractedFields(), set(), CFG)
+    ranked = rank_discriminators(hyps, ExtractedFields(), set(), menu)
     assert [d.feature for d in ranked] == ["issue"] and set(ranked[0].options) == {"Alpha", "Beta"}
 
 
@@ -208,3 +209,33 @@ def test_waiving_the_doubt_restores_the_ordinary_decision():
     assert waived.confidence.reason == "clear" and all(h.missing_terms == [] for h in waived.hypotheses)
     other = AmbiguityResult(hyps, decide([_h("a", 0.5), _h("b", 0.5)], CFG), [])
     assert waive_uncovered_terms(other, CFG).confidence.reason == "split"       # only this doubt is waived
+
+
+# ---- a pasted error that matches ONE cause's documented error stands in for the usual lead requirement ----
+from triage.differential import verbatim_error_leader  # noqa: E402
+
+DOC = "You have reached your pull rate limit. You may increase the limit by authenticating and upgrading"
+
+
+def test_quoting_the_leaders_documented_error_exactly_makes_the_decision_clear_without_the_usual_margin():
+    hyps = [_h("lead", 0.45, error_message=DOC), _h("other", 0.40, error_message="Too Many Requests"), _h("third", 0.15)]
+    said = ["You have reached your pull rate limit"]
+    assert decide(hyps, CFG).ambiguous and decide(hyps, CFG).reason == "split"            # margin 0.05: normally a question
+    assert verbatim_error_leader(hyps, said, CFG)
+    assert not decide(hyps, CFG, verbatim=True).ambiguous
+
+
+def test_the_shortcut_needs_a_long_enough_match_a_leader_that_still_leads_and_no_equally_good_rival():
+    hyps = [_h("lead", 0.45, error_message=DOC), _h("other", 0.40, error_message="Too Many Requests")]
+    assert not verbatim_error_leader(hyps, ["pull rate"], CFG)                              # two words match anything
+    assert not verbatim_error_leader(hyps, ["Too Many Requests please wait"], CFG)          # that is the OTHER cause's text
+    assert not verbatim_error_leader([_h("lead", 0.30, error_message=DOC), _h("other", 0.25)], ["You have reached your pull rate limit"], CFG)   # leader below 0.4
+    twins = [_h("lead", 0.45, error_message=DOC), _h("twin", 0.44, error_message=DOC)]      # two causes quote the same text and are equally likely
+    assert not verbatim_error_leader(twins, ["You have reached your pull rate limit"], CFG)
+    sibling = [_h("lead", 0.52, error_message=DOC), _h("usage page", 0.34, error_message=DOC)]   # a usage page quoting the same message, clearly less likely
+    assert verbatim_error_leader(sibling, ["You have reached your pull rate limit"], CFG)
+
+
+def test_without_a_pasted_error_nothing_changes():
+    hyps = [_h("lead", 0.45, error_message=DOC), _h("other", 0.40)]
+    assert not verbatim_error_leader(hyps, [], CFG) and decide(hyps, CFG).ambiguous

@@ -73,8 +73,25 @@ class ClarifierConfig:
     min_top_score: float = 0.0          # absolute score floor. DISABLED on purpose: with the vector retriever, junk and
                                         # genuine hits score alike (0.669 vs 0.669); min_grounding below does this job
     mismatch_penalty: float = 0.15      # weight multiplier for hypotheses contradicting a customer answer
+    # SYMPTOM LIST: with >= pick_min_close causes within pick_close_ratio of the leader, list what each looks like and ask which the
+    # customer is seeing (they may pick several). Picked causes are lifted, listed-but-unpicked ones lowered; "none of these" lowers them all.
+    pick_min_close: int = 3
+    pick_max_options: int = 4
+    pick_close_ratio: float = 0.5
+    pick_boost: float = 4.0
+    pick_penalty: float = 0.3
+    pick_none_penalty: float = 0.7      # "none of these" only mildly lowers the listed causes: the wording may simply not match the customer's words
+    trait_yes_boost: float = 2.5        # a "yes" to a condition lifts that cause only moderately (a condition can hold for several causes);
+                                        # a "no" removes it firmly (mismatch_penalty)
     error_match_threshold: float = 0.6  # customer's pasted error vs a hypothesis's documented error text
     error_match_boost: float = 4.0      # weight multiplier at a perfect match (scaled by the match score)
+    # A pasted error that matches ONE cause's documented error text is the strongest evidence a customer can give, so it can stand
+    # in for the usual lead-over-the-runner-up requirement (ready_margin): ask nothing when the report quotes the error exactly.
+    verbatim_error_match: float = 0.8   # how closely the pasted text must match the leader's documented error (0..1)
+    verbatim_min_tokens: int = 4        # ...and the pasted text must be at least this long (a two-word fragment matches anything)
+    verbatim_runner_up_gap: float = 0.3 # ...and no other cause's documented error may come within this of the leader's match
+    verbatim_leader_ratio: float = 1.5  # ...unless it shares that text with a cause it is at least this many times likelier than
+    verbatim_min_p_top: float = 0.4     # ...and the leader must still hold at least this probability
     min_discriminator_gain: float = 0.15  # don't ask a question that eliminates less than this
     min_option_weight: float = 0.05     # a cause below this probability is never offered in a menu
     # How easily can a CUSTOMER answer a question about this feature? Ranking uses
@@ -83,7 +100,7 @@ class ClarifierConfig:
     # a customer cannot answer. `issue` ("which of these sounds like yours?") is the universal
     # fallback -- always available, but the customer has to read and interpret doc titles.
     feature_answerability: dict = field(default_factory=lambda: {
-        "platform": 1.0, "error_message": 0.9, "product_area": 0.8, "issue": 0.6})
+        "platform": 1.0, "error_message": 0.9, "product_area": 0.8, "trait": 0.7, "pick": 0.8})
 
     # --- retrieval weighting by page type. Release notes / archived versions are ~25% of the
     # KB and shouldn't compete equally with troubleshooting pages. A soft multiplier, never a filter.

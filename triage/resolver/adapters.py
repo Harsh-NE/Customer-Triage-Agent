@@ -11,6 +11,10 @@ These two classes translate, and use what the Clarifier already learned:
                            customer's own words. rerank_score = vector similarity x lexical coverage of the customer's
                            words (+ the boost): dense similarity alone cannot tell a real match from junk, B's gate needs
                            an absolute 0..1 relevance, and this is the same grounding idea the Clarifier uses.
+                           Optional SUPPLEMENTARY tier (third-party tutorials / labs, scripts/11_supplementary.py): searched ONLY when the
+                           official evidence is weak (best relevance below `supplementary_below`), ranked at SUPPLEMENTARY_FACTOR of
+                           the same relevance formula so official evidence wins any tie, labelled as community material and linked to
+                           its own source with its own licence. Strong official answers are never touched by it.
   TicketEvidenceRetriever  Tier 2. TicketHit -> Evidence; the PROBLEM / RESOLUTION layout B's drafting step expects.
 
 Retry exclusion works at issue level: B records the chunk ids it cited; every chunk of those issues is excluded, so a retry
@@ -36,6 +40,8 @@ GITHUB_BASE_URL = "https://github.com/docker/docs/blob/main/"     # same citable
 HYPOTHESIS_BOOST = 0.30        # relevance += this x the Clarifier's probability for the issue. The posterior includes everything the
                                # customer said and answered (a pasted error, a picked menu entry) which the raw query cannot see.
 COVERAGE_FLOOR = 0.5           # rerank_score = similarity x (0.5 + 0.5 x coverage)
+SUPPLEMENTARY_FACTOR = 0.85    # third-party guides count for less than official docs on the same relevance
+SUPPLEMENTARY_BELOW = 0.55     # consult them only when the best official evidence scores under this (the gate's min_top_score)
 APPLICABILITY_PENALTY = 0.6    # the issue's heading is limited to platforms that exclude the customer's (soft, never a filter)
 PARENT_TEXT_CHARS = 6000       # cap per issue; the prompt builder cuts further
 QUERY_CHARS = 800
@@ -78,11 +84,14 @@ def _customer_words(signature: Optional[ProblemSignature], query: str) -> str:
 # ---------------------------------------------------------------------------
 
 class KBEvidenceRetriever:
-    def __init__(self, kb, ontology=None) -> None:
+    def __init__(self, kb, ontology=None, supplementary=None, supplementary_below: float = SUPPLEMENTARY_BELOW) -> None:
         """kb: any A-side retriever with search(query, top_k) and fetch(chunk_ids) -- HybridKBRetriever, MockRetriever.
-        ontology: used to check platform applicability; defaults to the retriever's own (None when it has none)."""
+        ontology: used to check platform applicability; defaults to the retriever's own (None when it has none).
+        supplementary: an optional second retriever over third-party material, used only when official evidence is weak."""
         self.kb = kb
         self.ontology = ontology if ontology is not None else getattr(kb, "ontology", None)
+        self.supplementary = supplementary
+        self.supplementary_below = supplementary_below
 
     def _fetch(self, chunk_ids: list[str]) -> list[Candidate]:
         return self.kb.fetch(chunk_ids) if chunk_ids else []
@@ -100,7 +109,8 @@ class KBEvidenceRetriever:
                 c.score = floor
                 cands[c.chunk_id] = c
 
-        excluded_issues = {issue_key(c) for c in self._fetch(list(set(exclude_chunk_ids)))}
+        tried = list(set(exclude_chunk_ids))
+        excluded_issues = {issue_key(c) for c in self._fetch(tried)}
         by_issue: dict[str, list[Candidate]] = {}
         for c in cands.values():
             key = issue_key(c)
@@ -110,13 +120,32 @@ class KBEvidenceRetriever:
         customer_platform = ((signature.environment or {}).get("os") if signature else None) or None
         words = _customer_words(signature, query)
         weight_of = {cid: float(h.get("weight") or 0.0) for h in reversed(hyps) for cid in h.get("chunk_ids") or []}
+        evidence = self._evidence(by_issue, words, weight_of, customer_platform)
+        evidence.sort(key=lambda e: -e.rerank_score)
+
+        if self.supplementary is not None and (not evidence or evidence[0].rerank_score < self.supplementary_below):
+            fetch = getattr(self.supplementary, "fetch", None)
+            skip = {issue_key(c) for c in fetch(tried)} if (fetch and tried) else set()
+            supp_by_issue: dict[str, list[Candidate]] = {}
+            for c in self.supplementary.search(_query_for(query, signature), top_k=k):
+                key = issue_key(c)
+                if key not in skip:
+                    supp_by_issue.setdefault(key, []).append(c)
+            evidence += self._evidence(supp_by_issue, words, {}, customer_platform, supplementary=True)
+            evidence.sort(key=lambda e: -e.rerank_score)
+        return _number(evidence[:k])
+
+    def _evidence(self, by_issue: dict[str, list[Candidate]], words: str, weight_of: dict[str, float],
+                  customer_platform: Optional[str], supplementary: bool = False) -> list[Evidence]:
         evidence: list[Evidence] = []
         for key, chunks in by_issue.items():
             chunks.sort(key=lambda c: c.chunk_id)
             best = max(chunks, key=lambda c: c.score)
-            parent = "\n\n".join(c.text for c in chunks)[:PARENT_TEXT_CHARS]
+            parent = (chr(10) * 2).join(c.text for c in chunks)[:PARENT_TEXT_CHARS]
             relevance = best.score * DOC_KIND_WEIGHT.get(str(best.metadata.get("doc_kind", "")), 0.9) * (COVERAGE_FLOOR + (1 - COVERAGE_FLOOR) * query_coverage(words, f"{issue_title(best)} {parent}"))
             relevance += HYPOTHESIS_BOOST * max((weight_of.get(c.chunk_id, 0.0) for c in chunks), default=0.0)
+            if supplementary:
+                relevance *= SUPPLEMENTARY_FACTOR
             meta = dict(best.metadata)
             limited_to = self.ontology.required_platforms(" ".join(best.heading_path)) if self.ontology is not None else frozenset()
             if limited_to:        # e.g. a section under "Topics for Windows", or about WSL 2: it applies to those platforms only
@@ -125,13 +154,16 @@ class KBEvidenceRetriever:
                     relevance *= APPLICABILITY_PENALTY
             meta.update({"issue": issue_title(best), "heading_path": " > ".join(best.heading_path),
                          "chunk_ids": [c.chunk_id for c in chunks], "license": meta.get("license") or "Apache-2.0"})
+            if supplementary:     # its own source link, name and licence: never presented as docker/docs
+                url, source = meta.get("source_url") or "", "community: " + (meta.get("source_name") or "third-party guide")
+            else:
+                url, source = (GITHUB_BASE_URL + best.source_path if best.source_path else ""), "docker/docs"
             evidence.append(Evidence(
                 evidence_id="", chunk_id=best.chunk_id, doc_id=evidence_doc_id(best.source_path, best.chunk_id), tier="kb",
-                text=best.text, url=GITHUB_BASE_URL + best.source_path if best.source_path else "", source="docker/docs",
+                text=best.text, url=url, source=source,
                 parent_text=parent, fused_score=round(best.score, 4), rerank_score=round(min(relevance, 1.0), 4),
                 doc_hash=sha(best.text), metadata=meta))
-        evidence.sort(key=lambda e: -e.rerank_score)
-        return _number(evidence[:k])
+        return evidence
 
 
 # ---------------------------------------------------------------------------

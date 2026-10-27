@@ -90,15 +90,25 @@ def test_questions_are_never_repeated_and_unknown_counts_as_answered(make_clarif
     assert s.answered.get("platform") == "unknown"
 
 
+MENU_CFG = ClarifierConfig(feature_answerability={"platform": 1.0, "error_message": 0.9, "product_area": 0.8, "issue": 0.6})   # the optional "closest issue" menu
+
+
 def test_unmatched_menu_reply_that_looks_like_an_error_is_kept_as_evidence():
     corpus = [{"chunk_id": f"x{i}", "text": f"{n} problem with widgets and gadgets", "source_path": "doc.md",
                "article_title": "Doc", "heading_path": ["Doc", n], "metadata": {"doc_kind": "troubleshooting", "product_area": "engine"}}
               for i, n in enumerate(["Alpha", "Beta"])]
-    cl = Clarifier(None, MockRetriever(corpus))
+    cl = Clarifier(None, MockRetriever(corpus), MENU_CFG)
     s = cl.start()
     res = cl.turn(s, "widgets and gadgets problem on docker engine")
     assert res.status is ClarifierStatus.ASK and res.question.feature == "issue"
     res = cl.turn(s, "Error: widget exploded 0x42")          # not a menu option, but error-shaped
+    assert "Error: widget exploded 0x42" in s.fields.error_messages
+    # default configuration: no menu; the open "tell me more" question takes its place and an error-shaped reply is kept just the same
+    cl = Clarifier(None, MockRetriever(corpus))
+    s = cl.start()
+    res = cl.turn(s, "widgets and gadgets problem on docker engine")
+    assert res.status is ClarifierStatus.ASK and res.question.feature == "detail"
+    cl.turn(s, "Error: widget exploded 0x42")
     assert "Error: widget exploded 0x42" in s.fields.error_messages
 
 
@@ -226,9 +236,9 @@ def test_leader_missing_the_customers_distinguishing_word_triggers_a_question_th
     cl = Clarifier(None, _FixedRetriever(_s17_pool()))
     s = cl.start()
     res = cl.turn(s, "docker pull fails for me on rootless Docker")
-    assert res.status is ClarifierStatus.ASK and res.question.feature == "issue"
+    assert res.status is ClarifierStatus.ASK and res.question.feature.startswith(("trait:", "confirm:"))      # confirm the front-runner, no menu
     assert res.meta["confidence"]["reason"] == "uncovered_term" and res.meta["uncovered_terms"] == ["rootless"]
-    res = cl.turn(s, "1")                          # the customer picks the leader: the doubt must not veto READY again
+    res = cl.turn(s, "yes")                        # the customer confirms the leader: the doubt must not veto READY again
     assert res.status is ClarifierStatus.READY and res.reason == "clear" and "failed pulls" in _top(res)
 
 
