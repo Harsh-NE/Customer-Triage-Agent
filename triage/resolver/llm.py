@@ -86,6 +86,8 @@ class FakeLLM:
             return self._classify(user)
         if "TASK: draft" in system:
             return self._draft(user)
+        if "TASK: expand_queries" in system:
+            return self._expand(user)
         raise ValueError("FakeLLM: unknown task")
 
     @staticmethod
@@ -118,6 +120,28 @@ class FakeLLM:
                 "steps": steps[:4],
                 "verification": "Re-run the failing command and confirm the error is gone."}
 
+
+    @staticmethod
+    def _expand(user: str) -> dict[str, Any]:
+        """Generate 2-3 search queries from the problem signature."""
+        # Extract key terms from the signature dict string
+        queries = []
+        import re as _re
+        errors = _re.findall(r"'error_strings':\s*\[([^\]]+)\]", user)
+        symptom = _re.search(r"'symptom':\s*'([^']*)'", user)
+        component = _re.search(r"'component':\s*'([^']*)'", user)
+        product = _re.search(r"'product_area':\s*'([^']*)'", user)
+        raw = _re.search(r"'raw_query':\s*'([^']*)'", user)
+        if errors and errors[0].strip():
+            queries.append(errors[0].replace("'", "").strip())
+        if symptom and symptom.group(1):
+            q = symptom.group(1)
+            if component and component.group(1):
+                q = f"{component.group(1)} {q}"
+            queries.append(q)
+        if raw and raw.group(1):
+            queries.append(raw.group(1))
+        return {"queries": queries or ["docker troubleshooting"]}
 
 def get_llm(provider: str | None = None) -> LLM:
     provider = (provider or os.getenv("LLM_PROVIDER", "fake")).lower()

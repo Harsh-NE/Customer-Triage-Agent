@@ -26,8 +26,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional, Protocol
 
-from triage.config import CacheConfig
-from triage.contracts import CacheStatus, ProblemSignature
+from triage.resolver.config import CacheConfig
+from triage.resolver.contracts import CacheStatus, ProblemSignature
 
 
 # --------------------------------------------------------------------------- embedders
@@ -194,4 +194,92 @@ class SemanticCache:
                     n += 1
                     break
         self.save()
+        return n
+
+
+# --------------------------------------------------------------------------- negative cache
+@dataclass
+class NegativeCacheEntry:
+    entry_id: str
+    key_hash: str
+    key_text: str
+    product_area: Optional[str]
+    component: Optional[str]
+    error_strings: list[str]
+    exit_codes: list[int]
+    embedding: list[float]
+    diagnosis: str
+    fix_summary: str
+    failure_reason: str          # why this fix didn't work
+    reply_label: str             # not_resolved / partial / escalated
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    hits: int = 0
+    valid: bool = True
+
+
+class NegativeCache:
+    """Stores known-bad fixes so the same problem + same approach = skip."""
+
+    def __init__(self, embedder: Embedder | None = None,
+                 path: Optional[str | Path] = None, sim_threshold: float = 0.92):
+        self.embedder = embedder or HashingEmbedder()
+        self.sim_threshold = sim_threshold
+        self.path = Path(path) if path else None
+        self.entries: list[NegativeCacheEntry] = []
+        if self.path and self.path.exists():
+            self.entries = [NegativeCacheEntry(**e) for e in json.loads(self.path.read_text())]
+
+    def save(self) -> None:
+        if self.path:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(json.dumps([asdict(e) for e in self.entries]))
+
+    def check(self, sig: ProblemSignature, diagnosis: str) -> Optional[NegativeCacheEntry]:
+        """Return a matching negative entry if same problem + same diagnosis was tried."""
+        live = [e for e in self.entries if e.valid]
+        if not live:
+            return None
+        # gate on metadata first
+        candidates = [e for e in live if SemanticCache.metadata_gate(sig, e)]
+        if not candidates:
+            return None
+        # embed the combo of problem + diagnosis
+        combo = f"{sig.cache_key_text()} ||| {diagnosis}"
+        q = self.embedder.embed([combo])[0]
+        for e in candidates:
+            sim = cosine(q, e.embedding)
+            if sim >= self.sim_threshold:
+                e.hits += 1
+                self.save()
+                return e
+        return None
+
+    def put(self, sig: ProblemSignature, diagnosis: str, fix_summary: str,
+            failure_reason: str, reply_label: str) -> NegativeCacheEntry:
+        combo = f"{sig.cache_key_text()} ||| {diagnosis}"
+        entry = NegativeCacheEntry(
+            entry_id=f"NC-{uuid.uuid4().hex[:10]}",
+            key_hash=hashlib.sha256(combo.encode()).hexdigest()[:20],
+            key_text=combo,
+            product_area=sig.product_area, component=sig.component,
+            error_strings=list(sig.error_strings), exit_codes=list(sig.exit_codes),
+            embedding=self.embedder.embed([combo])[0],
+            diagnosis=diagnosis, fix_summary=fix_summary,
+            failure_reason=failure_reason, reply_label=reply_label)
+        self.entries.append(entry)
+        self.save()
+        return entry
+
+    def invalidate_for_signature(self, sig: ProblemSignature) -> int:
+        """When a fix finally works, invalidate negatives for same problem."""
+        kh = hashlib.sha256(sig.cache_key_text().encode()).hexdigest()[:20]
+        n = 0
+        for e in self.entries:
+            if e.valid and e.key_hash[:20] == kh[:20]:
+                # approximate: same problem prefix
+                if SemanticCache.metadata_gate(sig, e):
+                    e.valid = False
+                    n += 1
+        if n:
+            self.save()
         return n

@@ -12,16 +12,16 @@ import sys
 import uuid
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from langgraph.types import Command  # noqa: E402
 
-from triage.cache import SemanticCache  # noqa: E402
-from triage.graph_integration import build_triage_graph  # noqa: E402
-from triage.llm import get_llm  # noqa: E402
-from triage.oplog import EventLogger  # noqa: E402
+from triage.resolver.cache import SemanticCache  # noqa: E402
+from triage.resolver.graph_integration import build_triage_graph  # noqa: E402
+from triage.resolver.llm import get_llm  # noqa: E402
+from triage.resolver.oplog import EventLogger  # noqa: E402
 from triage.resolver.graph import ResolverDeps  # noqa: E402
-from triage.retrieval.interface import (LexicalRetriever, TieredRetriever, load_kb_jsonl,  # noqa: E402
+from triage.resolver.retrieval import (LexicalRetriever, TieredRetriever, load_kb_jsonl,  # noqa: E402
                                         load_tickets_jsonl)
 
 

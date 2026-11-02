@@ -18,7 +18,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
-from triage.contracts import ProblemSignature, Severity, TriageState
+from triage.resolver.contracts import ProblemSignature, Severity, TriageState
 from triage.resolver.graph import ResolverDeps, build_resolver_graph
 
 PRODUCTS = {"docker-desktop": r"docker desktop|wsl|hyper-v|mac|windows",

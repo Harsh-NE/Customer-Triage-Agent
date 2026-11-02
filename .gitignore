@@ -36,3 +36,6 @@ Thumbs.db
 
 # --- Stray scratch files ---
 char_check.txt
+
+# --- Agent runtime output ---
+logs/agent_events.jsonl

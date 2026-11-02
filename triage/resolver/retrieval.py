@@ -20,7 +20,7 @@ from typing import Any, Callable, Iterable, Optional, Protocol, runtime_checkabl
 
 from rank_bm25 import BM25Okapi
 
-from triage.contracts import Evidence, ProblemSignature, Tier
+from triage.resolver.contracts import Evidence, ProblemSignature, Tier
 
 
 @runtime_checkable
@@ -241,3 +241,68 @@ class TieredRetriever:
             return []
         return backend.retrieve(query, signature, k=k, tier=tier,
                                 exclude_chunk_ids=exclude_chunk_ids)
+
+
+# --------------------------------------------------------------------------- hybrid multi-query
+class HybridRetriever:
+    """Runs multiple queries (from query expansion) against a base retriever,
+    fuses results via reciprocal rank fusion, then re-ranks by best score.
+
+    This implements the poster's 'Hybrid Retrieve + Rerank' layer:
+      1. Query Expansion (done externally via expand_queries)
+      2. BM25 + Semantic Fusion via RRF across multiple query results
+      3. Cross-encoder style reranking (simulated via score fusion)
+    """
+
+    def __init__(self, base: Retriever, rrf_k: int = 60):
+        """
+        base: underlying retriever (LexicalRetriever, TieredRetriever, etc.)
+        rrf_k: RRF constant (default 60, standard value)
+        """
+        self.base = base
+        self.rrf_k = rrf_k
+
+    def retrieve_multi(self, queries: list[str],
+                       signature: Optional[ProblemSignature] = None,
+                       k: int = 10, tier: Tier = "kb",
+                       exclude_chunk_ids: Iterable[str] = ()) -> list[Evidence]:
+        """Run all queries, fuse with RRF, return top-k."""
+        if not queries:
+            return []
+
+        excluded = set(exclude_chunk_ids)
+        # Collect results from each query
+        all_results: dict[str, list[tuple[int, Evidence]]] = {}  # chunk_id -> [(rank, ev)]
+
+        for query in queries:
+            results = self.base.retrieve(query, signature, k=k * 2, tier=tier,
+                                         exclude_chunk_ids=excluded)
+            for rank, ev in enumerate(results):
+                if ev.chunk_id not in all_results:
+                    all_results[ev.chunk_id] = []
+                all_results[ev.chunk_id].append((rank, ev))
+
+        # Reciprocal Rank Fusion
+        fused: list[tuple[float, float, Evidence]] = []
+        for chunk_id, rankings in all_results.items():
+            rrf_score = sum(1.0 / (self.rrf_k + rank + 1) for rank, _ in rankings)
+            best_ev = max(rankings, key=lambda x: x[1].rerank_score)[1]
+            # Combined score: RRF normalized + original rerank score
+            combined = 0.6 * min(rrf_score * self.rrf_k, 1.0) + 0.4 * best_ev.rerank_score
+            fused.append((combined, best_ev.rerank_score, best_ev))
+
+        # Sort by combined score, take top-k
+        fused.sort(key=lambda t: t[0], reverse=True)
+        out = []
+        for combined, _, ev in fused[:k]:
+            ev.rerank_score = round(combined, 4)
+            out.append(ev)
+
+        return _number(out)
+
+    def retrieve(self, query: str, signature: Optional[ProblemSignature] = None,
+                 k: int = 10, tier: Tier = "kb",
+                 exclude_chunk_ids: Iterable[str] = ()) -> list[Evidence]:
+        """Single-query fallback — same interface as Retriever protocol."""
+        return self.base.retrieve(query, signature, k=k, tier=tier,
+                                  exclude_chunk_ids=exclude_chunk_ids)

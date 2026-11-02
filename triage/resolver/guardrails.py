@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-from triage.contracts import EscalationReason, ProblemSignature, Severity
+from triage.resolver.contracts import EscalationReason, ProblemSignature, Severity
 
 INJECTION = re.compile(
     r"(ignore (all |any |the )?(previous|prior|above) (instructions|prompts)|"

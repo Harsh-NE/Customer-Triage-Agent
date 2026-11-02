@@ -10,8 +10,8 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass
 
-from triage.config import GateConfig
-from triage.contracts import Evidence, ProblemSignature
+from triage.resolver.config import GateConfig
+from triage.resolver.contracts import Evidence, ProblemSignature
 
 
 @dataclass

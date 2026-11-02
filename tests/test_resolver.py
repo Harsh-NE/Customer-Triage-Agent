@@ -4,19 +4,19 @@ from pathlib import Path
 import pytest
 from langgraph.types import Command
 
-from triage.cache import SemanticCache
-from triage.config import CacheConfig, GateConfig, ResolverConfig
-from triage.contracts import CacheStatus, Evidence, ProblemSignature, ReplyLabel, Severity
-from triage.escalate import build_payload
-from triage.contracts import EscalationReason
-from triage.graph_integration import build_triage_graph
-from triage.guardrails import check_input, hard_escalation, mask_pii
-from triage.llm import FakeLLM
-from triage.oplog import EventLogger
+from triage.resolver.cache import SemanticCache
+from triage.resolver.config import CacheConfig, GateConfig, ResolverConfig
+from triage.resolver.contracts import CacheStatus, Evidence, ProblemSignature, ReplyLabel, Severity
+from triage.resolver.escalate import build_payload
+from triage.resolver.contracts import EscalationReason
+from triage.resolver.graph_integration import build_triage_graph
+from triage.resolver.guardrails import check_input, hard_escalation, mask_pii
+from triage.resolver.llm import FakeLLM
+from triage.resolver.oplog import EventLogger
 from triage.resolver.gate import assess
 from triage.resolver.graph import ResolverDeps, build_resolver_app, to_triage_record
 from triage.resolver.steps import classify_reply, verify_draft
-from triage.retrieval.interface import (LexicalRetriever, PhaseAAdapter, Retriever, TieredRetriever,
+from triage.resolver.retrieval import (LexicalRetriever, PhaseAAdapter, Retriever, TieredRetriever,
                                         load_kb_jsonl, load_tickets_jsonl)
 
 FX = Path(__file__).resolve().parents[1] / "fixtures"

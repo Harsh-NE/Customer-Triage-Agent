@@ -18,9 +18,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from triage.cache import Embedder, HashingEmbedder, SemanticCache
-from triage.config import CacheConfig
-from triage.contracts import CacheStatus, ProblemSignature
+from triage.resolver.cache import Embedder, HashingEmbedder, SemanticCache
+from triage.resolver.config import CacheConfig
+from triage.resolver.contracts import CacheStatus, ProblemSignature
 
 
 def _sim_and_gate(pair: dict[str, Any], embedder: Embedder) -> tuple[float, bool]:
@@ -69,7 +69,7 @@ def main() -> None:
     a = ap.parse_args()
     emb: Embedder = HashingEmbedder()
     if a.embedder.startswith("st:"):
-        from triage.cache import SentenceTransformerEmbedder
+        from triage.resolver.cache import SentenceTransformerEmbedder
         emb = SentenceTransformerEmbedder(a.embedder[3:])
     pairs = [json.loads(l) for l in Path(a.pairs).read_text().splitlines() if l.strip()]
     rep = calibrate(pairs, emb, a.max_false_hit)

@@ -30,17 +30,21 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
-from triage.cache import SemanticCache
-from triage.config import ResolverConfig
-from triage.contracts import (CacheStatus, EscalationReason, Evidence, GateDecision, Outcome,
+from triage.resolver.cache import NegativeCache, SemanticCache
+from triage.resolver.feedback import ABMetrics, FeedbackCollector, TraceLogger
+from triage.resolver.config import ResolverConfig
+from triage.resolver.contracts import (CacheStatus, EscalationReason, Evidence, GateDecision, Outcome,
                               ProblemSignature, ReplyLabel, TriageRecord, TriageState)
-from triage.escalate import build_payload, customer_message
-from triage.guardrails import check_input, hard_escalation
-from triage.llm import LLM, FakeLLM
-from triage.oplog import NULL_LOGGER, EventLogger, estimate_cost
+from triage.resolver.escalate import build_payload, customer_message
+from triage.resolver.sentiment import SentimentState, should_early_escalate, update_sentiment
+from triage.resolver.guardrails import check_input, hard_escalation
+from triage.resolver.llm import LLM, FakeLLM
+from triage.resolver.oplog import NULL_LOGGER, EventLogger, estimate_cost
 from triage.resolver.gate import assess
-from triage.resolver.steps import classify_reply, draft_resolution, render_message, verify_draft
-from triage.retrieval.interface import Retriever
+from triage.resolver.steps import (classify_reply, draft_resolution, expand_queries,
+                                    multi_draft_resolution, render_message, select_best_draft,
+                                    summarize_fix_history, verify_draft)
+from triage.resolver.retrieval import HybridRetriever, Retriever
 
 
 @dataclass
@@ -48,6 +52,10 @@ class ResolverDeps:
     retriever: Retriever
     llm: LLM = field(default_factory=FakeLLM)
     cache: Optional[SemanticCache] = None
+    negative_cache: Optional[NegativeCache] = None
+    feedback: Optional[FeedbackCollector] = None
+    tracer: Optional[TraceLogger] = None
+    ab_metrics: Optional[ABMetrics] = None
     logger: EventLogger = NULL_LOGGER
     cfg: ResolverConfig = field(default_factory=ResolverConfig)
 
@@ -98,6 +106,10 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
             return "escalate"
         if state.get("gate_decision") == GateDecision.CLARIFY.value:
             return "to_clarifier"
+        # Start trace for this ticket
+        if deps.tracer is not None:
+            deps.tracer.start(state.get("ticket_id", "unknown"))
+            deps.tracer.add_span(state.get("ticket_id", "unknown"), "guard")
         return "cache_lookup"
 
     def cache_lookup(state: TriageState) -> dict[str, Any]:
@@ -126,9 +138,15 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
 
     def retrieve(state: TriageState) -> dict[str, Any]:
         sig, tier = _sig(state), state.get("tier") or "kb"
+        excluded = state.get("tried_evidence_ids") or []
         with log.timed("retrieval", ticket_id=state.get("ticket_id"), tier=tier) as ev:
-            results = deps.retriever.retrieve(sig.raw_query, sig, k=cfg.k, tier=tier,
-                                              exclude_chunk_ids=state.get("tried_evidence_ids") or [])
+            # Query expansion: LLM rewrites signature into 2-3 search queries
+            queries = _llm_logged("expand_queries", state, expand_queries, deps.llm, sig)
+            ev["queries"] = queries
+            # Hybrid retrieve: run all queries, fuse via RRF
+            hybrid = HybridRetriever(deps.retriever)
+            results = hybrid.retrieve_multi(queries, sig, k=cfg.k, tier=tier,
+                                            exclude_chunk_ids=excluded)
             ev["n"] = len(results)
             ev["top_score"] = results[0].rerank_score if results else None
         return {"evidence": [e.to_dict() for e in results]}
@@ -160,10 +178,32 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
 
     def draft(state: TriageState) -> dict[str, Any]:
         sig, evs = _sig(state), _evs(state)
-        tried = [s["text"] for a in state.get("attempts") or [] for s in a.get("steps", [])]
-        last_reply = (state.get("attempts") or [{}])[-1].get("customer_reply")
-        d = _llm_logged("draft", state, draft_resolution, deps.llm, sig, evs, tried, last_reply)
-        return {"draft": d}
+        attempts = state.get("attempts") or []
+        # Smart retry: summarize what each fix revealed instead of flat list
+        if attempts:
+            tried = [summarize_fix_history(attempts)]
+        # Negative cache: filter out known-bad diagnoses
+        neg_skipped = []
+        if deps.negative_cache is not None:
+            sig = _sig(state)
+            for ev in evidence:
+                diag = ev.text[:200] if hasattr(ev, "text") else ""
+                hit = deps.negative_cache.check(sig, diag)
+                if hit:
+                    neg_skipped.append(hit.entry_id)
+            if neg_skipped:
+                log.log("neg_cache_skip", ticket_id=state.get("ticket_id"),
+                        skipped=len(neg_skipped))
+        else:
+            tried = []
+        last_reply = (attempts or [{}])[-1].get("customer_reply")
+        # Multi-draft: generate 3 drafts, pick the one with the best verify pass rate
+        drafts = _llm_logged("multi_draft", state, multi_draft_resolution,
+                             deps.llm, sig, evs, tried, last_reply, cfg.n_drafts)
+        best, best_verify = select_best_draft(drafts, evs)
+        log.log("multi_draft", ticket_id=state.get("ticket_id"),
+                n_drafts=len(drafts), best_pass_rate=len(best_verify.steps) / max(len(best.get("steps", [])), 1))
+        return {"draft": best}
 
     def verify(state: TriageState) -> dict[str, Any]:
         evs = _evs(state)
@@ -218,7 +258,14 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
         if attempts and attempts[-1].get("customer_reply") is None:
             attempts[-1]["customer_reply"] = reply
             attempts[-1]["reply_label"] = label.value
-        return {"reply_label": label.value, "attempts": attempts}
+        # Sentiment tracking
+        sentiment = update_sentiment(
+            SentimentState.from_dict(state.get("sentiment")), reply)
+        log.log("sentiment", ticket_id=state.get("ticket_id"),
+                turn_score=sentiment.scores[-1] if sentiment.scores else 0,
+                current=sentiment.current)
+        return {"reply_label": label.value, "attempts": attempts,
+                "sentiment": sentiment.to_dict()}
 
     def route_classify(state: TriageState) -> str:
         label = state.get("reply_label")
@@ -228,11 +275,38 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
             return "to_clarifier"
         if label == ReplyLabel.OFF_TOPIC.value:
             return "nudge" if state.get("off_topic_count", 0) < 1 else "escalate_off_topic"
-        if len(state.get("attempts") or []) < cfg.max_attempts:
+        # Partial: some steps worked, re-draft only the failed ones
+        if label == ReplyLabel.PARTIAL.value:
+            n_attempts = len(state.get("attempts") or [])
+            if n_attempts < cfg.max_attempts:
+                return "prepare_partial_retry"
+            return "escalate_retry"
+        # Sentiment-gated early escalation
+        sentiment = SentimentState.from_dict(state.get("sentiment"))
+        n_attempts = len(state.get("attempts") or [])
+        if should_early_escalate(sentiment, n_attempts):
+            log.log("sentiment_escalation", ticket_id=state.get("ticket_id"),
+                    frustration=sentiment.current, attempts=n_attempts)
+            return "escalate_retry"
+        if n_attempts < cfg.max_attempts:
             return "prepare_retry"
         return "escalate_retry"
 
     def prepare_retry(state: TriageState) -> dict[str, Any]:
+        # Write negative cache entry for the failed attempt
+        if deps.negative_cache is not None:
+            last = (state.get("attempts") or [{}])[-1]
+            deps.negative_cache.put(
+                _sig(state),
+                diagnosis=last.get("diagnosis", ""),
+                fix_summary=last.get("fix_snippet", ""),
+                failure_reason=last.get("customer_reply", "not resolved"),
+                reply_label=last.get("reply_label", "not_resolved"))
+        return {"tier": "kb", "draft": None, "gate_decision": ""}
+
+    def prepare_partial_retry(state: TriageState) -> dict[str, Any]:
+        """For partial success: keep working steps, re-draft only failed ones."""
+        log.log("partial_retry", ticket_id=state.get("ticket_id"))
         return {"tier": "kb", "draft": None, "gate_decision": ""}
 
     def nudge(state: TriageState) -> dict[str, Any]:
@@ -243,6 +317,7 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
                 "off_topic_count": state.get("off_topic_count", 0) + 1}
 
     def set_reason(reason: EscalationReason):
+        """NOTE: trace finalization added below in the returned closure."""
         def _node(state: TriageState) -> dict[str, Any]:
             return {"escalation_reason": reason.value}
         return _node
@@ -254,6 +329,23 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
             cited = set(last.get("evidence_ids") or [])
             evidence = [e for e in state.get("evidence") or [] if e["evidence_id"] in cited]
             deps.cache.put(_sig(state), state.get("draft") or {}, evidence, confirmed_by="customer")
+            # Invalidate negative cache entries for this now-resolved problem
+            if deps.negative_cache is not None:
+                deps.negative_cache.invalidate_for_signature(_sig(state))
+        # Trace: finalize
+        if deps.tracer is not None:
+            deps.tracer.finalize(
+                state.get("ticket_id", "unknown"), outcome="resolved",
+                cache_status=state.get("cache_status", ""),
+                evidence_count=len(state.get("evidence") or []),
+                attempts=len(state.get("attempts") or []))
+        # A/B metrics
+        if deps.ab_metrics is not None:
+            deps.ab_metrics.record(
+                ticket_id=state.get("ticket_id", "unknown"),
+                resolved=True,
+                attempts=len(state.get("attempts") or []),
+                latency_ms=0.0)  # filled by caller if needed
         msg = "Glad that fixed it. I've recorded the solution so similar issues get resolved faster."
         transcript = list(state.get("transcript") or []) + [{"role": "assistant", "content": msg}]
         log.log("outcome", ticket_id=state.get("ticket_id"), outcome="resolved",
@@ -282,7 +374,8 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
     for name, fn in [("guard", guard), ("cache_lookup", cache_lookup), ("retrieve", retrieve),
                      ("gate", gate), ("draft", draft), ("verify", verify), ("send", send),
                      ("await_reply", await_reply), ("classify", classify),
-                     ("prepare_retry", prepare_retry), ("nudge", nudge),
+                     ("prepare_retry", prepare_retry), ("prepare_partial_retry", prepare_partial_retry),
+                     ("nudge", nudge),
                      ("escalate_retry", set_reason(EscalationReason.RETRY_EXHAUSTED)),
                      ("escalate_off_topic", set_reason(EscalationReason.OUT_OF_SCOPE)),
                      ("close_resolved", close_resolved), ("to_clarifier", to_clarifier),
@@ -300,8 +393,9 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
     g.add_edge("await_reply", "classify")
     g.add_conditional_edges("classify", route_classify,
                             ["close_resolved", "to_clarifier", "nudge", "escalate_off_topic",
-                             "prepare_retry", "escalate_retry"])
+                             "prepare_retry", "prepare_partial_retry", "escalate_retry"])
     g.add_edge("prepare_retry", "retrieve")
+    g.add_edge("prepare_partial_retry", "retrieve")
     g.add_edge("nudge", "await_reply")
     g.add_edge("escalate_retry", "escalate")
     g.add_edge("escalate_off_topic", "escalate")

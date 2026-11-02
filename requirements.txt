@@ -7,6 +7,9 @@ sentence-transformers==6.0.0
 # Clarifier.build_graph() needs the package.
 langgraph>=1.0.0
 
+# Integrated agent UI: streamlit run app.py
+streamlit>=1.40
+
 # Tests: python -m pytest   (add `-m real_store` to run only the tests that use the real Docker store)
 pytest>=8.0.0
 
@@ -14,3 +17,7 @@ pytest>=8.0.0
 google-genai>=1.0.0
 # anthropic>=0.40.0
 # openai>=2.0.0
+
+# OCR for screenshot attachment feature
+Pillow>=10.0
+pytesseract>=0.3.10

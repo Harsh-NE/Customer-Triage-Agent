@@ -107,10 +107,10 @@ def metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def main() -> None:
-    from triage.cache import SemanticCache
-    from triage.llm import get_llm
-    from triage.oplog import EventLogger
-    from triage.retrieval.interface import (LexicalRetriever, TieredRetriever, load_kb_jsonl,
+    from triage.resolver.cache import SemanticCache
+    from triage.resolver.llm import get_llm
+    from triage.resolver.oplog import EventLogger
+    from triage.resolver.retrieval import (LexicalRetriever, TieredRetriever, load_kb_jsonl,
                                             load_tickets_jsonl)
     ap = argparse.ArgumentParser()
     ap.add_argument("--cases", default="fixtures/eval_cases.jsonl")

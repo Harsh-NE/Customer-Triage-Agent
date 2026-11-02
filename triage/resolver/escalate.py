@@ -9,8 +9,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from triage.contracts import EscalationReason
-from triage.guardrails import mask_pii
+from triage.resolver.contracts import EscalationReason
+from triage.resolver.guardrails import mask_pii
 
 PRIORITY = {
     EscalationReason.SECURITY_OR_DATA_LOSS: "P1",
