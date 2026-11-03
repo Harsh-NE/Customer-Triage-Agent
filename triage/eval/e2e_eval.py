@@ -69,14 +69,17 @@ def is_gold_row(row: dict, gold: dict) -> bool:
             and gold["issue_contains"].lower() in row["issue"].lower())
 
 
-def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_messages: int = 14) -> dict:
+def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_messages: int = 14, customer_seed: int | None = None) -> dict:
     first_input = len(rec.gate_inputs)
     rec.exclude = {s.hidden["source_ticket_id"]} if s.hidden.get("source_ticket_id") else set()
-    tid = f"E2E-{s.id}"
+    tid = f"E2E-{s.id}" + (f"-r{customer_seed}" if customer_seed is not None else "")
     cfg = {"configurable": {"thread_id": tid}}
-    customer = RuleBasedCustomer(s)
+    customer = RuleBasedCustomer(s, seed=customer_seed)
+    t0 = time.time()
     out = app.invoke({"ticket_id": tid, "customer_message": customer.opening(), "transcript": []}, cfg)
+    first_reply_s = round(time.time() - t0, 2)
     sent: list[dict] = []
+    asked: list[dict] = []
     questions = 0
     for _ in range(max_messages):
         if "__interrupt__" not in out:
@@ -85,6 +88,7 @@ def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_me
         if v["type"] == "clarifier_question":
             questions += 1
             reply = customer.reply(v["message"])
+            asked.append({"message": v["message"], "reply": reply})
         else:
             tier, evidence = rec.calls[-1] if rec.calls else ("kb", [])
             cited = sorted({i for grp in _CITED.findall(v["message"]) for i in grp.split(", ")})
@@ -101,11 +105,12 @@ def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_me
     gate_inputs = [{**g, "evidence": [{**e, "gold": bool(s.gold) and is_gold_row(e, s.gold)} for e in g["evidence"]]}
                    for g in rec.gate_inputs[first_input:]]
     outcome = st.get("outcome") or ("in_progress" if "__interrupt__" in out else "unknown")
-    return {"id": s.id, "opening": s.opening, "has_gold": bool(s.gold), "oos": bool(s.oos), "kb_gap": s.note.startswith("kb_gap"), "outcome": outcome,
+    return {"id": s.id, "opening": s.opening, "vagueness": s.vagueness, "opening_facts": s.opening_facts, "has_gold": bool(s.gold), "oos": bool(s.oos), "kb_gap": s.note.startswith("kb_gap"), "outcome": outcome,
             "escalation_reason": st.get("escalation_reason"), "questions": questions, "fixes_sent": sent,
             "first_gold": bool(sent and sent[0]["gold"]), "resolved_gold": outcome == "resolved" and any(f["gold"] for f in sent),
             "clarifier": (st.get("signature") or {}).get("clarifier", {}), "clarify_returns": st.get("clarify_returns", 0),
-            "gate_inputs": gate_inputs, "gate_final": st.get("gate_detail"), "confidence": st.get("confidence")}
+            "gate_inputs": gate_inputs, "gate_final": st.get("gate_detail"), "confidence": st.get("confidence"),
+            "asked": asked, "first_reply_s": first_reply_s, "total_s": round(time.time() - t0, 2)}
 
 
 def llm_usage(events: Path, offset: int) -> dict:
