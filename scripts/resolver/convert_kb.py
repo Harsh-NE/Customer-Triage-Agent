@@ -1,11 +1,11 @@
 """Convert your processed Docker KB into the JSONL the Resolver loads.
 
 Step 1 — look at your file (prints the fields of the first record):
-    python scripts/convert_kb.py --input path/to/chunks.jsonl --inspect
+    python scripts/resolver/convert_kb.py --input path/to/chunks.jsonl --inspect
 
 Step 2 — convert (auto-detects common field names; override with --map):
-    python scripts/convert_kb.py --input path/to/chunks.jsonl --output data/kb_docker.jsonl
-    python scripts/convert_kb.py --input chunks.jsonl --output data/kb_docker.jsonl \
+    python scripts/resolver/convert_kb.py --input path/to/chunks.jsonl --output data/kb_docker.jsonl
+    python scripts/resolver/convert_kb.py --input chunks.jsonl --output data/kb_docker.jsonl \
         --map text=chunk_text chunk_id=id doc_id=source_path url=source_url
 
 Accepts .jsonl, .json (a list of records) and .csv. Also writes

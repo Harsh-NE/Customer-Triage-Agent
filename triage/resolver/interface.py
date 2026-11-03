@@ -241,3 +241,30 @@ class TieredRetriever:
             return []
         return backend.retrieve(query, signature, k=k, tier=tier,
                                 exclude_chunk_ids=exclude_chunk_ids)
+
+
+class HybridRetriever:
+    """Several phrasings of one problem against a base retriever, fused by reciprocal rank (opt-in: ResolverConfig.expand_queries).
+
+    A chunk found by more than one phrasing ranks higher. The evidence keeps the base retriever's own rerank_score (the best it got
+    for any phrasing): the confidence gate's thresholds were calibrated on that scale, and rescaling it would silently move them."""
+
+    def __init__(self, base: Retriever, rrf_k: int = 60) -> None:
+        self.base, self.rrf_k = base, rrf_k
+
+    def retrieve_multi(self, queries: list[str], signature: Optional[ProblemSignature] = None, k: int = 10, tier: Tier = "kb",
+                       exclude_chunk_ids: Iterable[str] = ()) -> list[Evidence]:
+        excluded = list(exclude_chunk_ids)
+        fused: dict[str, float] = {}
+        best: dict[str, Evidence] = {}
+        for query in dict.fromkeys(q for q in queries if q.strip()):
+            for rank, ev in enumerate(self.base.retrieve(query, signature, k=k * 2, tier=tier, exclude_chunk_ids=excluded)):
+                fused[ev.chunk_id] = fused.get(ev.chunk_id, 0.0) + 1.0 / (self.rrf_k + rank + 1)
+                if ev.chunk_id not in best or ev.rerank_score > best[ev.chunk_id].rerank_score:
+                    best[ev.chunk_id] = ev
+        order = sorted(fused, key=lambda c: (-fused[c], -best[c].rerank_score))
+        return _number([best[c] for c in order[:k]])
+
+    def retrieve(self, query: str, signature: Optional[ProblemSignature] = None, k: int = 10, tier: Tier = "kb",
+                 exclude_chunk_ids: Iterable[str] = ()) -> list[Evidence]:
+        return self.base.retrieve(query, signature, k=k, tier=tier, exclude_chunk_ids=exclude_chunk_ids)

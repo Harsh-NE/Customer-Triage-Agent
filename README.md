@@ -167,3 +167,23 @@ Tier 1 data, hybrid retrieval, memory/cache, and the Resolver. The contract betw
 
 No live LLM run (the end-to-end numbers use an offline FakeLLM); Resolver gate/cache thresholds are uncalibrated starting guesses; no router; ticket retrieval quality is unmeasured; no cross-encoder rerank; the dense index embeds chunk text without its heading; the pre-pivot
 slide deck is out of date; the new scripts, tests and docs are not yet committed.
+
+## Integrated agent (Clarifier + Resolver) and UI
+
+Both agents now live in one package: the Clarifier in `triage/`, the Resolver in `triage/resolver/`
+(formerly `resolver_track/`; its notes are in `docs/RESOLVER.md`). `triage/agent.py` wires them into one
+LangGraph: the Clarifier interviews the customer, hands a signature to the Resolver, and the Resolver can
+send the ticket back to the Clarifier for more information.
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py          # chat UI with an agent-trace sidebar
+python -m triage.agent        # same flow in the terminal
+python -m pytest -q           # includes tests/test_agent.py (end-to-end, offline)
+```
+
+Offline mode (default) uses heuristic extraction and the FakeLLM, so it costs nothing. "LLM from .env"
+uses `LLM_PROVIDER` / `LLM_MODEL` for both agents. Both agents read the same KB file
+(`data/kb_docker.jsonl`, or `fixtures/kb_mini.jsonl` for a guaranteed resolve path). The Clarifier uses a
+lexical retriever over it. Swap in `HybridKBRetriever` once the real Chroma store is built.
+

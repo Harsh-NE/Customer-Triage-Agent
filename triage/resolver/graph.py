@@ -30,17 +30,19 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
-from triage.resolver.cache import SemanticCache
+from triage.resolver.cache import NegativeCache, SemanticCache
 from triage.resolver.config import ResolverConfig
 from triage.resolver.contracts import (CacheStatus, EscalationReason, Evidence, GateDecision, Outcome,
                               ProblemSignature, ReplyLabel, TriageRecord, TriageState)
 from triage.resolver.escalate import build_payload, customer_message
+from triage.resolver.sentiment import SentimentState, should_early_escalate, update_sentiment
 from triage.resolver.guardrails import check_input, hard_escalation
 from triage.resolver.llm import LLM, FakeLLM
 from triage.resolver.oplog import NULL_LOGGER, EventLogger, estimate_cost
 from triage.resolver.gate import assess
-from triage.resolver.steps import BUTTON_REPLY_LABELS, classify_reply, draft_resolution, render_message, verify_draft
-from triage.resolver.interface import Retriever
+from triage.resolver.steps import (BUTTON_REPLY_LABELS, classify_reply, draft_resolution, expand_queries, multi_draft_resolution,
+                                   render_message, select_best_draft, summarize_fix_history, verify_draft)
+from triage.resolver.interface import HybridRetriever, Retriever
 
 
 @dataclass
@@ -48,6 +50,7 @@ class ResolverDeps:
     retriever: Retriever
     llm: LLM = field(default_factory=FakeLLM)
     cache: Optional[SemanticCache] = None
+    negative_cache: Optional[NegativeCache] = None    # fixes that failed for the same problem, so they are not offered again
     logger: EventLogger = NULL_LOGGER
     cfg: ResolverConfig = field(default_factory=ResolverConfig)
     ontology: Optional[Any] = None       # triage.ontology.Ontology: used only for the optional definitions-only background
@@ -146,9 +149,14 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
 
     def retrieve(state: TriageState) -> dict[str, Any]:
         sig, tier = _sig(state), state.get("tier") or "kb"
+        excluded = state.get("tried_evidence_ids") or []
         with log.timed("retrieval", ticket_id=state.get("ticket_id"), tier=tier) as ev:
-            results = deps.retriever.retrieve(sig.raw_query, sig, k=cfg.k, tier=tier,
-                                              exclude_chunk_ids=state.get("tried_evidence_ids") or [])
+            if cfg.expand_queries:         # several phrasings of the problem, fused by rank (off by default: one more model call)
+                queries = _llm_logged("expand_queries", state, expand_queries, deps.llm, sig)
+                ev["queries"] = queries
+                results = HybridRetriever(deps.retriever).retrieve_multi(queries, sig, k=cfg.k, tier=tier, exclude_chunk_ids=excluded)
+            else:
+                results = deps.retriever.retrieve(sig.raw_query, sig, k=cfg.k, tier=tier, exclude_chunk_ids=excluded)
             ev["n"] = len(results)
             ev["top_score"] = results[0].rerank_score if results else None
         return {"evidence": [e.to_dict() for e in results]}
@@ -181,17 +189,33 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
     def draft(state: TriageState) -> dict[str, Any]:
         sig, evs = _sig(state), _evs(state)
         # A fix whose reply was only NEW INFORMATION was never judged by the customer, so it is not "already tried".
-        tried = [s["text"] for a in state.get("attempts") or [] if a.get("reply_label") != ReplyLabel.NEW_INFO.value
-                 for s in a.get("steps", [])]
+        judged = [a for a in state.get("attempts") or [] if a.get("reply_label") != ReplyLabel.NEW_INFO.value]
+        tried = [summarize_fix_history(judged)] if judged else []       # what each failed fix revealed, not just its steps
         last_reply = (state.get("attempts") or [{}])[-1].get("customer_reply")
         background = (deps.ontology.background(f"{sig.raw_query} {sig.symptom or ''}")
                       if deps.ontology is not None and cfg.use_background else None)
-        d = _llm_logged("draft", state, draft_resolution, deps.llm, sig, evs, tried, last_reply, background)
+
+        def make(extra_tried: list[str]) -> dict[str, Any]:
+            if cfg.multi_draft:
+                drafts = _llm_logged("multi_draft", state, multi_draft_resolution, deps.llm, sig, evs, tried + extra_tried, last_reply,
+                                     cfg.n_drafts, background)
+                best, v = select_best_draft(drafts, evs)
+                log.log("multi_draft", ticket_id=state.get("ticket_id"), n_drafts=len(drafts),
+                        best_pass_rate=round(len(v.steps) / max(len(best.get("steps", [])), 1), 2))
+                return best
+            return _llm_logged("draft", state, draft_resolution, deps.llm, sig, evs, tried + extra_tried, last_reply, background)
+
+        d = make([])
+        if deps.negative_cache is not None and d.get("diagnosis"):
+            known_bad = deps.negative_cache.check(sig, d["diagnosis"])
+            if known_bad is not None:       # this diagnosis failed for the same problem before: say so and draft once more
+                log.log("neg_cache_hit", ticket_id=state.get("ticket_id"), entry=known_bad.entry_id)
+                d = make([f"Failed for an earlier customer with the same problem ({known_bad.diagnosis}): {known_bad.fix_summary}"])
         return {"draft": d}
 
     def verify(state: TriageState) -> dict[str, Any]:
         evs = _evs(state)
-        v = verify_draft(state.get("draft") or {}, evs)
+        v = verify_draft(state.get("draft") or {}, evs, check_urls=cfg.check_urls)
         log.log("verify", ticket_id=state.get("ticket_id"), ok=v.ok, kept=len(v.steps),
                 dropped=v.dropped)
         d = dict(state.get("draft") or {})
@@ -256,7 +280,9 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
         if attempts and attempts[-1].get("customer_reply") is None:
             attempts[-1]["customer_reply"] = reply
             attempts[-1]["reply_label"] = label.value
-        return {"reply_label": label.value, "attempts": attempts}
+        sentiment = update_sentiment(SentimentState.from_dict(state.get("sentiment")), reply)
+        log.log("sentiment", ticket_id=state.get("ticket_id"), turn_score=sentiment.scores[-1], current=round(sentiment.current, 3))
+        return {"reply_label": label.value, "attempts": attempts, "sentiment": sentiment.to_dict()}
 
     def route_classify(state: TriageState) -> str:
         label = state.get("reply_label")
@@ -266,11 +292,26 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
             return "to_clarifier"
         if label == ReplyLabel.OFF_TOPIC.value:
             return "nudge" if state.get("off_topic_count", 0) < 1 else "escalate_off_topic"
-        if len(state.get("attempts") or []) < cfg.max_attempts:
+        n_attempts = len(state.get("attempts") or [])
+        if cfg.sentiment_escalation and should_early_escalate(SentimentState.from_dict(state.get("sentiment")), n_attempts,
+                                                              threshold=cfg.sentiment_threshold):
+            log.log("sentiment_escalation", ticket_id=state.get("ticket_id"), attempts=n_attempts,
+                    frustration=(state.get("sentiment") or {}).get("current"))
+            return "escalate_retry"
+        if n_attempts < cfg.max_attempts:
             return "prepare_retry"
         return "escalate_retry"
 
     def prepare_retry(state: TriageState) -> dict[str, Any]:
+        # Remember the fix that failed so the same diagnosis is not offered again to the next customer with this problem.
+        # A PARTIAL fix did part of the job: it goes into the attempt history for the next draft, not into the negative cache.
+        last = (state.get("attempts") or [{}])[-1]
+        if deps.negative_cache is not None and last.get("diagnosis") and last.get("reply_label") == ReplyLabel.NOT_FIXED.value:
+            deps.negative_cache.put(_sig(state), diagnosis=last["diagnosis"],
+                                    fix_summary=" / ".join(s.get("text", "")[:80] for s in last.get("steps", [])[:2]),
+                                    failure_reason=str(last.get("customer_reply") or "not resolved")[:200], reply_label="not_fixed")
+        if last.get("reply_label") == ReplyLabel.PARTIAL.value:
+            log.log("partial_retry", ticket_id=state.get("ticket_id"))
         return {"tier": "kb", "draft": None, "gate_decision": ""}
 
     def nudge(state: TriageState) -> dict[str, Any]:
@@ -292,6 +333,8 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
             cited = set(last.get("evidence_ids") or [])
             evidence = [e for e in state.get("evidence") or [] if e["evidence_id"] in cited]
             deps.cache.put(_sig(state), state.get("draft") or {}, evidence, confirmed_by="customer")
+        if deps.negative_cache is not None:
+            deps.negative_cache.invalidate_for_signature(_sig(state))
         msg = "Glad that fixed it. I've recorded the solution so similar issues get resolved faster."
         transcript = list(state.get("transcript") or []) + [{"role": "assistant", "content": msg}]
         log.log("outcome", ticket_id=state.get("ticket_id"), outcome="resolved",

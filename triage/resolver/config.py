@@ -39,6 +39,14 @@ class ResolverConfig:
     use_ticket_fallback: bool = True
     use_background: bool = False       # give the drafting model one-line ontology definitions of the names the customer used
                                        # (background only: not evidence, never citable). Off until measured with a real model.
+    # Opt-in Resolver features (from the resolver track). Each costs extra model calls, which are 10-30 s each on a hosted model,
+    # so they stay off until an A/B run shows they pay for themselves.
+    multi_draft: bool = False          # draft n_drafts times and keep the draft with the most steps that survive verification
+    n_drafts: int = 3
+    expand_queries: bool = False       # a model rewrites the problem into 2-3 search queries; results are fused (HybridRetriever)
+    check_urls: bool = False           # HEAD-request every URL a step cites (a network call per link)
+    sentiment_escalation: bool = True  # hand over to a person when the customer's replies show clear frustration after a failed fix
+    sentiment_threshold: float = 0.55
     gate: GateConfig = field(default_factory=GateConfig)
     cache: CacheConfig = field(default_factory=CacheConfig)
 

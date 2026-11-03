@@ -38,6 +38,7 @@ class GateDecision(str, Enum):
 class ReplyLabel(str, Enum):
     RESOLVED = "resolved"
     NOT_FIXED = "not_fixed"
+    PARTIAL = "partial"          # some steps worked, others didn't
     NEW_INFO = "new_info"        # customer added facts -> Clarifier should re-normalise
     OFF_TOPIC = "off_topic"
 
@@ -47,6 +48,7 @@ class CacheStatus(str, Enum):
     HIT_EXACT = "hit_exact"
     HIT_SEMANTIC = "hit_semantic"          # reuse answer as-is
     HIT_REDRAFT = "hit_redraft"            # reuse evidence, re-draft answer
+    HIT_NEGATIVE = "hit_negative"        # known-bad fix, skip it
     BYPASSED = "bypassed"
 
 
