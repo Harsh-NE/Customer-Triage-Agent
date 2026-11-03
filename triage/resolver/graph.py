@@ -36,7 +36,7 @@ from triage.resolver.contracts import (CacheStatus, EscalationReason, Evidence, 
                               ProblemSignature, ReplyLabel, TriageRecord, TriageState)
 from triage.resolver.escalate import build_payload, customer_message
 from triage.resolver.sentiment import SentimentState, should_early_escalate, update_sentiment
-from triage.resolver.guardrails import check_input, hard_escalation
+from triage.resolver.guardrails import DOMAIN_TERMS, check_input, content_free, hard_escalation
 from triage.resolver.llm import LLM, FakeLLM
 from triage.resolver.oplog import NULL_LOGGER, EventLogger, estimate_cost
 from triage.resolver.gate import assess
@@ -98,10 +98,19 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
             return {"escalation_reason": EscalationReason.OUT_OF_SCOPE.value, "gate_decision": GateDecision.ESCALATE.value,
                     "gate_detail": {"guardrail": "clarifier_out_of_scope"}, "outcome": Outcome.REJECTED.value}
         g = check_input(text, sig)
+        if not g.allowed and g.detail == "out_of_domain" and content_free(text):
+            # Nothing said so far tells what is wrong ("it doesn't work"), which is not the same as "not Docker": a person takes over.
+            log.log("guardrail", ticket_id=state.get("ticket_id"), result="vague_to_human", detail="content_free")
+            return {"escalation_reason": EscalationReason.CLARIFY_LOOP_EXHAUSTED.value, "gate_decision": GateDecision.ESCALATE.value}
         if not g.allowed:
             log.log("guardrail", ticket_id=state.get("ticket_id"), result="blocked", detail=g.detail)
             return {"escalation_reason": g.reason.value, "gate_decision": GateDecision.ESCALATE.value,
                     "gate_detail": {"guardrail": g.detail}, "outcome": Outcome.REJECTED.value}
+        if (sig.clarifier or {}).get("status") == "unresolved" and content_free(text, DOMAIN_TERMS):
+            # The Clarifier gave up and the customer never said what is wrong beyond naming Docker ("I have a problem with docker").
+            # Whatever the retriever ranks first would be a guess; a person takes over instead of the agent drafting one.
+            log.log("guardrail", ticket_id=state.get("ticket_id"), result="vague_to_human", detail="unresolved_and_content_free")
+            return {"escalation_reason": EscalationReason.CLARIFY_LOOP_EXHAUSTED.value, "gate_decision": GateDecision.ESCALATE.value}
         hard = hard_escalation(sig)
         if hard:
             log.log("guardrail", ticket_id=state.get("ticket_id"), result="hard_escalation",
@@ -211,6 +220,8 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
             if known_bad is not None:       # this diagnosis failed for the same problem before: say so and draft once more
                 log.log("neg_cache_hit", ticket_id=state.get("ticket_id"), entry=known_bad.entry_id)
                 d = make([f"Failed for an earlier customer with the same problem ({known_bad.diagnosis}): {known_bad.fix_summary}"])
+        if d.get("retried"):                # the first reply was unusable (not JSON / wrong shape); `malformed` is set when the retry failed too
+            log.log("draft_retry", ticket_id=state.get("ticket_id"), gave_up=bool(d.get("malformed")), malformed=d.get("malformed"))
         return {"draft": d}
 
     def verify(state: TriageState) -> dict[str, Any]:

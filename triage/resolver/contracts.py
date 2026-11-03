@@ -243,4 +243,5 @@ class TriageState(TypedDict, total=False):
     escalation_reason: Optional[str]
     escalation_payload: Optional[dict[str, Any]]
     outcome: str
+    sentiment: Optional[dict[str, Any]]     # running frustration score (triage/resolver/sentiment.py)
     next: str                    # routing hint for the parent graph: "clarifier" | "end"

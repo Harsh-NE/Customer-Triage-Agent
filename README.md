@@ -13,7 +13,7 @@ instead of guessing) and **soft signals, never hard filters** (metadata re-weigh
 |---|---|
 | Tier 1 knowledge base (`docker/docs`) — pipeline + vector/BM25 store | **Built**: 961 docs → 11,440 token-capped chunks (rebuilt 2026-10-07) |
 | Clarifier agent (understanding, differential diagnosis, session memory, reflection, tools) | **Built, verified**: 356 tests, offline evaluation |
-| Hybrid KB retrieval (`triage/hybrid.py`: BM25 + vector + RRF) and ticket retrieval (`TicketRetriever`) | **Built**; the KB one is the Clarifier's default. No cross-encoder rerank; ticket retrieval unmeasured |
+| Hybrid KB retrieval (`triage/hybrid.py`: BM25 + vector + RRF) and ticket retrieval (`TicketRetriever`) | **Built**; the KB one is the Clarifier's default. No cross-encoder rerank in use (an opt-in experiment, `RERANK=`, found no gain: `reports/RERANK_EXPERIMENT.md`); ticket retrieval unmeasured |
 | Resolver (Member B: guard, cache, gate, draft, verify, retry, escalation) merged with the Clarifier into one graph | **Integrated** (`triage/resolver/`, `triage/joint.py`); first end-to-end run with the offline FakeLLM only. See [docs/INTEGRATION.md](docs/INTEGRATION.md) |
 | Docker ontology (lightweight KG: aliases, issues, platforms) on top of RAG | **Built on branch `feature/docker-ontology`**, measured on a same-author eval (upper bound); see [docs/ONTOLOGY.md](docs/ONTOLOGY.md) |
 | Third-party knowledge tier (661 community tutorial / lab chunks, MIT and Apache-2.0) | **Built**, searched only when official evidence is weak, labelled as community material; see [docs/THIRD_PARTY_SOURCES.md](docs/THIRD_PARTY_SOURCES.md) |
@@ -168,22 +168,25 @@ Tier 1 data, hybrid retrieval, memory/cache, and the Resolver. The contract betw
 No live LLM run (the end-to-end numbers use an offline FakeLLM); Resolver gate/cache thresholds are uncalibrated starting guesses; no router; ticket retrieval quality is unmeasured; no cross-encoder rerank; the dense index embeds chunk text without its heading; the pre-pivot
 slide deck is out of date; the new scripts, tests and docs are not yet committed.
 
-## Integrated agent (Clarifier + Resolver) and UI
+## Integrated agent (Clarifier + Resolver), UI and screenshots
 
-Both agents now live in one package: the Clarifier in `triage/`, the Resolver in `triage/resolver/`
-(formerly `resolver_track/`; its notes are in `docs/RESOLVER.md`). `triage/agent.py` wires them into one
-LangGraph: the Clarifier interviews the customer, hands a signature to the Resolver, and the Resolver can
-send the ticket back to the Clarifier for more information.
+Both agents live in one package: the Clarifier in `triage/`, the Resolver in `triage/resolver/` (it started as the resolver track's
+`resolver_track/`; its original notes are in `docs/RESOLVER.md`). `triage/joint.py` wires them into one LangGraph: the Clarifier
+interviews the customer, hands a signature to the Resolver, and the Resolver can send the ticket back for more information. The
+FastAPI backend (`triage/api`) serves it, and the React app (`frontend/`) is the UI.
+
+**Screenshots.** A customer can attach a screenshot of the error (the paperclip button). The server checks the file, reads it with OCR
+(`triage/ocr.py`: Tesseract, or rapidocr-onnxruntime), and shows what it read so the customer can correct it before sending. The agents
+then receive the customer's words plus the screenshot's error lines, exactly as if they had been typed. See `docs/BACKEND.md`.
 
 ```bash
-pip install -r requirements.txt
-streamlit run app.py          # chat UI with an agent-trace sidebar
-python -m triage.agent        # same flow in the terminal
-python -m pytest -q           # includes tests/test_agent.py (end-to-end, offline)
+pip install -r requirements.txt                       # + the Tesseract program for OCR (see requirements.txt)
+uvicorn "triage.api.app:create_app" --factory --port 8000
+cd frontend && npm install && npm run dev             # http://localhost:5173
+python -m pytest -q
 ```
 
-Offline mode (default) uses heuristic extraction and the FakeLLM, so it costs nothing. "LLM from .env"
-uses `LLM_PROVIDER` / `LLM_MODEL` for both agents. Both agents read the same KB file
-(`data/kb_docker.jsonl`, or `fixtures/kb_mini.jsonl` for a guaranteed resolve path). The Clarifier uses a
-lexical retriever over it. Swap in `HybridKBRetriever` once the real Chroma store is built.
-
+Resolver extras taken from the resolver track (all in `triage/resolver/`, switches in `ResolverConfig`): a *partial fix* reply label,
+a negative cache of fixes that failed for the same problem, hand-over to a person when a customer's replies show clear frustration, and
+an attempt-history summary for the next draft. Opt in with `RESOLVER_EXPAND_QUERIES=1`, `RESOLVER_MULTI_DRAFT=1`, `RESOLVER_CHECK_URLS=1`
+(each costs extra model or network calls; none has been measured yet).

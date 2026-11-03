@@ -239,3 +239,61 @@ def test_the_shortcut_needs_a_long_enough_match_a_leader_that_still_leads_and_no
 def test_without_a_pasted_error_nothing_changes():
     hyps = [_h("lead", 0.45, error_message=DOC), _h("other", 0.40)]
     assert not verbatim_error_leader(hyps, [], CFG) and decide(hyps, CFG).ambiguous
+
+
+# ---- quoting the documented error outranks a stray word the leader's text lacks ("... while pulling nginx server") ----
+def _with_missing(h, terms):
+    h.missing_terms = terms
+    return h
+
+
+def test_a_verbatim_documented_error_wins_over_an_uncovered_filler_word():
+    hyps = [_with_missing(_h("lead", 0.556, error_message=DOC), ["server"]), _h("other", 0.155), _h("third", 0.11)]
+    assert decide(hyps, CFG).reason == "uncovered_term" and decide(hyps, CFG).ambiguous         # without the quote the word still triggers a question
+    assert not decide(hyps, CFG, verbatim=True).ambiguous and decide(hyps, CFG, verbatim=True).reason == "clear"
+
+
+def test_the_verbatim_shortcut_still_cannot_override_weak_evidence_or_ungrounded_leaders():
+    weak = _with_missing(_h("lead", 0.6, error_message=DOC), ["server"])
+    weak.best_score = 0.01
+    floor = ClarifierConfig(min_top_score=0.5)                  # the absolute floor is off by default (0.0), so switch it on for this check
+    assert decide([weak, _h("other", 0.1)], floor, verbatim=True).reason == "no_evidence"
+    ungrounded = _with_missing(_h("lead", 0.6, error_message=DOC), ["server"])
+    ungrounded.grounding = 0.0
+    assert decide([ungrounded, _h("other", 0.1)], CFG, verbatim=True).reason == "ungrounded"
+
+
+def test_without_a_verbatim_quote_an_uncovered_word_still_asks_even_with_a_clear_lead():
+    hyps = [_with_missing(_h("lead", 0.7, error_message=DOC), ["server"]), _h("other", 0.1), _h("third", 0.05)]
+    assert decide(hyps, CFG).reason == "uncovered_term" and decide(hyps, CFG).ambiguous
+
+
+# ---- the CLI prints the documented message behind a prefix; a complete quote must still count as verbatim ----
+from triage.differential import documented_error_contained  # noqa: E402
+
+CLI_LINE = "Error response from daemon: toomanyrequests: You have reached your pull rate limit."
+
+
+def test_a_documented_sentence_inside_a_longer_pasted_line_counts_as_contained():
+    assert documented_error_contained(DOC, CLI_LINE, 4) == 1.0
+    assert documented_error_contained(DOC, "You have reached your pull rate limit", 4) == 1.0
+    assert documented_error_contained(DOC, "pull rate limit", 4) < 1.0                          # a fragment of it is not the whole sentence
+    assert documented_error_contained(DOC, "Cannot connect to the Docker daemon", 4) < 0.5
+
+
+def test_a_documented_error_shorter_than_the_minimum_never_counts_as_contained():
+    assert documented_error_contained("Too Many Requests", "Too Many Requests please wait", 4) == 0.0
+    assert documented_error_contained("", CLI_LINE, 4) == 0.0
+
+
+def test_the_cli_prefixed_quote_now_makes_the_leader_verbatim_and_the_overlap_measure_alone_would_not():
+    from triage.answers import overlap_coefficient
+    assert overlap_coefficient(DOC, CLI_LINE) < CFG.verbatim_error_match                       # why it failed before: the prefix dilutes the overlap
+    hyps = [_with_missing(_h("lead", 0.556, error_message=DOC), ["server"]), _h("other", 0.155, error_message="Too Many Requests"), _h("third", 0.11)]
+    assert verbatim_error_leader(hyps, [CLI_LINE], CFG)
+    assert not decide(hyps, CFG, verbatim=True).ambiguous and decide(hyps, CFG, verbatim=True).reason == "clear"
+
+
+def test_a_prefixed_quote_of_the_runner_ups_error_does_not_make_the_leader_verbatim():
+    hyps = [_h("lead", 0.45, error_message=DOC), _h("other", 0.42, error_message="Too many requests were sent from this address in a short time")]
+    assert not verbatim_error_leader(hyps, ["Error from server: Too many requests were sent from this address in a short time"], CFG)

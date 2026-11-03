@@ -16,8 +16,9 @@ better recall. BM25 therefore changes which issues are in the pool, not their we
 Ticket scoring is different: tickets are ranked by us (fused rank x trust x resolution kind x recency x exact matches), so
 the score is a ranking score in (0, 1], not a similarity.
 
-No cross-encoder rerank yet: it is a ~80 MB extra model with an uncalibrated score; add it only if an evaluation shows the
-fused order needs it.
+Cross-encoder rerank: OFF by default. triage/rerank.py is an experiment (RERANK=order|blend) measured by
+`python -m triage.eval.rerank_eval`; it is a ~80 MB extra model that costs about a second per search on a CPU, and its score
+is not on the scale the thresholds were calibrated on, so it stays opt-in until the evaluation justifies it.
 """
 
 from __future__ import annotations
@@ -31,11 +32,22 @@ from pathlib import Path
 
 from triage import config
 from triage.answers import overlap_coefficient
+from triage import rerank as rerank_mod
 from triage.retrieval import BGE_QUERY_INSTRUCTION, ChromaRetriever
 from triage.state import Candidate, TicketHit
 
 _TOKEN = re.compile(r"\w+")
 RRF_K = 60
+KB_FILTERS = ("dedupe", "archive", "notes")      # opt-in clean-ups of what the KB retriever returns (KB_FILTERS=dedupe,archive,notes)
+FILTER_EXTRA = 6                                 # extra candidates fetched so a filter that drops some still leaves top_k
+# wording that suggests the customer is on an OLD Docker, so archived (previous-version) pages are worth showing
+OLD_VERSION_CUES = re.compile(r"(?i)\b(docker[ -]?toolbox|boot2docker|docker[ -]?machine|docker[ -]?compose v?1|legacy|deprecated|"
+                              r"1\.\d{1,2}\.\d|17\.\d{2}|18\.\d{2}|19\.03|old(er)? version|previous version)\b")
+RELEASE_CUES = re.compile(r"(?i)\b(releases?|changelog|changed in|updat(e|ed|ing)|upgrad(e|ed|ing)|new version|bug ?fix(es)?|fixed in|regression)\b")
+
+
+def _norm_text(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip().lower()
 
 
 def tokenize(text: str) -> list[str]:
@@ -83,10 +95,19 @@ class HybridKBRetriever(ChromaRetriever):
     ENTITY_LIST_WEIGHT = 0.5      # shared entities are a supporting signal: half the vote of the dense and keyword rankings
     KNOWN_ISSUE_WEIGHT = 2.0      # a confident match to a curated known issue is as strong as ranking first in BOTH other lists
 
-    def __init__(self, bm25_path: str | None = None, pool: int = 30, ontology=None, ontology_mode: str | None = None, **kwargs) -> None:
+    def __init__(self, bm25_path: str | None = None, pool: int = 30, ontology=None, ontology_mode: str | None = None,
+                 rerank_mode: str | None = None, rerank_pool: int | None = None, rerank_blend: float | None = None, reranker=None,
+                 kb_filters: str | list[str] | None = None, **kwargs) -> None:
         """ontology_mode: off | expand (alias terms added to the BM25 query) | entities (a third ranked list of chunks that share the
-        query's specific entities or belong to a matched known issue, fused by RRF) | both."""
+        query's specific entities or belong to a matched known issue, fused by RRF) | both.
+        rerank_mode: off | order | blend (see triage/rerank.py); None reads RERANK from the environment, default off.
+        kb_filters: names from KB_FILTERS (comma-separated string or list); None reads KB_FILTERS from the environment, default none."""
         super().__init__(**kwargs)
+        self.set_filters(os.environ.get("KB_FILTERS", "") if kb_filters is None else kb_filters)
+        env_mode, env_pool, env_blend = rerank_mod.settings_from_env()
+        self.set_rerank(env_mode if rerank_mode is None else rerank_mode, env_pool if rerank_pool is None else rerank_pool,
+                        env_blend if rerank_blend is None else rerank_blend)
+        self._reranker = reranker
         self._bm25_path = Path(bm25_path or config.PROJECT_ROOT / config.get_env()["BM25_PATH"])
         self._pool = pool
         self._bm25 = None
@@ -105,6 +126,51 @@ class HybridKBRetriever(ChromaRetriever):
     @property
     def ontology(self):
         return self._ontology if self._mode != "off" else None
+
+    def set_filters(self, names) -> None:
+        """dedupe: of chunks with identical text only the best-scored one is returned. archive: previous-version pages are dropped unless the
+        query sounds like an old Docker. notes: release notes are dropped unless the query is about a release, update or fix."""
+        wanted = [n.strip() for n in (names.split(",") if isinstance(names, str) else names) if n and n.strip()]
+        unknown = [n for n in wanted if n not in KB_FILTERS]
+        if unknown:
+            raise ValueError(f"kb filter must be one of {KB_FILTERS}, got {unknown}")
+        self._filters = set(wanted)
+
+    def _apply_filters(self, query: str, hits: list[Candidate]) -> list[Candidate]:
+        out, seen = [], set()
+        for c in hits:                                                             # `hits` arrives best-scored first
+            kind = c.metadata.get("doc_kind")
+            if "archive" in self._filters and kind == "archive" and not OLD_VERSION_CUES.search(query):
+                continue
+            if "notes" in self._filters and kind == "release_notes" and not RELEASE_CUES.search(query):
+                continue
+            if "dedupe" in self._filters:
+                key = _norm_text(c.text)
+                if key in seen:
+                    continue
+                seen.add(key)
+            out.append(c)
+        return out
+
+    def set_rerank(self, mode: str, pool: int | None = None, blend: float | None = None) -> None:
+        """Switch the cross-encoder rerank (used by the experiment to compare variants on one loaded retriever)."""
+        if mode not in rerank_mod.MODES:
+            raise ValueError(f"rerank mode must be one of {rerank_mod.MODES}, got '{mode}'")
+        self._rerank_mode = mode
+        self._rerank_pool = int(pool if pool is not None else getattr(self, "_rerank_pool", rerank_mod.DEFAULT_POOL))
+        self._rerank_blend = float(blend if blend is not None else getattr(self, "_rerank_blend", rerank_mod.DEFAULT_BLEND))
+
+    def _rerank(self, query: str, hits: list[Candidate], top_k: int, fused_top: set[str]) -> list[Candidate]:
+        """The fused candidates re-read by the cross-encoder. Fails open: any problem returns exactly what the rerank-off path returns
+        (the `fused_top` chunks, the caller's top_k by fused rank), not merely the best-scored `top_k` of the wider pool."""
+        try:
+            if self._reranker is None:
+                self._reranker = rerank_mod.CrossEncoderReranker()
+            relevance = self._reranker.relevance(query, [rerank_mod.candidate_text(c) for c in hits])
+            return rerank_mod.rerank_candidates(hits, relevance, self._rerank_mode, self._rerank_blend, top_k)
+        except Exception as exc:  # noqa: BLE001 -- a reranker problem must never cost the customer an answer
+            rerank_mod.log.warning("rerank skipped: %s: %s", type(exc).__name__, exc)
+            return [h for h in hits if h.chunk_id in fused_top]
 
     def entity_index(self):
         """Entities per chunk, built once from the stored chunks (the same matcher tags queries, so nothing needs re-indexing)."""
@@ -154,7 +220,9 @@ class HybridKBRetriever(ChromaRetriever):
                 lists.append(entity_ranked)
                 weights.append(self.ENTITY_LIST_WEIGHT)
 
-        chosen = [cid for cid, _ in sorted(rrf_fuse(lists, weights=weights).items(), key=lambda kv: -kv[1])][:top_k]
+        reading = self._rerank_mode != "off"                   # the cross-encoder re-reads a wider pool than the caller asked for
+        n_take = (max(top_k, self._rerank_pool) if reading else top_k) + (FILTER_EXTRA if self._filters else 0)
+        chosen = [cid for cid, _ in sorted(rrf_fuse(lists, weights=weights).items(), key=lambda kv: -kv[1])][:n_take]
 
         lexical_only = [cid for cid in chosen if cid not in by_id]       # found by BM25 / the ontology but not by dense search
         if lexical_only:
@@ -163,6 +231,11 @@ class HybridKBRetriever(ChromaRetriever):
                 by_id[cid] = self._to_candidate(cid, doc, meta, 1.0 / (1.0 + _sq_distance(q_emb, emb)))
 
         hits = sorted((by_id[cid] for cid in chosen), key=lambda c: -c.score)
+        if self._filters:
+            hits = self._apply_filters(query, hits)
+            kept = {c.chunk_id for c in hits}
+            chosen = [cid for cid in chosen if cid in kept]                          # the fused order of what survived
+        hits = self._rerank(query, hits, top_k, set(chosen[:top_k])) if reading else hits[:top_k]
         if not self._expand:
             return hits
         return sorted(hits + self._siblings(hits), key=lambda c: -c.score)
@@ -183,6 +256,19 @@ EXIT_CODE_MISMATCH = 0.85      # the ticket is about other exit codes only
 ERROR_LINE_BOOST = 1.4         # a ticket error line closely matches the customer's words
 ERROR_LINE_MIN_OVERLAP = 0.6
 TOPIC_BOOST = 1.1              # soft: shares a topic with what the Clarifier inferred
+# Advice for tools Docker has retired (a quarter of the tickets are over 8 years old). Off by default: TICKET_LEGACY_PENALTY=0.5 halves the score of a
+# ticket that depends on one of these when the customer's own words do not mention it (measured by triage/eval/ticket_freshness_eval.py).
+LEGACY_TERMS = re.compile(r"(?i)(\bdocker-machine\b|\bdocker machine (create|ls|ssh|env|start|stop|rm|ip|inspect)\b|\bboot2docker\b|\bdocker[ -]?toolbox\b|"
+                          r"\bdocker-engine\b|\blxc-docker\b|\bdocker ?cloud\b|(?<![\w-])--link\b)")
+
+
+def legacy_penalty_for(row: dict, query: str) -> float:
+    """1.0 (no change) unless TICKET_LEGACY_PENALTY is set, the ticket leans on retired tooling and the query does not mention it."""
+    factor = float(os.environ.get("TICKET_LEGACY_PENALTY", "1.0"))
+    if factor >= 1.0 or LEGACY_TERMS.search(query):
+        return 1.0
+    text = f"{row['title']} {row['problem']} {row.get('resolution') or ''}"
+    return factor if LEGACY_TERMS.search(text) else 1.0
 _EXIT_CODE_RE = re.compile(r"(?i)\b(?:exit(?:ed)?(?:\s+with)?(?:\s+(?:status|code))?|code|status)\s*[:=]?\s*(\d{1,3})\b")
 
 _ROW_COLUMNS = ("ticket_id, title, problem, resolution, source, source_type, trust_tier, trust_score, resolution_kind, "
@@ -237,6 +323,10 @@ def score_ticket(row: dict, base: float, query: str, codes: set[str], topics: se
     if shared:
         score *= TOPIC_BOOST
         reasons.append("topic:" + ",".join(sorted(shared)))
+    penalty = legacy_penalty_for(row, query)
+    if penalty < 1.0:
+        score *= penalty
+        reasons.append("legacy_tooling")
     return score, reasons
 
 

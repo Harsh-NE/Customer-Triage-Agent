@@ -224,6 +224,8 @@ class NegativeCacheEntry:
     failure_reason: str          # why this fix didn't work
     reply_label: str             # not_resolved / partial / escalated
     problem_hash: str = ""       # hash of the problem alone, so a later success can invalidate every failure recorded for it
+    problem_embedding: list[float] = field(default_factory=list)       # the problem alone, and the diagnosis alone, are compared
+    diagnosis_embedding: list[float] = field(default_factory=list)     # separately: joined, the shared problem text drowns the difference
     issue: Optional[str] = None  # the Clarifier's leading KB issue, as in CacheEntry (SemanticCache.metadata_gate compares it)
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     hits: int = 0
@@ -234,9 +236,10 @@ class NegativeCache:
     """Stores known-bad fixes so the same problem + same approach = skip."""
 
     def __init__(self, embedder: Embedder | None = None,
-                 path: Optional[str | Path] = None, sim_threshold: float = 0.92):
+                 path: Optional[str | Path] = None, sim_threshold: float = 0.85, problem_threshold: float = 0.9):
         self.embedder = embedder or HashingEmbedder()
-        self.sim_threshold = sim_threshold
+        self.sim_threshold = sim_threshold               # diagnosis vs diagnosis
+        self.problem_threshold = problem_threshold       # problem vs problem (when the exact-problem hash differs)
         self.path = Path(path) if path else None
         self.entries: list[NegativeCacheEntry] = []
         if self.path and self.path.exists():
@@ -252,16 +255,14 @@ class NegativeCache:
         live = [e for e in self.entries if e.valid]
         if not live:
             return None
-        # gate on metadata first
-        candidates = [e for e in live if SemanticCache.metadata_gate(sig, e)]
+        candidates = [e for e in live if SemanticCache.metadata_gate(sig, e) and e.diagnosis_embedding]
         if not candidates:
             return None
-        # embed the combo of problem + diagnosis
-        combo = f"{sig.cache_key_text()} ||| {diagnosis}"
-        q = self.embedder.embed([combo])[0]
+        problem_hash = hashlib.sha256(sig.cache_key_text().encode()).hexdigest()[:20]
+        pq, dq = self.embedder.embed([sig.cache_key_text(), diagnosis])
         for e in candidates:
-            sim = cosine(q, e.embedding)
-            if sim >= self.sim_threshold:
+            same_problem = e.problem_hash == problem_hash or cosine(pq, e.problem_embedding) >= self.problem_threshold
+            if same_problem and cosine(dq, e.diagnosis_embedding) >= self.sim_threshold:
                 e.hits += 1
                 self.save()
                 return e
@@ -270,6 +271,7 @@ class NegativeCache:
     def put(self, sig: ProblemSignature, diagnosis: str, fix_summary: str,
             failure_reason: str, reply_label: str) -> NegativeCacheEntry:
         combo = f"{sig.cache_key_text()} ||| {diagnosis}"
+        pe, de = self.embedder.embed([sig.cache_key_text(), diagnosis])
         entry = NegativeCacheEntry(
             entry_id=f"NC-{uuid.uuid4().hex[:10]}",
             key_hash=hashlib.sha256(combo.encode()).hexdigest()[:20],
@@ -279,7 +281,7 @@ class NegativeCache:
             embedding=self.embedder.embed([combo])[0],
             diagnosis=diagnosis, fix_summary=fix_summary,
             failure_reason=failure_reason, reply_label=reply_label,
-            problem_hash=hashlib.sha256(sig.cache_key_text().encode()).hexdigest()[:20],
+            problem_hash=hashlib.sha256(sig.cache_key_text().encode()).hexdigest()[:20], problem_embedding=pe, diagnosis_embedding=de,
             issue=SemanticCache.leading_issue(sig))
         self.entries.append(entry)
         self.save()

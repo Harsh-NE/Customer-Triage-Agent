@@ -28,7 +28,7 @@ from triage import understand as U
 from triage.clarifier import Clarifier
 from triage.context_session import SessionMemory
 from triage.resolver.contracts import ProblemSignature, Severity, TriageState
-from triage.resolver.guardrails import DOMAIN_TERMS, INJECTION, SECRET_REQUEST
+from triage.resolver.guardrails import DOMAIN_TERMS, INJECTION, SECRET_REQUEST, hard_escalation
 from triage.resolver.oplog import NULL_LOGGER, estimate_cost
 from triage.resolver.scope import classify_scope
 from triage.state import ClarifierResult, ClarifierStatus
@@ -48,6 +48,11 @@ NOT_DOCKER = re.compile(r"(?i)\b(?:not|isn'?t|is not|nothing to do with|unrelate
 FOREIGN_SERVICE = re.compile(
     r"(?i)\b(netflix|spotify|youtube|instagram|facebook|whatsapp|tiktok|snapchat|twitter|gmail|outlook|hotmail|icloud|paypal|venmo|"
     r"hulu|disney\+?|playstation|xbox|steam|roblox|minecraft|fortnite|zoom|photoshop|excel|powerpoint|uber|tinder)\b")
+
+
+# Words that say the message is about Docker itself. Narrower than DOMAIN_TERMS on purpose (which also holds port, build, pull, image,
+# volume...: "build an image in Photoshop" must still reach the scope check).
+STRONG_DOCKER = re.compile(r"(?i)\b(docker(?:file|d|-compose|hub)?|containerd|buildx|buildkit)\b")
 
 
 def clearly_out_of_scope(customer_text: str) -> bool:
@@ -76,7 +81,7 @@ def to_resolver_signature(result: ClarifierResult, session: SessionMemory) -> Pr
     if sig is None:
         raise ValueError("a READY/UNRESOLVED ClarifierResult always carries a signature")
     f = sig.fields
-    customer_text = "\n".join(t.text for t in session.customer_turns()).strip()     # already PII-redacted
+    customer_text = "\n".join(U.strip_chatter(t.text) for t in session.customer_turns()).strip()     # already PII-redacted; greetings and pleas removed
     codes: list[int] = []
     for text in [*f.error_codes, *f.error_messages]:
         for m in _EXIT_CODE.findall(text):
@@ -131,8 +136,19 @@ def make_clarifier_node(clarifier: Clarifier, scope_llm: Any = None, logger: Any
                     "signature": sig.to_dict()}
 
         everything_said = "\n".join([t.text for t in session.customer_turns()] + [message])
+        if DOMAIN_TERMS.search(everything_said):
+            # Data loss, a security incident or a production outage reaches a person NOW: interviewing the customer first only delays
+            # it. B's guard escalates on the same rules (hard_escalation), so this just skips the questions.
+            urgent = ProblemSignature(raw_query=everything_said, severity=Severity.CRITICAL if U.looks_critical(everything_said) else Severity.MEDIUM)
+            if hard_escalation(urgent) is not None:
+                sig = ProblemSignature(raw_query=everything_said, severity=urgent.severity, completeness=1.0,
+                                       clarifier={"status": "escalated_before_clarifier"})
+                return {"transcript": transcript, "customer_message": message, "clarifier_pending": "", "next": "",
+                        "clarifier_session": session.to_json(), "signature": sig.to_dict()}
         decline: dict[str, Any] | None = {"source": "rule"} if clearly_out_of_scope(everything_said) else None
-        if decline is None and scope_llm is not None and not raw and not pending:     # first message of the ticket only
+        # The scope model is only worth a call when the message does not already say it is about Docker (one call, 3-9 s, on every
+        # ticket otherwise). The rule check above still runs on everything.
+        if decline is None and scope_llm is not None and not raw and not pending and not STRONG_DOCKER.search(message):   # first message only
             with log.timed("llm_call", ticket_id=state.get("ticket_id"), node="scope") as ev:
                 verdict = classify_scope(scope_llm, message)
                 usage = dict(getattr(scope_llm, "last_usage", None) or {})

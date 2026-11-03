@@ -1175,7 +1175,9 @@ entities:
     errors: ["permission denied while trying to connect to the Docker daemon socket"]
     affects: [docker-socket, docker-group, linux]
     summary: "On Linux the user is not allowed to use the Docker socket (not in the docker group)."
-    kb: []
+    kb:
+      - path: engine/install/linux-postinstall.md
+        issue: Manage Docker as a non-root user
     provenance: tickets
   - id: issue-no-space
     type: issue

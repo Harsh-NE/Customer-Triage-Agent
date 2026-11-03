@@ -38,8 +38,10 @@ There are no passwords. Do not expose it publicly. Swap in OIDC before real use.
 | `POST /auth/login` `{username, role, passcode?}` | returns `{token, user}`; send `Authorization: Bearer <token>` |
 | `GET /me`, `GET /health` | identity; resolver LLM and priced models |
 | **Customer** | |
-| `POST /conversations` `{message}` | starts a conversation and returns it with the agent's first reply |
-| `POST /conversations/{id}/messages` `{text}` or `{action: "resolved" \| "not_fixed"}` | reply; the actions are the UI's "fixed it / still failing" buttons |
+| `POST /attachments` (multipart `file`) | a screenshot: validated, read with OCR, stored; returns `{id, ocr: {ok, text, confidence, engine, reason, low_confidence, ...}}` for the customer to check |
+| `POST /conversations` `{message, attachment_id?, screenshot_text?}` | starts a conversation and returns it with the agent's first reply. `message` may be empty when a screenshot is attached |
+| `POST /conversations/{id}/messages` `{text?, attachment_id?, screenshot_text?}` or `{action: "resolved" \| "not_fixed"}` | reply; the actions are the UI's "fixed it / still failing" buttons |
+| `GET /conversations/{id}/attachments/{attachment_id}` | the image: the conversation's owner and engineers only, and only if a message in it carries that attachment |
 | `GET /conversations`, `GET /conversations/{id}?after=<message id>` | history; the second one is the polling call (only new messages) |
 | `POST /conversations/{id}/feedback` `{rating 1-5, helpful, comment}` | |
 | **Engineer** | |
@@ -86,12 +88,32 @@ findings), `messages`, `agent_events` (the Resolver's event log with tokens, cos
 so neither counts for or against the agent. `decline_rate = declined / finished`. `verify_drop_rate` = fix steps removed by the
 citation check / steps drafted. Cache hit rate and average gate confidence come straight from the event log.
 
+## Screenshots
+
+Two steps, so a wrong read is corrected before it is used. `POST /attachments` checks the file (size <= 5 MB, at most 6000 px a side,
+type judged by its content: PNG, JPEG, BMP, TIFF, WebP), runs OCR, and stores the image and the result under `uploads/<user id>/<sha256
+prefix>.<ext>` (`UPLOADS_DIR`, default beside the checkpoint database). The id is derived from the content, never from a client file
+name. The customer then sends it with `attachment_id` and `screenshot_text`, the text they confirmed (their edit wins over what OCR
+read). Secrets in that text (tokens, `password=`, bearer strings, e-mails) are masked before anything is stored.
+
+What the agents receive: the customer's own words, then the screenshot's error lines as plain lines. A label in front of them was tried
+and changed what the Clarifier asked, so a screenshot is treated exactly like the same error typed in. The chat shows what the
+customer typed plus the picture; the message payload keeps the full text and the OCR facts (`payload.attachment`) for engineers, and an
+`ocr` event (engine, confidence, latency, characters, whether the customer edited it; never the text) goes into `agent_events` and the
+case's activity timeline. Engines (`triage/ocr.py`): Tesseract through pytesseract (the Tesseract program must be installed; set
+`TESSERACT_CMD` if it is not on `PATH`), else rapidocr-onnxruntime (`OCR_ENGINE=tesseract|rapidocr` forces one). With neither
+installed the upload still works and says nothing could be read, and the customer types the error instead. A read below 0.5 confidence
+is shown with a "please check it" note.
+
+OCR text is untrusted input like anything else the customer sends: it goes through the same guardrails and the Clarifier, and is never
+an instruction.
+
 ## Not done (deliberately or yet)
 
 * No push channel: clients poll `GET /conversations/{id}?after=`. (A server-sent-events stream is an easy addition.)
 * `promote_to_kb` is stored when an engineer resolves a case but nothing consumes it yet. B's cache cannot serve a human fix:
   its verification step needs cited evidence, which an engineer's free text does not have. The intended path is Tier 2.
-* No attachments; no rate limiting; one process (a per-conversation lock prevents two simultaneous turns on one thread).
+* Screenshots only (no other file types); uploaded files are never deleted; no rate limiting; one process (a per-conversation lock prevents two simultaneous turns on one thread).
 * No simulated-data seeder: a fresh dashboard is empty. Any seeded data must be labelled simulated.
 * Costs for the Anthropic/OpenAI models are not in the price table.
 * Tests: `tests/test_api.py` (offline, real SQLite store and checkpointer, plus one test on the real stores).

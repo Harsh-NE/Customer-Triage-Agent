@@ -279,11 +279,26 @@ _SYMPTOM_CUE = re.compile(r"(?i)\b(fail|fails|failed|failing|error|errors|can't|
                           r"reached|limit|exceeded|conflict)\b")
 
 
+_PRODUCTION = re.compile(r"(?i)\b(production|prod)\b")
+_OUTAGE = re.compile(r"(?i)\b(outage|(?:is|are|went|gone)\s+down|down for|all users|all (?:our )?(?:customers|nodes|servers)|"
+                     r"every(?:one|body)|every node|cannot serve)\b")
+
+
+def looks_critical(text: str) -> bool:
+    """Production AND a sign of wide impact ("production outage", "prod is down for everyone"). Both are required: "production" alone is
+    often just a setting, and "blocked" or "everyone" alone are ordinary complaints. Only the heuristic path needs this; the LLM extractor
+    can already say Critical."""
+    return bool(_PRODUCTION.search(text) and _OUTAGE.search(text))
+
+
 def _tone_levels(text: str) -> tuple[str, str]:
     """Cheap, rule-based severity/frustration defaults for the heuristic path."""
     lowered = text.lower()
     frustration = "High" if re.search(r"(?i)\b(again|still|urgent|asap|!!|unacceptable|terrible|hours|days)\b", lowered) else "Medium"
-    severity = "High" if re.search(r"(?i)\b(production|prod|outage|down for|all users|everyone|blocked)\b", lowered) else "Medium"
+    if looks_critical(text):
+        severity = "Critical"
+    else:
+        severity = "High" if re.search(r"(?i)\b(production|prod|outage|down for|all users|everyone|blocked)\b", lowered) else "Medium"
     return severity, frustration
 
 
@@ -369,11 +384,26 @@ def _coerce(data: dict, message: str, known_products: list[str]) -> ExtractedFie
     )
 
 
+_GREETING = re.compile(r"(?i)^\s*(hi|hello|hey|dear [a-z ]{1,20}|good (morning|afternoon|evening))\b[\s,!.:-]*")
+_PLEASANTRY = re.compile(r"(?i)[\s,;]*\b(many thanks|thanks|thank you|cheers)( so much| a lot| in advance| for your help)?\b[\s,!.]*|"
+                         r"[\s,;]*\b(been stuck (on|with) (this|it)( for [a-z0-9 ]{1,20})?|please help( me)?|pls help|any help( is| would be)?( appreciated| welcome)?)\b[\s,!.]*")
+
+
+def strip_chatter(text: str) -> str:
+    """The message without greetings and pleas ("hi, ... thanks in advance, been stuck on this for hours"). Without it the extractor treats the whole
+    clause as the symptom and the search text carries the chatter (the perturbation evaluation measured this). Never returns an empty string, and a
+    message that is ONLY chatter is returned unchanged. The transcript keeps what the customer actually wrote; only extraction sees the clean text."""
+    cleaned = _PLEASANTRY.sub(" ", _GREETING.sub("", text or ""))
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned).strip(" ,;")
+    return cleaned if len(cleaned.split()) >= 2 else text
+
+
 def extract(message: str, llm: LLM | None, known_products: list[str], known: ExtractedFields | None = None,
             pending_question: str | None = None) -> ExtractionResult:
     """LLM extraction with graceful degradation: any LLM/JSON failure falls back to the
     heuristic extractor, so a flaky API never blocks a customer. With llm=None it is
     always heuristic (free). Never raises."""
+    message = strip_chatter(message)
     if llm is None:
         return ExtractionResult(heuristic_extract(message, known_products), "heuristic")
     try:

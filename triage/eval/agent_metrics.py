@@ -408,7 +408,7 @@ def run_all(scenarios, llm_name: str, repeats: int, verbose: bool) -> tuple[list
     from triage.clarifier import Clarifier
     from triage.eval.e2e_eval import Recording, llm_usage, run_scenario
     from triage.joint import build_default_deps, build_joint_graph
-    from triage.resolver.cache import SemanticCache
+    from triage.resolver.cache import NegativeCache, SemanticCache
     from triage.resolver.llm import get_llm
 
     llm = get_llm(llm_name)
@@ -423,6 +423,7 @@ def run_all(scenarios, llm_name: str, repeats: int, verbose: bool) -> tuple[list
         rows = []
         for s in scenarios:
             deps.cache = SemanticCache(embedder=deps.cache.embedder)            # scenarios must not feed each other through the cache
+            deps.negative_cache = NegativeCache(embedder=deps.cache.embedder)     # in memory: failures must not carry over either
             offset = EVENTS.stat().st_size if EVENTS.exists() else 0
             row = run_scenario(app, rec, s, verbose, customer_seed=rep if repeats > 1 else None)
             row["usage"] = llm_usage(EVENTS, offset)

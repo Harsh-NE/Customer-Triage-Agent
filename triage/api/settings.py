@@ -24,6 +24,7 @@ class Settings:
     cors_origins: list[str] = field(default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"])
     token_ttl_hours: int = 12
     frontend_dir: str = str(config.PROJECT_ROOT / "frontend" / "dist")   # served at / when it has been built (npm run build)
+    uploads_dir: str = ""                                           # customer screenshots; empty = an `uploads` folder beside the checkpoint database
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -35,7 +36,10 @@ class Settings:
             resolver_llm=e.get("RESOLVER_LLM", base.resolver_llm).lower(),
             cors_origins=[o.strip() for o in e.get("CORS_ORIGINS", ",".join(base.cors_origins)).split(",") if o.strip()],
             token_ttl_hours=int(e.get("TOKEN_TTL_HOURS", base.token_ttl_hours)),
-            frontend_dir=e.get("FRONTEND_DIR", base.frontend_dir))
+            frontend_dir=e.get("FRONTEND_DIR", base.frontend_dir), uploads_dir=e.get("UPLOADS_DIR", base.uploads_dir))
+
+    def uploads_path(self) -> Path:
+        return Path(self.uploads_dir) if self.uploads_dir else Path(self.checkpoint_path).parent / "uploads"
 
     def warn_if_insecure(self) -> None:
         if self.secret == DEV_SECRET or self.engineer_passcode == DEV_PASSCODE:

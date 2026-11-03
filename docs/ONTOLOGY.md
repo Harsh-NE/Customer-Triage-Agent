@@ -22,9 +22,10 @@ what platform a name implies.
 
 153 entities: 24 concept, 18 product, 10 component, 23 feature, 7 tool, 4 platform, 7 use_case, 5 error, 55 issue; about 500 aliases.
 Provenance is recorded per node: `kb` (120, from the docs), `tickets` (21, from community questions), `general` (12, author knowledge,
-needs review). 50 issues link to a KB section by path fragment plus title prefix; all 50 resolve against the 11,440 chunks.
-5 issues are real and common but **not documented** in the KB (`kb: []`): exec format error, docker socket permission denied,
-no space left on device, pull access denied, `docker-compose` command not found.
+needs review). 51 issues link to a KB section by path fragment plus title prefix; all 51 resolve against the 11,440 chunks.
+4 issues are real and common but **not documented** in the KB (`kb: []`): exec format error, no space left on device, pull access denied,
+`docker-compose` command not found. (A fifth, docker socket permission denied, was listed here until a label review found it documented in
+`linux-postinstall.md > Manage Docker as a non-root user`; it now links there. `scripts/15_kg_candidates.py` checks such claims against the KB text.)
 
 Node fields: `id`, `type`, `name`, `summary`, `aliases`, `scoped` (alias counted only when context words are also present),
 `parent`, `related`, `available_on` (platform limit), `kb_area`, `confused_with` (+ how they differ), `generic` (too common to
@@ -97,5 +98,5 @@ the heading as the KB writes it; `check` fails if it matches no chunk (so a docs
   only with the parent ("docker desktop"). Walking up the hierarchy in `EntityIndex.rank` is a likely improvement, not done because
   it would invalidate the measured weights.
 - The background prompt and the ticket-side expansion are implemented but unmeasured, hence off.
-- 12 `general` nodes and the 5 undocumented issues need review by someone who knows Docker support.
+- 12 `general` nodes and the 4 undocumented issues need review by someone who knows Docker support.
 - Aliases are English only; the pack covers what the KB and the 13,092 indexed tickets cover.

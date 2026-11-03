@@ -300,15 +300,18 @@ def test_only_a_sure_out_of_scope_verdict_blocks(mock):
         assert st["outcome"] == "resolved", answer
 
 
+NO_DOCKER_WORD = "image pulls fail with 'You have reached your pull rate limit' HTTP 429 on the hub"     # in-domain words, but never says "docker"
+
+
 def test_classifier_failure_fails_open(mock):
     app, llm, _ = scoped_app(mock, RuntimeError("503 from the provider"))
-    kinds, st = converse(app, RATE_LIMIT, ["that worked, thanks"])
+    kinds, st = converse(app, NO_DOCKER_WORD, ["that worked, thanks"])
     assert st["outcome"] == "resolved" and len(llm.scope_calls) == 1
 
 
 def test_scope_is_asked_once_on_the_first_message_only(mock):
     app, llm, _ = scoped_app(mock, {"scope": "in_scope", "confidence": 0.9, "reason": "docker"})
-    kinds, st = converse(app, "docker pull on Docker Hub keeps failing with a 429", ["Too Many Requests", "actually I am on windows 10", "works"])
+    kinds, st = converse(app, "pulls on the hub keep failing with a 429", ["Too Many Requests", "actually I am on windows 10", "works"])
     assert len(llm.scope_calls) == 1 and "429" in llm.scope_calls[0]                  # not on replies, not on the resolver hand-back
 
 
@@ -379,3 +382,158 @@ def test_real_joint_graph_reaches_the_documented_fix_and_never_answers_nonsense(
         assert bad["outcome"] in ("rejected", "escalated") and not bad["fixes_sent"], sid
     vague = run_scenario(app, rec, by_id["S24"])                                     # "help": never guess a fix
     assert vague["outcome"] == "escalated" and not vague["fixes_sent"]
+
+
+# ---------------- review follow-up: early escalation, Critical severity, vague input, scope call, malformed drafts ----------------
+def asked(kinds):
+    return kinds.count("clarifier_question")
+
+
+@pytest.mark.parametrize("report,reason", [
+    ("I ran docker compose down -v and lost all my data, the database volume is gone", "SECURITY_OR_DATA_LOSS"),
+    ("our docker registry credentials were leaked and exposed, CVE-2024-1234 in the image we run", "SECURITY_OR_DATA_LOSS"),
+    ("production outage: all users blocked, docker pull fails with 429 on every node", "CRITICAL_SEVERITY"),
+    ("prod is down for everyone, my docker containers will not start", "CRITICAL_SEVERITY"),
+])
+def test_urgent_reports_reach_a_person_without_a_single_clarifying_question(app, report, reason):
+    kinds, st = converse(app, report, [])
+    assert asked(kinds) == 0 and st["outcome"] == "escalated" and st["escalation_reason"] == reason
+    assert not st.get("attempts") and st["signature"]["clarifier"]["status"] == "escalated_before_clarifier"
+    assert st["escalation_payload"]["priority"] == "P1" and report[:30] in st["signature"]["raw_query"]
+
+
+def test_urgent_wording_without_docker_vocabulary_is_not_rushed_to_an_engineer(app):
+    kinds, st = converse(app, "my phone was wiped and I lost all my data after the update", ["no idea", "no idea", "no idea"])
+    assert st["escalation_reason"] == "OUT_OF_SCOPE" and st["outcome"] == "rejected"             # the ordinary out-of-scope path, after the usual questions
+    assert st["signature"]["clarifier"].get("status") != "escalated_before_clarifier"
+
+
+def test_ordinary_production_wording_is_not_critical(app):
+    for text in ("how do I set production environment variables in docker compose", "my docker pull is blocked by the firewall"):
+        kinds, st = converse(app, text, [])
+        assert st.get("escalation_reason") not in ("CRITICAL_SEVERITY", "SECURITY_OR_DATA_LOSS"), text
+
+
+def test_heuristic_extractor_can_now_say_critical_and_one_marker_is_not_enough(mock):
+    cl = Clarifier(None, mock)
+    s = cl.start("T-crit")
+    cl.turn(s, "production outage: all users blocked, docker pull fails with 429 rate limit on Docker Hub")
+    assert s.fields.severity == "Critical"
+    s2 = cl.start("T-high")
+    cl.turn(s2, "docker pull fails with 429 and everyone on my team is blocked")
+    assert s2.fields.severity == "High"
+
+
+@pytest.mark.parametrize("vague", ["help", "it doesn't work", "error", "please fix"])
+def test_content_free_complaints_go_to_a_person_not_to_the_out_of_scope_decline(app, vague):
+    kinds, st = converse(app, vague, ["I'm not sure", "I don't know, nothing happens", "no idea"])
+    assert st["outcome"] == "escalated" and st["escalation_reason"] == "CLARIFY_LOOP_EXHAUSTED" and not st.get("attempts"), vague
+
+
+def test_a_substantive_non_docker_message_is_still_declined(app):
+    kinds, st = converse(app, "what is the weather in chennai today", ["I'm not sure", "no idea", "no idea"])
+    assert st["outcome"] == "rejected" and st["escalation_reason"] == "OUT_OF_SCOPE"
+
+
+def test_vague_input_never_produces_a_fix(app):
+    for vague in ("docker", "docker is broken", "I have a problem with docker", "something is wrong with my containers"):
+        kinds, st = converse(app, vague, ["I'm not sure", "it just doesn't work", "I don't know, nothing happens", "no idea", "no idea"], tid=vague[:12])
+        assert not st.get("attempts") and st.get("outcome") == "escalated", (vague, kinds)
+
+
+def test_the_scope_model_is_not_called_when_the_message_already_says_docker(mock):
+    app, llm, _ = scoped_app(mock, {"scope": "out_of_scope", "confidence": 0.99, "reason": "would decline if it were asked"})
+    kinds, st = converse(app, RATE_LIMIT, ["that worked, thanks"])
+    assert llm.scope_calls == [] and st["outcome"] == "resolved"                                # the hostile verdict was never consulted
+
+
+def test_the_scope_model_is_still_called_for_messages_without_docker_vocabulary(mock):
+    app, llm, _ = scoped_app(mock, {"scope": "out_of_scope", "confidence": 0.95, "reason": "ubuntu web server"})
+    kinds, st = converse(app, "how do I get nginx to restart on ubuntu after a reboot", [])
+    assert len(llm.scope_calls) == 1 and st["outcome"] == "rejected" and st["signature"]["clarifier"]["scope"]["source"] == "llm"
+    app, llm, _ = scoped_app(mock, {"scope": "out_of_scope", "confidence": 0.95, "reason": "photo editing"})
+    kinds, st = converse(app, "how do I build an image gallery in photoshop", [])                # "build" and "image" are domain words, not Docker words
+    assert len(llm.scope_calls) == 1 and st["outcome"] == "rejected"
+
+
+class ScriptedDraftLLM(FakeLLM):
+    """Answers the draft task from a script (a value is returned, an Exception is raised); everything else as FakeLLM."""
+
+    def __init__(self, replies):
+        self.replies, self.draft_calls = list(replies), 0
+
+    def complete_json(self, system, user, max_tokens=1200):
+        if "TASK: draft" in system:
+            self.draft_calls += 1
+            r = self.replies.pop(0) if self.replies else super().complete_json(system, user, max_tokens)
+            if isinstance(r, Exception):
+                raise r
+            return r
+        return super().complete_json(system, user, max_tokens)
+
+
+def drafted_app(mock, replies):
+    llm = ScriptedDraftLLM(replies)
+    tickets = LexicalRetriever(load_tickets_jsonl(FX / "tickets_mini.jsonl"), "tickets")
+    deps = ResolverDeps(retriever=TieredRetriever(KBEvidenceRetriever(mock), tickets), llm=llm, cache=SemanticCache(), logger=EventLogger())
+    return build_joint_graph(Clarifier(None, mock), deps), llm, deps
+
+
+def test_a_malformed_draft_is_retried_once_and_the_second_reply_is_used(mock):
+    app, llm, deps = drafted_app(mock, [{"status": "OK", "steps": "just do it"}])                  # then the FakeLLM's real draft
+    kinds, st = converse(app, RATE_LIMIT, ["that worked, thanks"])
+    assert llm.draft_calls == 2 and st["outcome"] == "resolved" and st["attempts"][0]["steps"]
+    assert [e for e in deps.logger.events if e["event"] == "draft_retry"][0]["gave_up"] is False
+
+
+def test_two_malformed_drafts_end_in_a_normal_escalation_not_a_system_error(mock):
+    app, llm, deps = drafted_app(mock, [[1, 2], {"steps": ["do a", "do b"]}])
+    kinds, st = converse(app, RATE_LIMIT, [])
+    assert llm.draft_calls >= 2 and st["outcome"] == "escalated" and not [a for a in st.get("attempts", []) if a["tier"] == "kb"]   # no KB fix went out
+    assert st["escalation_reason"] in ("VERIFICATION_FAILED", "RETRY_EXHAUSTED", "LOW_EVIDENCE")                                   # a normal reason, not SYSTEM_ERROR
+    gave_up = [e for e in deps.logger.events if e["event"] == "draft_retry"]
+    assert gave_up and gave_up[0]["gave_up"] is True and "MalformedDraft" in gave_up[0]["malformed"]
+
+
+def test_provider_errors_are_not_retried_by_the_draft_step(mock):
+    for exc in (TimeoutError("read timed out"), RuntimeError("503 unavailable")):
+        app, llm, _ = drafted_app(mock, [exc])
+        with pytest.raises(type(exc)):                          # the service turns this into SYSTEM_ERROR (tests/test_api.py); here it propagates
+            converse(app, RATE_LIMIT, [])
+        assert llm.draft_calls == 1                             # the provider layer already retried; a second call would double the wait
+
+
+def test_an_unparsable_reply_counts_as_malformed(mock):
+    app, llm, _ = drafted_app(mock, [ValueError("LLM response was not valid JSON: 'Sure! Here is...'")])
+    kinds, st = converse(app, RATE_LIMIT, ["that worked, thanks"])
+    assert llm.draft_calls == 2 and st["outcome"] == "resolved"
+
+
+# ---------------- gold-set follow-up: urgent phrasings outside the first rules, and time words in a vague complaint ----------------
+@pytest.mark.parametrize("report", [
+    "We ran docker system prune -a --volumes on the production host and our postgres data is gone",
+    "I think someone pushed a malicious image to our Docker Hub organization and our servers pulled it",
+    "after the docker upgrade our customers records are lost from the live database container",
+])
+def test_data_gone_in_production_and_malicious_images_escalate_with_no_questions(app, report):
+    kinds, st = converse(app, report, [])
+    assert asked(kinds) == 0 and st["outcome"] == "escalated" and st["escalation_reason"] == "SECURITY_OR_DATA_LOSS"
+    assert st["escalation_payload"]["priority"] == "P1"
+
+
+@pytest.mark.parametrize("text", [
+    "my postgres data is gone after I restart the container",                  # the classic: no production context, the KB answers it (volumes)
+    "data is missing from the container after restart, how do I use volumes",
+    "how do I back up customer data volumes safely before an upgrade",
+])
+def test_everyday_data_questions_are_not_rushed_to_a_person(app, text):
+    kinds, st = converse(app, text, [])
+    assert st.get("escalation_reason") != "SECURITY_OR_DATA_LOSS"
+    assert (st.get("signature") or {}).get("clarifier", {}).get("status") != "escalated_before_clarifier"
+
+
+def test_time_words_do_not_turn_a_vague_complaint_into_an_out_of_scope_decline(app):
+    kinds, st = converse(app, "nothing works since this morning", ["I'm not sure", "no idea", "it just stopped"])
+    assert st["outcome"] == "escalated" and st["escalation_reason"] == "CLARIFY_LOOP_EXHAUSTED" and not st.get("attempts")
+    kinds, st = converse(app, "what is the weather in chennai today", ["no idea", "no idea", "no idea"], tid="W")
+    assert st["outcome"] == "rejected"                                         # a substantive non-Docker message is still declined

@@ -33,7 +33,8 @@ def parse_json(text: str) -> dict[str, Any]:
 class AnthropicLLM:
     def __init__(self, model: str | None = None, temperature: float = 0.0):
         import anthropic  # lazy import so tests don't need the SDK
-        self.client = anthropic.Anthropic()
+        from triage.llm import PROVIDER_MAX_RETRIES, PROVIDER_TIMEOUT_S
+        self.client = anthropic.Anthropic(timeout=PROVIDER_TIMEOUT_S, max_retries=PROVIDER_MAX_RETRIES)
         self.model = model or os.getenv("RESOLVER_MODEL", "claude-sonnet-5-5")
         self.temperature = temperature
         self.name = f"anthropic:{self.model}"
@@ -53,7 +54,8 @@ class OpenAICompatLLM:
     def __init__(self, model: str | None = None, base_url: str | None = None,
                  temperature: float = 0.0):
         from openai import OpenAI  # lazy import
-        self.client = OpenAI(base_url=base_url or os.getenv("OPENAI_BASE_URL"))
+        from triage.llm import PROVIDER_MAX_RETRIES, PROVIDER_TIMEOUT_S
+        self.client = OpenAI(base_url=base_url or os.getenv("OPENAI_BASE_URL"), timeout=PROVIDER_TIMEOUT_S, max_retries=PROVIDER_MAX_RETRIES)
         self.model = model or os.getenv("RESOLVER_MODEL", "gpt-4o-mini")
         self.temperature = temperature
         self.name = f"openai:{self.model}"

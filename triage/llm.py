@@ -52,7 +52,9 @@ def _set_usage(input_tokens: int, output_tokens: int) -> None:
     _tls.usage = {"input_tokens": int(input_tokens or 0), "output_tokens": int(output_tokens or 0)}
 
 
-GEMINI_TIMEOUT_S = 90
+PROVIDER_TIMEOUT_S = 90        # one request to any hosted model; a call with no timeout can hold a customer's chat for minutes
+PROVIDER_MAX_RETRIES = 1       # Gemini is retried once by hand below; the other SDKs retry 2 times by default (3 x 90 s), so cap them the same way
+GEMINI_TIMEOUT_S = PROVIDER_TIMEOUT_S
 
 
 def _call_gemini(prompt: str, model: str, api_key: str) -> str:
@@ -79,7 +81,7 @@ def _call_gemini(prompt: str, model: str, api_key: str) -> str:
 
 def _call_anthropic(prompt: str, model: str, api_key: str) -> str:
     import anthropic
-    client = anthropic.Anthropic(api_key=api_key)
+    client = anthropic.Anthropic(api_key=api_key, timeout=PROVIDER_TIMEOUT_S, max_retries=PROVIDER_MAX_RETRIES)
     response = client.messages.create(model=model, max_tokens=1024,
                                       messages=[{"role": "user", "content": prompt}])
     _set_usage(response.usage.input_tokens, response.usage.output_tokens)
@@ -88,7 +90,7 @@ def _call_anthropic(prompt: str, model: str, api_key: str) -> str:
 
 def _call_openai(prompt: str, model: str, api_key: str) -> str:
     from openai import OpenAI
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(api_key=api_key, timeout=PROVIDER_TIMEOUT_S, max_retries=PROVIDER_MAX_RETRIES)
     response = client.chat.completions.create(model=model, messages=[{"role": "user", "content": prompt}])
     if response.usage:
         _set_usage(response.usage.prompt_tokens, response.usage.completion_tokens)

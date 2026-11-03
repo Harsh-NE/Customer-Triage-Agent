@@ -27,7 +27,7 @@ from langgraph.types import Command
 
 from triage.clarifier import Clarifier
 from triage.joint import build_default_deps, build_joint_graph
-from triage.resolver.cache import SemanticCache
+from triage.resolver.cache import NegativeCache, SemanticCache
 from triage.resolver.llm import get_llm
 from triage.sim.customer import RuleBasedCustomer, Scenario, load_scenarios
 
@@ -187,12 +187,14 @@ def main() -> None:
     llm = get_llm(args.llm)
     kb, deps = build_default_deps(llm, log_path=events)
     deps.cache = SemanticCache(embedder=deps.cache.embedder)          # fresh, in-memory: scenarios must not feed each other
+    deps.negative_cache = NegativeCache(embedder=deps.cache.embedder)     # in memory: failures must not carry over either
     rec = Recording(deps.retriever)
     deps.retriever = rec
     app = build_joint_graph(Clarifier(None, kb), deps)
     rows = []
     for s in scenarios:
         deps.cache = SemanticCache(embedder=deps.cache.embedder)      # each scenario starts with an empty cache: they must be independent
+        deps.negative_cache = NegativeCache(embedder=deps.cache.embedder)     # in memory: failures must not carry over either
         if args.verbose:
             print(f"=== {s.id}: {s.opening}")
         rows.append(run_scenario(app, rec, s, args.verbose))

@@ -6,6 +6,7 @@ import { useAuth } from "../auth";
 import ActivityTimeline from "../components/ActivityTimeline";
 import { Badge, Button, Card, ErrorNote, PriorityBadge, Spinner, StatusBadge, cx, inputClass, selectClass } from "../components/ui";
 import { fmtAge, fmtDuration, fmtMoney, fmtTime, fmtTokens, reasonLabel } from "../format";
+import { SentScreenshot } from "../components/Screenshot";
 
 const ROLE_STYLE: Record<string, string> = {
   customer: "border-brand-100 bg-brand-50", agent: "border-slate-200 bg-white", engineer: "border-emerald-200 bg-emerald-50", system: "border-amber-200 bg-amber-50",
@@ -63,6 +64,7 @@ export default function CaseDetailPage() {
                     <span>{fmtTime(m.created_at)}</span>
                   </div>
                   <p className="whitespace-pre-wrap text-sm text-slate-800">{m.content}</p>
+                  {m.payload?.attachment && <SentScreenshot dark={false} conversationId={c.id} attachment={m.payload.attachment} />}
                 </div>
               ))}
             </div>

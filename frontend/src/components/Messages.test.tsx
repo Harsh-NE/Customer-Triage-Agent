@@ -88,6 +88,19 @@ describe("QuestionCard", () => {
 
 describe("MessageView", () => {
   const noop = () => {};
+  it("shows a screenshot the customer attached, with the text read from it folded away", async () => {
+    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL: vi.fn(() => "blob:shot"), revokeObjectURL: vi.fn() }));
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, blob: async () => new Blob(["x"]) });
+    vi.stubGlobal("fetch", fetchMock);
+    const msg: Message = { id: 9, role: "customer", kind: "text", content: "it dies", created_at: "",
+                           payload: { attachment: { id: "0123456789abcdef.png", text: "ERROR: OOMKilled" } } };
+    render(<MessageView message={msg} conversationId="C-1" isLast={false} active={false} busy={false} onChoose={noop} onAction={noop} />);
+    expect(await screen.findByAltText("Screenshot you attached")).toHaveAttribute("src", "blob:shot");
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/conversations/C-1/attachments/0123456789abcdef.png");
+    expect(screen.getByText("Text read from the screenshot")).toBeInTheDocument();
+    expect(screen.getByText("ERROR: OOMKilled")).toBeInTheDocument();
+    vi.unstubAllGlobals();
+  });
   it("labels engineer replies and renders customer text", () => {
     const { rerender } = render(<MessageView message={{ id: 3, role: "engineer", kind: "engineer_reply", content: "Looking now.", payload: {}, created_at: "", author: "enid" }} isLast active={false} busy={false} onChoose={noop} onAction={noop} />);
     expect(screen.getByText(/Support engineer · enid/)).toBeInTheDocument();

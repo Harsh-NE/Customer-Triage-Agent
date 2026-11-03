@@ -60,16 +60,46 @@ def _draft_prompt(signature: ProblemSignature, evidence: list[Evidence], tried_f
     )
 
 
+class MalformedDraft(ValueError):
+    """The model replied, but not with the draft shape (steps not a list, a step that is not an object, ...)."""
+
+
+def normalize_draft(out: Any) -> dict[str, Any]:
+    """The draft in the shape the rest of the Resolver relies on, or MalformedDraft. Harmless variations are repaired (a lone evidence id
+    as a string, null diagnosis or verification, missing status); anything that would make the steps meaningless is refused."""
+    if not isinstance(out, dict):
+        raise MalformedDraft(f"the reply is a {type(out).__name__}, not an object")
+    steps = out.get("steps")
+    steps = [] if steps is None else steps
+    if not isinstance(steps, list):
+        raise MalformedDraft("steps is not a list")
+    clean = []
+    for st in steps:
+        if not isinstance(st, dict) or not isinstance(st.get("text"), str):
+            raise MalformedDraft("a step is not an object with text")
+        ids = st.get("evidence_ids", [])
+        ids = [ids] if isinstance(ids, str) else ids
+        if not isinstance(ids, list):
+            raise MalformedDraft("evidence_ids is not a list")
+        clean.append({**st, "evidence_ids": [str(i) for i in ids]})
+    return {**out, "status": str(out.get("status") or "OK"), "steps": clean,
+            "diagnosis": str(out.get("diagnosis") or ""), "verification": str(out.get("verification") or "")}
+
+
 def draft_resolution(llm: LLM, signature: ProblemSignature, evidence: list[Evidence],
                      tried_fixes: list[str] | str, last_reply: Optional[str] = None,
                      background: Optional[list[str]] = None) -> dict[str, Any]:
     user = _draft_prompt(signature, evidence, tried_fixes, last_reply, background)
-    out = llm.complete_json(DRAFT_SYSTEM, user)
-    out.setdefault("status", "OK")
-    out.setdefault("steps", [])
-    out.setdefault("diagnosis", "")
-    out.setdefault("verification", "")
-    return out
+    last_error = ""
+    for attempt in (1, 2):
+        try:
+            out = normalize_draft(llm.complete_json(DRAFT_SYSTEM, user))
+            return {**out, "retried": True} if attempt == 2 else out
+        except ValueError as exc:       # a reply that is not JSON (parse_json) or not the draft shape; network/provider errors are not ValueErrors
+            last_error = f"{type(exc).__name__}: {exc}"[:160]
+    # Two unusable replies: treat it as "the model could not draft from this evidence" (the normal verify -> ticket tier / escalate path)
+    # rather than a system error that ends the automated flow.
+    return {"status": "INSUFFICIENT_EVIDENCE", "steps": [], "diagnosis": "", "verification": "", "retried": True, "malformed": last_error}
 
 
 # --------------------------------------------------------------------------- verify
@@ -243,12 +273,8 @@ def multi_draft_resolution(llm: LLM, signature: ProblemSignature, evidence: list
     drafts = []
     for _ in range(n_drafts):
         try:
-            out = llm.complete_json(MULTI_DRAFT_SYSTEM, user)
-            out.setdefault("status", "OK")
-            out.setdefault("steps", [])
-            out.setdefault("diagnosis", "")
-            out.setdefault("verification", "")
-            for step in out.get("steps", []):
+            out = normalize_draft(llm.complete_json(MULTI_DRAFT_SYSTEM, user))      # a malformed sample is skipped, like a failed one
+            for step in out["steps"]:
                 step.setdefault("confidence", "medium")
             drafts.append(out)
         except Exception:

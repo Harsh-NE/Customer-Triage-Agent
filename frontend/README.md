@@ -53,5 +53,6 @@ npm run build     # type-check + production build into dist/
 * Scores are shown as "gate score" and labelled "a heuristic, not a probability" because the thresholds behind them are uncalibrated.
 * Charts are in the engineer bundle only (lazy-loaded), so customers do not download them.
 * Layout is desktop-first but collapses to a top bar and scrolling tables on narrow screens.
-* Not done: attachments, push updates (it polls), dark mode, i18n, end-to-end browser tests (the UI was checked by hand against the
+* Screenshots: the paperclip button uploads an image, shows what OCR read (editable) and sends it with the message; engineers see the picture on the case page.
+* Not done: other attachment types, push updates (it polls), dark mode, i18n, end-to-end browser tests (the UI was checked by hand against the
   running backend; the unit tests cover formatting, the API client, the message cards and login).

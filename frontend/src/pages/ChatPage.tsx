@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, type ConversationView } from "../api";
+import { api, type AttachmentRef, type ConversationView } from "../api";
 import FeedbackBox from "../components/FeedbackBox";
 import { MessageView } from "../components/Messages";
+import { ScreenshotButton, ScreenshotCard, ScreenshotReading, type Shot } from "../components/Screenshot";
 import { Button, ErrorNote, Spinner, StatusBadge } from "../components/ui";
 
 const EXAMPLES = [
@@ -24,6 +25,8 @@ export default function ChatPage() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
+  const [shot, setShot] = useState<Shot | null>(null);
+  const [reading, setReading] = useState<string | null>(null);        // preview URL of a screenshot the server is still reading
   const bottom = useRef<HTMLDivElement>(null);
 
   const conv = useQuery({
@@ -32,29 +35,46 @@ export default function ChatPage() {
   });
   const view = conv.data;
 
+  const upload = useMutation({
+    mutationFn: (file: File) => api.upload(file),
+    onMutate: (file) => { dropShot(); setReading(URL.createObjectURL(file)); },
+    onSuccess: (attachment, file) => { setShot({ previewUrl: URL.createObjectURL(file), fileName: file.name, attachment, text: attachment.ocr.text }); },
+    onSettled: () => setReading((u) => { if (u) URL.revokeObjectURL(u); return null; }),
+  });
   const start = useMutation({
-    mutationFn: (text: string) => api.start(text),
+    mutationFn: ({ text, ref }: { text: string; ref?: AttachmentRef }) => api.start(text, ref),
     onSuccess: (v) => { qc.setQueryData(["conv", v.id], v); qc.invalidateQueries({ queryKey: ["history"] }); nav(`/chat/${v.id}`); },
   });
   const send = useMutation({
-    mutationFn: (body: { text?: string; action?: "resolved" | "not_fixed" }) => api.send(id!, body),
+    mutationFn: (body: { text?: string; action?: "resolved" | "not_fixed" } & AttachmentRef) => api.send(id!, body),
     onSuccess: (v) => { qc.setQueryData(["conv", id], v); qc.invalidateQueries({ queryKey: ["history"] }); },
   });
 
   const busy = start.isPending || send.isPending;
-  const pendingText = send.isPending ? send.variables?.text ?? (send.variables?.action === "resolved" ? "That fixed it, thanks." : "I tried that but it is still the same error.") : start.isPending ? start.variables : null;
+  const SHOT_ONLY = "(screenshot attached)";
+  const pendingText = send.isPending
+    ? send.variables?.text || (send.variables?.attachment_id ? SHOT_ONLY : send.variables?.action === "resolved" ? "That fixed it, thanks." : "I tried that but it is still the same error.")
+    : start.isPending ? start.variables?.text || SHOT_ONLY : null;
 
   const lastMessage = view?.messages[view.messages.length - 1];
   const alreadyShown = !!pendingText && lastMessage?.role === "customer" && lastMessage.content === pendingText;      // the 3 s refresh got there first
 
   useEffect(() => { bottom.current?.scrollIntoView?.({ behavior: "smooth", block: "end" }); }, [view?.messages.length, busy]);
-  useEffect(() => { setDraft(""); start.reset(); send.reset(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setDraft(""); dropShot(); start.reset(); send.reset(); upload.reset(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => { if (shot) URL.revokeObjectURL(shot.previewUrl); }, [shot?.previewUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function dropShot() { setShot(null); }
+
+  const shotText = shot?.text.trim() ?? "";
+  const canSend = (!!draft.trim() || !!shotText) && !busy && !upload.isPending;
 
   function submit() {
     const text = draft.trim();
-    if (!text || busy) return;
+    if (!canSend) return;
+    const ref: AttachmentRef | undefined = shot ? { attachment_id: shot.attachment.id, screenshot_text: shot.text } : undefined;
     setDraft("");
-    if (id) send.mutate({ text }); else start.mutate(text);
+    dropShot();
+    if (id) send.mutate({ text, ...ref }); else start.mutate({ text, ref });
   }
   const onKey = (e: KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } };
 
@@ -62,7 +82,7 @@ export default function ChatPage() {
   if (id && conv.isError) return <div className="p-6"><ErrorNote error={conv.error} /></div>;
 
   const canReply = !id || (view?.can_reply ?? false);
-  const error = start.error ?? send.error;
+  const error = start.error ?? send.error ?? upload.error;
   const closed = view && !view.can_reply;
 
   return (
@@ -85,7 +105,7 @@ export default function ChatPage() {
           )}
           {view?.messages.map((m, i) => (
             <MessageView key={m.id} message={m} isLast={i === view.messages.length - 1 && !busy} active={view.status === "active"} busy={busy}
-              onChoose={(text) => send.mutate({ text })} onAction={(action) => send.mutate({ action })} />
+              conversationId={view.id} onChoose={(text) => send.mutate({ text })} onAction={(action) => send.mutate({ action })} />
           ))}
           {pendingText && !alreadyShown && <div className="flex justify-end"><div className="max-w-[34rem] rounded-2xl rounded-tr-sm bg-brand-600/70 px-4 py-2.5 text-sm text-white">{pendingText}</div></div>}
           {busy && <div className="flex items-center gap-2 text-sm text-slate-500" role="status"><span className="h-3 w-3 animate-pulse rounded-full bg-brand-500" />Checking the documentation…</div>}
@@ -98,11 +118,14 @@ export default function ChatPage() {
       </div>
 
       <footer className="border-t border-slate-200 bg-white px-3 py-3 sm:px-6">
+        {reading && <ScreenshotReading previewUrl={reading} />}
+        {shot && <ScreenshotCard shot={shot} onText={(text) => setShot({ ...shot, text })} onRemove={dropShot} disabled={busy} />}
         <div className="mx-auto flex max-w-3xl items-end gap-2">
           <textarea aria-label="Message" rows={2} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={onKey} disabled={!canReply || busy}
             placeholder={canReply ? "Describe the problem, or paste an error message…  (Enter to send, Shift+Enter for a new line)" : "This conversation is closed"}
             className="min-h-[3rem] flex-1 resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:bg-slate-50" />
-          <Button onClick={submit} disabled={!canReply || busy || !draft.trim()}>Send</Button>
+          <ScreenshotButton disabled={!canReply || busy || upload.isPending} onPick={(file) => upload.mutate(file)} />
+          <Button onClick={submit} disabled={!canReply || !canSend}>Send</Button>
         </div>
       </footer>
     </div>

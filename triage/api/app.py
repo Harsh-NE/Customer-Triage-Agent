@@ -17,7 +17,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Callable, Optional
 
 import jwt
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -25,7 +25,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from triage import pricing
+from triage import ocr
 from triage.api import analytics
+from triage.api.attachments import MEDIA_TYPES, AttachmentStore
 from triage.api.db import User, init_db, make_engine, session_factory
 from triage.api.events import DBEventLogger
 from triage.api.service import ConversationService, ServiceError
@@ -42,12 +44,16 @@ class LoginIn(BaseModel):
 
 
 class StartIn(BaseModel):
-    message: str = Field(min_length=1, max_length=4000)
+    message: str = Field(default="", max_length=4000)        # may be empty when a screenshot is attached
+    attachment_id: Optional[str] = Field(default=None, max_length=40)
+    screenshot_text: Optional[str] = Field(default=None, max_length=4000)      # what the customer confirmed the screenshot says
 
 
 class MessageIn(BaseModel):
     text: Optional[str] = Field(default=None, max_length=4000)
     action: Optional[str] = None            # "resolved" | "not_fixed": the UI's fixed / still-failing buttons
+    attachment_id: Optional[str] = Field(default=None, max_length=40)
+    screenshot_text: Optional[str] = Field(default=None, max_length=4000)
 
 
 class FeedbackIn(BaseModel):
@@ -95,7 +101,7 @@ def real_graph_factory(logger: DBEventLogger, settings: Settings):
 # ---------------------------------------------------------------------------
 # app
 # ---------------------------------------------------------------------------
-def create_app(settings: Optional[Settings] = None, graph_factory: Optional[GraphFactory] = None) -> FastAPI:
+def create_app(settings: Optional[Settings] = None, graph_factory: Optional[GraphFactory] = None, ocr_reader=None) -> FastAPI:
     settings = settings or Settings.from_env()
     factory = graph_factory or real_graph_factory
 
@@ -108,6 +114,7 @@ def create_app(settings: Optional[Settings] = None, graph_factory: Optional[Grap
         logger = DBEventLogger(sf)
         app.state.settings, app.state.sf = settings, sf
         app.state.service = ConversationService(sf, factory(logger, settings))
+        app.state.attachments = AttachmentStore(settings.uploads_path(), ocr_reader or ocr.read_screenshot)
         yield
         engine.dispose()
 
@@ -139,6 +146,11 @@ def create_app(settings: Optional[Settings] = None, graph_factory: Optional[Grap
 
     def svc(request: Request) -> ConversationService:
         return request.app.state.service
+
+    def attachment_from(user: User, attachment_id: Optional[str], screenshot_text: Optional[str]) -> Optional[dict]:
+        if not attachment_id:
+            return None
+        return app.state.attachments.prepare(user.id, attachment_id, screenshot_text)
 
     @app.post("/api/auth/login")
     def login(body: LoginIn, request: Request):
@@ -173,7 +185,7 @@ def create_app(settings: Optional[Settings] = None, graph_factory: Optional[Grap
     def start(body: StartIn, user: User = Depends(current_user), service: ConversationService = Depends(svc)):
         if user.role != "customer":
             raise HTTPException(403, "customers only")
-        conv_id = service.create(user, body.message)
+        conv_id = service.create(user, body.message, attachment_from(user, body.attachment_id, body.screenshot_text))
         return service.customer_view(user, conv_id)
 
     @app.get("/api/conversations")
@@ -187,8 +199,24 @@ def create_app(settings: Optional[Settings] = None, graph_factory: Optional[Grap
 
     @app.post("/api/conversations/{conv_id}/messages")
     def post_message(conv_id: str, body: MessageIn, user: User = Depends(current_user), service: ConversationService = Depends(svc)):
-        service.post_message(user, conv_id, body.text, body.action)
+        service.post_message(user, conv_id, body.text, body.action, attachment_from(user, body.attachment_id, body.screenshot_text))
         return service.customer_view(user, conv_id)
+
+    @app.post("/api/attachments", status_code=201)
+    async def upload_attachment(request: Request, file: UploadFile = File(...), user: User = Depends(current_user)):
+        """A screenshot: checked, read with OCR, kept. Returns what was read so the customer can correct it before sending."""
+        if user.role != "customer":
+            raise HTTPException(403, "customers only")
+        data = await file.read(ocr.MAX_BYTES + 1)          # never read more than one byte past the limit
+        return request.app.state.attachments.save(user.id, data)
+
+    @app.get("/api/conversations/{conv_id}/attachments/{attachment_id}")
+    def get_attachment(request: Request, conv_id: str, attachment_id: str, user: User = Depends(current_user)):
+        """The image, to the customer who owns the conversation and to engineers; only if a message in it carries that attachment."""
+        service = request.app.state.service
+        owner = service.attachment_owner(user, conv_id, attachment_id)
+        path = request.app.state.attachments.path(owner, attachment_id)
+        return FileResponse(path, media_type=MEDIA_TYPES[attachment_id.rsplit(".", 1)[1]], headers={"Cache-Control": "private, max-age=3600"})
 
     @app.post("/api/conversations/{conv_id}/feedback")
     def feedback(conv_id: str, body: FeedbackIn, user: User = Depends(current_user), service: ConversationService = Depends(svc)):

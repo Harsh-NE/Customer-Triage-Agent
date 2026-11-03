@@ -174,7 +174,7 @@ def test_rejected_fixes_escalate_into_the_engineer_queue_with_the_agents_reasoni
     labels = [a["label"] for a in case["activity"]]
     assert any(l.startswith("Clarifier") for l in labels) and any(l.startswith("Evidence gate") for l in labels)
     assert any(l.startswith("Escalated") for l in labels) and any(l.startswith("LLM draft") for l in labels)
-    assert case["usage"]["llm_calls"] >= 2 and case["usage"]["unpriced_calls"] == 0     # scope + draft; the chat buttons need no classify call
+    assert case["usage"]["llm_calls"] >= 1 and case["usage"]["unpriced_calls"] == 0     # draft(s); the message says "Docker", so no scope call; the buttons need no classify call
 
 
 def test_engineer_actions_reply_assign_priority_notes_resolve_reopen(client):
@@ -251,7 +251,7 @@ def test_cost_is_computed_from_the_price_table_per_call_and_per_conversation(cli
     usage = client.get(f"/api/cases/{cid}", headers=eng).json()["usage"]
     per_call = pricing.cost_usd("gemini-3.5-flash-lite", {"input_tokens": IN_TOK, "output_tokens": OUT_TOK})
     assert per_call == pytest.approx((IN_TOK * 0.30 + OUT_TOK * 2.50) / 1e6)
-    assert usage["llm_calls"] >= 2                                                          # scope + draft (the buttons are classified without a model call)
+    assert usage["llm_calls"] >= 1                                                          # draft (no scope call: the message says "Docker"; the buttons need no classify call)
     assert usage["input_tokens"] == usage["llm_calls"] * IN_TOK and usage["output_tokens"] == usage["llm_calls"] * OUT_TOK
     assert usage["cost_usd"] == pytest.approx(usage["llm_calls"] * per_call) and usage["unpriced_calls"] == 0
 
@@ -261,7 +261,7 @@ def test_unpriced_models_are_reported_as_unpriced_never_as_free(tmp_path):
         h, eng = login(client, "alice"), login(client, "enid", "engineer")
         cid = client.post("/api/conversations", json={"message": RATE_LIMIT}, headers=h).json()["id"]
         usage = client.get(f"/api/cases/{cid}", headers=eng).json()["usage"]
-        assert usage["llm_calls"] >= 2 and usage["unpriced_calls"] == usage["llm_calls"] and usage["cost_usd"] == 0
+        assert usage["llm_calls"] >= 1 and usage["unpriced_calls"] == usage["llm_calls"] and usage["cost_usd"] == 0
         overall = client.get("/api/analytics/cost", headers=eng).json()["overall"]
         assert overall["unpriced_calls"] == overall["llm_calls"] and overall["total_cost_usd"] == 0
         assert "mystery-model-9" in client.get("/api/analytics/cost", headers=eng).json()["by_model"]
@@ -288,13 +288,14 @@ def test_dashboard_numbers_follow_the_stored_rows(client):
     assert s["timing"]["avg_time_to_resolution_s"] is not None and "resolution_rate" in s["definitions"]
     cost = client.get("/api/analytics/cost", headers=eng).json()
     assert cost["overall"]["total_cost_usd"] == pytest.approx(s["cost"]["total_cost_usd"]) and cost["overall"]["unpriced_calls"] == 0
-    assert set(cost["by_node"]) >= {"scope", "draft"} and "gemini-3.5-flash-lite" in cost["by_model"]
+    assert set(cost["by_node"]) >= {"draft"} and "gemini-3.5-flash-lite" in cost["by_model"]
     assert cost["by_model"]["gemini-3.5-flash-lite"]["calls"] == cost["overall"]["llm_calls"]
     series = client.get("/api/analytics/timeseries", headers=eng).json()["days"]
     assert sum(d["created"] for d in series) == 4
-    # bob's identical problem was served from alice's confirmed fix (no retrieval, no draft call): 2 LLM calls instead of 3
+    # bob's identical problem was served from alice's confirmed fix (no retrieval, no draft call), and his message says "Docker" so
+    # there is no scope call either: his conversation used no model at all (it used to cost the scope call)
     assert s["agent_behaviour"]["cache_hit_rate"] == 0.5
-    assert s["cost"]["avg_cost_escalated_usd"] < s["cost"]["avg_cost_resolved_usd"]
+    assert (s["cost"]["avg_cost_escalated_usd"] or 0) < s["cost"]["avg_cost_resolved_usd"]
 
 
 def test_pricing_table_lookup():
@@ -367,3 +368,69 @@ def test_without_a_built_frontend_the_api_has_no_catch_all(tmp_path):
     settings.frontend_dir = str(tmp_path / "does-not-exist")
     with TestClient(create_app(settings, offline_factory())) as client:
         assert client.get("/").status_code == 404
+
+
+# ---------------------------------------------------------------- malformed model replies (review follow-up)
+def factory_with(llm):
+    def factory(logger, settings):
+        mock = MockRetriever(demo_corpus())
+        tickets = LexicalRetriever(load_tickets_jsonl(FX / "tickets_mini.jsonl"), "tickets")
+        deps = ResolverDeps(retriever=TieredRetriever(KBEvidenceRetriever(mock), tickets), llm=llm, cache=SemanticCache(), logger=logger)
+        saver = SqliteSaver(sqlite3.connect(settings.checkpoint_path, check_same_thread=False))
+        return build_joint_graph(Clarifier(None, mock), deps, checkpointer=saver)
+    return factory
+
+
+class MalformedDrafts(MeteredFake):
+    """Answers the first `bad` draft requests with a reply of the wrong shape, then behaves."""
+
+    def __init__(self, bad):
+        super().__init__()
+        self.bad, self.draft_calls = bad, 0
+
+    def complete_json(self, system, user, max_tokens=1200):
+        if "TASK: draft" in system:
+            self.draft_calls += 1
+            if self.draft_calls <= self.bad:
+                return {"status": "OK", "steps": "this is not a list of steps"}
+        return super().complete_json(system, user, max_tokens)
+
+
+def test_one_malformed_draft_is_retried_and_the_customer_still_gets_a_fix(tmp_path):
+    llm = MalformedDrafts(bad=1)
+    with TestClient(create_app(make_settings(tmp_path), factory_with(llm))) as c:
+        v = c.post("/api/conversations", json={"message": RATE_LIMIT}, headers=login(c, "alice")).json()
+    assert llm.draft_calls == 2 and v["status"] == "active" and last(v)["kind"] == "fix" and last(v)["payload"]["steps"]
+
+
+def test_two_malformed_drafts_are_a_normal_escalation_not_a_technical_problem(tmp_path):
+    llm = MalformedDrafts(bad=9)
+    with TestClient(create_app(make_settings(tmp_path), factory_with(llm))) as c:
+        h = login(c, "alice")
+        v = c.post("/api/conversations", json={"message": RATE_LIMIT}, headers=h).json()
+        case = c.get(f"/api/cases/{v['id']}", headers=login(c, "enid", "engineer")).json()
+    assert v["status"] == "escalated" and case["reason"] != "SYSTEM_ERROR"
+    assert "technical problem" not in last(v)["content"]
+
+
+def test_the_retry_is_logged_for_the_engineer(tmp_path):
+    llm = MalformedDrafts(bad=1)
+    with TestClient(create_app(make_settings(tmp_path), factory_with(llm))) as c:
+        v = c.post("/api/conversations", json={"message": RATE_LIMIT}, headers=login(c, "alice")).json()
+        con = sqlite3.connect(tmp_path / "app.db")
+        rows = con.execute("select data from agent_events where conversation_id = ? and event = 'draft_retry'", (v["id"],)).fetchall()
+    assert len(rows) == 1 and '"gave_up": false' in rows[0][0]
+
+
+# ---------------------------------------------------------------- the scope model is only consulted when the message does not say Docker
+def llm_nodes(client, conv_id):
+    h = login(client, "enid", "engineer")
+    return [a["label"] for a in client.get(f"/api/cases/{conv_id}", headers=h).json()["activity"] if a["event"] == "llm_call"]
+
+
+def test_a_message_that_says_docker_costs_no_scope_call_and_one_without_it_does(client):
+    h = login(client, "alice")
+    says_docker = client.post("/api/conversations", json={"message": RATE_LIMIT}, headers=h).json()
+    no_docker_word = client.post("/api/conversations", json={"message": "image pulls fail with 'You have reached your pull rate limit' HTTP 429 on the hub"}, headers=h).json()
+    assert not any(label.startswith("LLM scope") for label in llm_nodes(client, says_docker["id"]))
+    assert any(label.startswith("LLM scope") for label in llm_nodes(client, no_docker_word["id"]))        # still asked, and still logged with tokens and cost

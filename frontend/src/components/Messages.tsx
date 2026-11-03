@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Message, Source, Step } from "../api";
 import { splitQuestion } from "../format";
 import { Badge, Button } from "./ui";
+import { SentScreenshot } from "./Screenshot";
 
 export function SourceList({ sources }: { sources: Source[] }) {
   if (!sources.length) return null;
@@ -101,12 +102,19 @@ export function QuestionCard({ message, active, busy, onChoose }: { message: Mes
   );
 }
 
-export function MessageView({ message, isLast, active, busy, onChoose, onAction }: {
+export function MessageView({ message, isLast, active, busy, onChoose, onAction, conversationId }: {
   message: Message; isLast: boolean; active: boolean; busy: boolean; onChoose: (t: string) => void; onAction: (a: "resolved" | "not_fixed") => void;
+  conversationId?: string;     // needed to show a screenshot the customer attached
 }) {
   const interactive = isLast && active;
   if (message.role === "customer") {
-    return <div className="flex justify-end"><div className="max-w-[34rem] whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-brand-600 px-4 py-2.5 text-sm text-white">{message.content}</div></div>;
+    const shot = message.payload?.attachment as { id: string; text: string } | undefined;
+    return (
+      <div className="flex justify-end"><div className="max-w-[34rem] whitespace-pre-wrap rounded-2xl rounded-tr-sm bg-brand-600 px-4 py-2.5 text-sm text-white">
+        {message.content}
+        {shot && conversationId && <SentScreenshot conversationId={conversationId} attachment={shot} />}
+      </div></div>
+    );
   }
   if (message.role === "engineer") {
     return (

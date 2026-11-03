@@ -23,6 +23,7 @@ from typing import Any, Optional
 from langgraph.types import Command
 from sqlalchemy import func, select
 
+from triage import ocr
 from triage.api.db import (AgentEvent, CaseAction, CaseNote, Conversation, Message, User, iso, utcnow)
 
 PRIORITIES = ("P1", "P2", "P3", "P4")
@@ -36,6 +37,16 @@ class ServiceError(Exception):
     def __init__(self, status: int, detail: str) -> None:
         super().__init__(detail)
         self.status, self.detail = status, detail
+
+
+def compose(text: Optional[str], attachment: Optional[dict]) -> tuple[str, str, str]:
+    """(shown in the chat, received by the agents, conversation title). With a screenshot the agents get the customer's own words plus
+    the error lines of what the screenshot says as plain lines (same as if typed); the chat shows what the customer typed + the picture."""
+    typed = (text or "").strip()
+    excerpt = ocr.message_excerpt(attachment.get("text", "")) if attachment else ""
+    shown = typed or ("(screenshot attached)" if attachment else "")
+    agent = f"{typed}\n\n{excerpt}".strip() if excerpt else typed
+    return shown, agent, (typed or excerpt or shown)[:80]
 
 
 def _light_evidence(evidence: list[dict]) -> list[dict]:
@@ -131,24 +142,35 @@ class ConversationService:
             s.commit()
 
     # -- customer operations -----------------------------------------------------------------------------------
-    def create(self, user: User, text: str) -> str:
-        text = text.strip()
-        if not text:
+    def create(self, user: User, text: Optional[str], attachment: Optional[dict] = None) -> str:
+        shown, agent_text, title = compose(text, attachment)
+        if not agent_text:
             raise ServiceError(422, "message is empty")
         conv_id = f"C-{uuid.uuid4().hex[:8]}"
         with self.sf() as s:
-            s.add(Conversation(id=conv_id, user_id=user.id, title=text[:80], status="active"))
+            s.add(Conversation(id=conv_id, user_id=user.id, title=title, status="active"))
             s.flush()
-            self._add_message(s, conv_id, "customer", "text", text, author_id=user.id)
+            self._add_customer_message(s, conv_id, user, shown, {}, attachment)
             s.commit()
         with self._lock(conv_id):
-            self._run(conv_id, first=text, resume=None)
+            self._run(conv_id, first=agent_text, resume=None)
         return conv_id
 
-    def post_message(self, user: User, conv_id: str, text: Optional[str], action: Optional[str]) -> None:
+    def _add_customer_message(self, s, conv_id: str, user: User, shown: str, payload: dict, attachment: Optional[dict]) -> None:
+        if attachment:
+            payload = {**payload, "attachment": {k: attachment[k] for k in ("id", "owner", "text", "edited", "ocr")}}
+            ocr_facts = attachment.get("ocr") or {}
+            s.add(AgentEvent(conversation_id=conv_id, ts=utcnow(), event="ocr", node="screenshot", latency_ms=ocr_facts.get("latency_ms"),
+                             data={**ocr_facts, "chars": len(attachment.get("text", "")), "edited": attachment.get("edited")}))
+        self._add_message(s, conv_id, "customer", "text", shown, payload, user.id)
+
+    def post_message(self, user: User, conv_id: str, text: Optional[str], action: Optional[str], attachment: Optional[dict] = None) -> None:
         if action and action not in ACTION_TEXT:
             raise ServiceError(422, f"unknown action '{action}'")
-        text = ACTION_TEXT[action] if action else (text or "").strip()
+        if action:
+            shown = text = ACTION_TEXT[action]
+        else:
+            shown, text, _ = compose(text, attachment)
         if not text:
             raise ServiceError(422, "message is empty")
         with self._lock(conv_id):
@@ -156,12 +178,22 @@ class ConversationService:
                 conv = self._owned(s, user, conv_id)
                 if conv.status in CLOSED:
                     raise ServiceError(409, f"this conversation is {conv.status}; start a new one")
-                self._add_message(s, conv_id, "customer", "text", text, {"action": action} if action else {}, user.id)
+                self._add_customer_message(s, conv_id, user, shown, {"action": action} if action else {}, None if action else attachment)
                 conv.updated_at = utcnow()
                 escalated = conv.status == "escalated"
                 s.commit()
             if not escalated:                       # an escalated case has no graph left to run: an engineer reads it
                 self._run(conv_id, first=None, resume=text)
+
+    def attachment_owner(self, user: User, conv_id: str, attachment_id: str) -> int:
+        """Who uploaded `attachment_id`, if a message in this conversation carries it and `user` may see the conversation."""
+        with self.sf() as s:
+            self._owned(s, user, conv_id)
+            for m in s.scalars(select(Message).where(Message.conversation_id == conv_id, Message.role == "customer")):
+                att = (m.payload or {}).get("attachment") or {}
+                if att.get("id") == attachment_id:
+                    return int(att["owner"])
+        raise ServiceError(404, "attachment not found")
 
     def _owned(self, s, user: User, conv_id: str) -> Conversation:
         conv = s.get(Conversation, conv_id)
@@ -368,6 +400,17 @@ def activity(events: list[AgentEvent]) -> list[dict]:
         d = ev.data or {}
         if ev.event == "guardrail":
             add(ev, f"Guardrail blocked the request ({d.get('detail')})", "warn")
+        elif ev.event == "ocr":
+            if d.get("ok"):
+                low = " (low confidence: the customer was asked to check it)" if d.get("low_confidence") else ""
+                add(ev, f"Read a screenshot with {d.get('engine')}: {d.get('chars')} characters, confidence {d.get('confidence')}{low}"
+                        + (", corrected by the customer" if d.get("edited") else ""), "warn" if d.get("low_confidence") else "ok")
+            else:
+                add(ev, f"Screenshot attached but no text was read ({d.get('reason')})", "warn")
+        elif ev.event == "sentiment_escalation":
+            add(ev, f"Customer frustration {d.get('frustration')} after {d.get('attempts')} attempt(s): handed to a person", "warn")
+        elif ev.event == "neg_cache_hit":
+            add(ev, "This diagnosis failed for an earlier customer with the same problem: drafted again without it", "warn")
         elif ev.event == "clarifier_turn":
             conf = d.get("confidence") or {}
             if d.get("status") == "ask":

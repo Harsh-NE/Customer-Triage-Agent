@@ -22,7 +22,7 @@ import re
 from collections import OrderedDict
 from dataclasses import dataclass, field
 
-from triage.answers import overlap_coefficient
+from triage.answers import _tokens, overlap_coefficient
 from triage.config import ClarifierConfig
 from triage.issues import FIELD_SUBSECTIONS, issue_key, issue_title, norm as _norm
 from triage.state import (PLATFORMS, Candidate, ExtractedFields, Hypothesis, SignatureConfidence)
@@ -194,6 +194,18 @@ def waive_uncovered_terms(amb: "AmbiguityResult", cfg: ClarifierConfig) -> "Ambi
     return amb
 
 
+_FIRST_SENTENCE = re.compile(r"(?<=[.!?])\s+|\n")
+
+
+def documented_error_contained(documented: str, pasted: str, min_tokens: int) -> float:
+    """Share of the documented error's FIRST sentence that appears in what the customer pasted. The docs quote the message
+    ("You have reached your pull rate limit"); the CLI prints it behind a prefix ("Error response from daemon: toomanyrequests: ...").
+    The overlap coefficient divides by the shorter text, so that prefix dilutes a complete quote to about 0.6."""
+    first = _FIRST_SENTENCE.split((documented or "").strip(), 1)[0]
+    wanted = _tokens(first)
+    return len(wanted & _tokens(pasted)) / len(wanted) if len(wanted) >= min_tokens else 0.0
+
+
 def verbatim_error_leader(hyps: list[Hypothesis], error_messages: list[str], cfg: ClarifierConfig) -> bool:
     """True when what the customer pasted matches the LEADING cause's documented error text closely, is long enough to mean something,
     and no other cause's documented text comes close. Same match measure as apply_error_evidence."""
@@ -203,7 +215,7 @@ def verbatim_error_leader(hyps: list[Hypothesis], error_messages: list[str], cfg
 
     def match(h: Hypothesis) -> float:
         documented = h.features.get("error_message")
-        return max(overlap_coefficient(documented, m) for m in pasted) if documented else 0.0
+        return max(max(overlap_coefficient(documented, m), documented_error_contained(documented, m, cfg.verbatim_min_tokens)) for m in pasted) if documented else 0.0
 
     lead = match(hyps[0])
     # another cause may share the same error text (a usage page quoting the same message): that only blocks the shortcut when it is
@@ -222,11 +234,11 @@ def decide(hyps: list[Hypothesis], cfg: ClarifierConfig, verbatim: bool = False)
         return SignatureConfidence(p_top, margin, top_score, True, "no_evidence")
     if hyps[0].grounding < cfg.min_grounding:
         return SignatureConfidence(p_top, margin, top_score, True, "ungrounded")
+    if verbatim:           # the customer quoted the documented error of one cause and no other: nothing left to ask. This outranks an
+        return SignatureConfidence(p_top, margin, top_score, False, "clear")      # uncovered word ("... while pulling nginx server"): the quote is the stronger evidence
     if hyps[0].missing_terms:       # the customer named something that tells the issues apart, and the leader lacks it
         return SignatureConfidence(p_top, margin, top_score, True, "uncovered_term")
     if p_top >= cfg.ready_p_top and margin >= cfg.ready_margin:
-        return SignatureConfidence(p_top, margin, top_score, False, "clear")
-    if verbatim:           # the customer quoted the documented error of one cause and no other: nothing left to ask
         return SignatureConfidence(p_top, margin, top_score, False, "clear")
     return SignatureConfidence(p_top, margin, top_score, True, "split")
 

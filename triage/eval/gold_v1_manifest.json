@@ -1,0 +1,44 @@
+{
+  "total": 89,
+  "by_class": {
+    "kb_gap": 46,
+    "answerable": 19,
+    "vague": 8,
+    "urgent": 6,
+    "out_of_scope": 6,
+    "injection": 4
+  },
+  "by_split": {
+    "dev": 71,
+    "test": 18
+  },
+  "by_class_and_split": {
+    "dev": {
+      "kb_gap": 37,
+      "answerable": 15,
+      "vague": 6,
+      "urgent": 5,
+      "out_of_scope": 5,
+      "injection": 3
+    },
+    "test": {
+      "kb_gap": 9,
+      "answerable": 4,
+      "vague": 2,
+      "urgent": 1,
+      "out_of_scope": 1,
+      "injection": 1
+    }
+  },
+  "split_rule": "per class, sorted by id: positions 3, 8, 13... go to test (about 1 in 5), the rest to dev",
+  "provenance": {
+    "real_questions": 65,
+    "written_for_this_set": 24
+  },
+  "caveats": [
+    "the 65 real questions were used while diagnosing retrieval, the gate and the reranker: the test split is not untouched",
+    "labels were reviewed by a model (reports/regression/heldout_gold_review.md), not by a second person",
+    "H033's ontology node was linked to its KB section AFTER the label review found that section, so judge knowledge-graph effects without H033",
+    "about 150 questions is the target; 89 exist"
+  ]
+}

@@ -24,7 +24,7 @@ from langgraph.graph import END, START, StateGraph
 from triage import config
 from triage.clarifier import Clarifier
 from triage.config import ClarifierConfig
-from triage.resolver.cache import SemanticCache
+from triage.resolver.cache import NegativeCache, SemanticCache
 from triage.resolver.config import ResolverConfig
 from triage.resolver.contracts import TriageState
 from triage.resolver.graph import ResolverDeps, build_resolver_graph
@@ -105,8 +105,13 @@ def build_default_deps(llm: Optional[LLM] = None, *, cache_path: Optional[Path] 
     cfg = resolver_cfg or ResolverConfig()
     if os.environ.get("ONTOLOGY_BACKGROUND") == "1":
         cfg.use_background = True
+    for var, attr in (("RESOLVER_MULTI_DRAFT", "multi_draft"), ("RESOLVER_EXPAND_QUERIES", "expand_queries"),
+                      ("RESOLVER_CHECK_URLS", "check_urls")):        # opt-in features: each costs extra model or network calls
+        if os.environ.get(var) == "1":
+            setattr(cfg, attr, True)
+    negative = NegativeCache(embedder=SharedModelEmbedder(model), path=root / f"negative__{tag}.json")     # per LLM, like the cache
     deps = ResolverDeps(retriever=TieredRetriever(KBEvidenceRetriever(kb, supplementary=supplementary), TicketEvidenceRetriever(tickets)),
-                        llm=llm, cache=cache, logger=logger or EventLogger(log_path or root / "events.jsonl"),
+                        llm=llm, cache=cache, negative_cache=negative, logger=logger or EventLogger(log_path or root / "events.jsonl"),
                         cfg=cfg, ontology=kb.ontology)
     return kb, deps
 

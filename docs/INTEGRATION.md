@@ -125,5 +125,31 @@ at those values, so recalibrate them on real-LLM runs.
 3. **Judge the ticket tier**: hold out ~100 tickets with known fixes and check KB-only vs KB+tickets; the current oracle ignores it.
 4. **`NeedClarification` is not wired.** The Resolver hands back raw (`next = "clarifier"`) rather than asking the Clarifier for a
    targeted field (`Clarifier.reenter` exists and counts against the shared question budget).
-5. **Adopt one tree.** B should work from this repo's `triage/resolver/` and retire `resolver_track/`, otherwise the two will drift.
+5. ~~Adopt one tree.~~ Done in section 7: `resolver_track/` is gone and B's later work lives in `triage/resolver/`.
 6. A reply that arrives as a new message after a resolved/escalated ticket starts nothing new; there is no session lifecycle yet.
+
+## 7. The resolver track's second round (merged 2026-11-03, branch `feature/integrated`)
+
+B's branch `feature/resolver-track` moved `resolver_track/` to the repository root and added a Streamlit app, an OCR module and several
+Resolver features. Both of us had built `triage/resolver/` from the same original files, so 13 files conflicted. The merge kept this
+tree as the base and added B's work on top; the merge commit keeps B's history.
+
+| B's addition | Now |
+|---|---|
+| `triage/ocr.py` (Tesseract, easyocr fallback, `extract_error_context`) | kept and extended: file checks, confidence, secret masking, rapidocr alternative, no machine-specific path. Used by `POST /api/attachments` |
+| `app.py` (Streamlit UI) | **not carried**: it called the agent directly (no login, case store or engineer console) and used a lexical retriever over `data/kb_docker.jsonl`. The React app has the same screenshot flow on the real API |
+| `triage/agent.py` (second integrated graph) | **not carried**: duplicates `triage/joint.py`, which uses the real stores |
+| `PARTIAL` reply label | kept: a partial fix goes round again with the history, and is not recorded as a bad fix |
+| `NegativeCache` | kept, with two fixes: it compared problem + diagnosis as one text, so a different diagnosis still matched (the shared problem text dominated); and invalidation after a success compared the wrong hash and never fired. Per LLM, like the cache |
+| Frustration-based early escalation (`sentiment.py`) | kept, but the score is now a fading peak rather than an exponential average: with a 0.7 decay one angry reply could never reach the 0.55 threshold inside the 2-attempt budget |
+| Attempt-history summary for the next draft | kept |
+| Query expansion + multi-query fusion | **opt-in** (`RESOLVER_EXPAND_QUERIES=1`). It rescaled `rerank_score`, which would have moved the calibrated gate threshold; the fusion now keeps the base scores |
+| Three drafts per attempt, best by verified steps | **opt-in** (`RESOLVER_MULTI_DRAFT=1`): triples drafting calls. The multi-draft prompt is derived from the draft prompt so the community-source rules stay in one place |
+| URL liveness check during verification | **opt-in** (`RESOLVER_CHECK_URLS=1`): a network call per cited link |
+| `FeedbackCollector`, `TraceLogger`, `ABMetrics` (JSONL files) | **not carried**: the case database and `agent_events` already record feedback, traces and cost. Her trace-id idea is the one thing worth adding (see the logging gaps in `triage/eval/agent_metrics.py --audit-db`) |
+
+A bug found by reading B's version, avoided here: her `draft` node used `evidence` and `tried` before defining them when the negative cache was on
+(it would have raised a `NameError` the first time that option was used).
+
+None of the opt-in features has been measured with a real model. Turn them on one at a time and compare with `python -m
+triage.eval.agent_metrics` (fixed `PYTHONHASHSEED`, same scenarios) before keeping any of them.

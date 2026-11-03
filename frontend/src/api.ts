@@ -16,6 +16,14 @@ export interface ConversationSummary {
   id: string; title: string; status: Status; escalated: boolean; created_at: string; updated_at: string;
   closed_at: string | null; duration_s: number; rating: number | null; helpful: boolean | null; resolved_by: string | null;
 }
+export interface OcrRead {
+  ok: boolean; text: string; confidence: number | null; engine: string | null; reason: string | null; latency_ms: number;
+  error_messages: string[]; exit_codes: string[]; low_confidence: boolean;
+}
+/** A screenshot after upload: what was read from it, for the customer to check before it is sent. */
+export interface Attachment { id: string; ocr: OcrRead }
+/** What a message carries for its screenshot: the id, and the text the customer confirmed (their edit, or what was read). */
+export interface AttachmentRef { attachment_id?: string; screenshot_text?: string }
 export interface Feedback { rating: number | null; helpful: boolean | null; comment: string | null }
 export interface ConversationView extends ConversationSummary { can_reply: boolean; feedback: Feedback; assigned: boolean; messages: Message[] }
 
@@ -83,7 +91,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
   const res = await fetch(`/api${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init.headers ?? {}) },
+    headers: { ...(init.body instanceof FormData ? {} : { "Content-Type": "application/json" }), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init.headers ?? {}) },
   });
   const body = await res.json().catch(() => null);
   if (res.status === 401 && token) { setToken(null); window.dispatchEvent(new Event("auth:expired")); }
@@ -101,10 +109,18 @@ export const api = {
   login: (username: string, role: Role, passcode?: string) => post<{ token: string; user: User }>("/auth/login", { username, role, passcode }),
   me: () => request<User>("/me"),
   // customer
-  start: (message: string) => post<ConversationView>("/conversations", { message }),
+  start: (message: string, ref?: AttachmentRef) => post<ConversationView>("/conversations", { message, ...ref }),
+  upload: (file: File) => { const form = new FormData(); form.append("file", file); return request<Attachment>("/attachments", { method: "POST", body: form }); },
+  /** The stored image as an object URL (the endpoint needs the login token, so an <img src> cannot fetch it directly). */
+  attachmentImage: async (conversationId: string, attachmentId: string): Promise<string> => {
+    const token = getToken();
+    const res = await fetch(`/api/conversations/${conversationId}/attachments/${attachmentId}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    if (!res.ok) throw new ApiError(res.status, "could not load the screenshot");
+    return URL.createObjectURL(await res.blob());
+  },
   conversation: (id: string) => request<ConversationView>(`/conversations/${id}`),
   history: () => request<{ conversations: ConversationSummary[] }>("/conversations"),
-  send: (id: string, body: { text?: string; action?: "resolved" | "not_fixed" }) => post<ConversationView>(`/conversations/${id}/messages`, body),
+  send: (id: string, body: { text?: string; action?: "resolved" | "not_fixed" } & AttachmentRef) => post<ConversationView>(`/conversations/${id}/messages`, body),
   feedback: (id: string, body: { rating?: number; helpful?: boolean; comment?: string }) => post<{ ok: boolean }>(`/conversations/${id}/feedback`, body),
   // engineer
   cases: (p: { status?: string; priority?: string; reason?: string; assigned?: string; q?: string }) =>
