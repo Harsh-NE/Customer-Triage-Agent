@@ -1,0 +1,157 @@
+{
+  "defaults": {
+    "min_top_score": 0.55,
+    "resolve_confidence": 0.6
+  },
+  "recommended": {
+    "min_top_score": 0.55,
+    "resolve_confidence": 0.8
+  },
+  "tune": {
+    "files": [
+      "C:\\Users\\anura\\AppData\\Local\\Temp\\claude\\4ad8052337e181f0\\441d74ae-b3ec-47e3-b1e8-6c39c25ed543\\scratchpad\\tune.json"
+    ],
+    "defaults": {
+      "correct_answers": 20,
+      "wrong_answers": 3,
+      "answered_unlabelled": 1,
+      "coverage": 0.571,
+      "wrong_rate": 0.13,
+      "wrong_rate_upper95": 0.321,
+      "n_gold": 35,
+      "n_no_kb_answer": 51
+    },
+    "recommended": {
+      "correct_answers": 13,
+      "wrong_answers": 0,
+      "answered_unlabelled": 0,
+      "coverage": 0.371,
+      "wrong_rate": 0.0,
+      "wrong_rate_upper95": 0.228,
+      "n_gold": 35,
+      "n_no_kb_answer": 51
+    },
+    "separation": {
+      "confidence_when_right": [
+        0.503,
+        0.608,
+        0.623,
+        0.656,
+        0.679,
+        0.725,
+        0.793,
+        0.799,
+        0.803,
+        0.823,
+        0.834,
+        0.836,
+        0.836,
+        0.837,
+        0.88,
+        0.892,
+        0.899,
+        0.907,
+        0.923,
+        0.941,
+        0.95
+      ],
+      "confidence_when_wrong": [
+        0.285,
+        0.31,
+        0.328,
+        0.337,
+        0.355,
+        0.355,
+        0.362,
+        0.367,
+        0.372,
+        0.374,
+        0.376,
+        0.376,
+        0.378,
+        0.388,
+        0.389,
+        0.395,
+        0.417,
+        0.419,
+        0.42,
+        0.42,
+        0.423,
+        0.423,
+        0.425,
+        0.429,
+        0.429,
+        0.431,
+        0.439,
+        0.441,
+        0.443,
+        0.443,
+        0.445,
+        0.449,
+        0.454,
+        0.457,
+        0.458,
+        0.464,
+        0.472,
+        0.477,
+        0.481,
+        0.483,
+        0.501,
+        0.507,
+        0.528,
+        0.536,
+        0.554,
+        0.567,
+        0.584,
+        0.587,
+        0.602,
+        0.609,
+        0.724
+      ],
+      "auc": 0.986
+    }
+  },
+  "test": {
+    "file": "C:\\Users\\anura\\AppData\\Local\\Temp\\claude\\4ad8052337e181f0\\441d74ae-b3ec-47e3-b1e8-6c39c25ed543\\scratchpad\\test.json",
+    "defaults": {
+      "correct_answers": 1,
+      "wrong_answers": 0,
+      "answered_unlabelled": 0,
+      "coverage": 0.25,
+      "wrong_rate": 0.0,
+      "wrong_rate_upper95": 0.793,
+      "n_gold": 4,
+      "n_no_kb_answer": 11
+    },
+    "recommended": {
+      "correct_answers": 1,
+      "wrong_answers": 0,
+      "answered_unlabelled": 0,
+      "coverage": 0.25,
+      "wrong_rate": 0.0,
+      "wrong_rate_upper95": 0.793,
+      "n_gold": 4,
+      "n_no_kb_answer": 11
+    },
+    "separation": {
+      "confidence_when_right": [
+        0.877
+      ],
+      "confidence_when_wrong": [
+        0.288,
+        0.348,
+        0.377,
+        0.41,
+        0.413,
+        0.422,
+        0.424,
+        0.435,
+        0.45,
+        0.456,
+        0.456,
+        0.497
+      ],
+      "auc": 1.0
+    }
+  }
+}

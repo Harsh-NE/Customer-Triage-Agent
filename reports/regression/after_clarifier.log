@@ -1,0 +1,32 @@
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 3938.28it/s]
+{
+  "gap_metrics": {
+    "gap_precision": 1.0,
+    "gap_recall": 1.0,
+    "product_area_accuracy_on_opening": 0.909,
+    "platform_accuracy_on_opening": 1.0,
+    "error_code_recall_on_opening": 1.0
+  },
+  "summary": {
+    "scenarios": 29,
+    "with_gold": 20,
+    "out_of_scope": 6,
+    "ready_rate": 0.655,
+    "unresolved_rate": 0.345,
+    "stuck_rate": 0.0,
+    "mean_questions_per_ticket": 1.55,
+    "gold_top1": 0.9,
+    "gold_top3": 0.95,
+    "ready_precision": 1.0,
+    "wrong_ready_rate": 0.0,
+    "oos_false_ready_rate": 0.0,
+    "redundant_question_rate": 0.0,
+    "duplicate_question_rate": 0.0,
+    "question_single_question": 1.0,
+    "question_options_present": 1.0,
+    "question_length_ok": 1.0,
+    "mean_tool_calls_per_ticket": 7
+  }
+}
+guardrails: {'vague_queries_ask_for_symptoms': True, 'injection_treated_as_data': True, 'hostile_llm_output_sanitised': True, 'pii_never_stored': True, 'tool_registry_enforces_allowlist_and_budget': True, 'llm_failure_degrades_gracefully': True}
+report: reports\regression\after_clarifier.md

@@ -1,0 +1,86 @@
+C:\Users\anura\AppData\Roaming\Python\Python314\site-packages\langchain_core\utils\pydantic.py:42: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1 import BaseModel as BaseModelV1
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 3684.18it/s]
+[run 1/1  1/65] H001: escalated, 3 q, 0 fix, 15.84s (16s elapsed of ~65 cases)
+[run 1/1  2/65] H002: escalated, 3 q, 0 fix, 2.36s (18s elapsed of ~65 cases)
+[run 1/1  3/65] H003: escalated, 3 q, 0 fix, 4.34s (23s elapsed of ~65 cases)
+[run 1/1  4/65] H004: escalated, 3 q, 0 fix, 3.89s (26s elapsed of ~65 cases)
+[run 1/1  5/65] H005: escalated, 3 q, 0 fix, 2.25s (29s elapsed of ~65 cases)
+[run 1/1  6/65] H006: resolved, 2 q, 1 fix, 2.07s (31s elapsed of ~65 cases)
+[run 1/1  7/65] H007: escalated, 1 q, 0 fix, 1.66s (32s elapsed of ~65 cases)
+[run 1/1  8/65] H008: escalated, 3 q, 0 fix, 5.74s (38s elapsed of ~65 cases)
+[run 1/1  9/65] H009: escalated, 3 q, 0 fix, 2.57s (41s elapsed of ~65 cases)
+[run 1/1  10/65] H010: escalated, 0 q, 0 fix, 2.32s (43s elapsed of ~65 cases)
+[run 1/1  11/65] H011: escalated, 3 q, 0 fix, 6.28s (49s elapsed of ~65 cases)
+[run 1/1  12/65] H012: escalated, 1 q, 0 fix, 3.6s (53s elapsed of ~65 cases)
+[run 1/1  13/65] H013: resolved, 3 q, 1 fix, 2.25s (55s elapsed of ~65 cases)
+[run 1/1  14/65] H014: escalated, 3 q, 0 fix, 3.33s (59s elapsed of ~65 cases)
+[run 1/1  15/65] H015: escalated, 3 q, 0 fix, 2.51s (61s elapsed of ~65 cases)
+[run 1/1  16/65] H017: escalated, 3 q, 0 fix, 3.19s (64s elapsed of ~65 cases)
+[run 1/1  17/65] H018: escalated, 3 q, 0 fix, 3.93s (68s elapsed of ~65 cases)
+[run 1/1  18/65] H020: escalated, 3 q, 0 fix, 8.51s (77s elapsed of ~65 cases)
+[run 1/1  19/65] H021: escalated, 3 q, 0 fix, 4.11s (81s elapsed of ~65 cases)
+[run 1/1  20/65] H022: escalated, 1 q, 0 fix, 2.08s (83s elapsed of ~65 cases)
+[run 1/1  21/65] H023: escalated, 3 q, 0 fix, 5.15s (88s elapsed of ~65 cases)
+[run 1/1  22/65] H025: escalated, 3 q, 0 fix, 6.28s (94s elapsed of ~65 cases)
+[run 1/1  23/65] H026: escalated, 3 q, 0 fix, 4.49s (99s elapsed of ~65 cases)
+[run 1/1  24/65] H027: escalated, 1 q, 0 fix, 3.63s (102s elapsed of ~65 cases)
+[run 1/1  25/65] H028: escalated, 1 q, 0 fix, 2.85s (105s elapsed of ~65 cases)
+[run 1/1  26/65] H030: escalated, 3 q, 0 fix, 3.17s (108s elapsed of ~65 cases)
+[run 1/1  27/65] H031: escalated, 1 q, 0 fix, 3.1s (112s elapsed of ~65 cases)
+[run 1/1  28/65] H032: escalated, 3 q, 0 fix, 3.63s (115s elapsed of ~65 cases)
+[run 1/1  29/65] H033: escalated, 2 q, 0 fix, 4.32s (119s elapsed of ~65 cases)
+[run 1/1  30/65] H034: escalated, 3 q, 0 fix, 5.27s (125s elapsed of ~65 cases)
+[run 1/1  31/65] H035: escalated, 1 q, 0 fix, 3.06s (128s elapsed of ~65 cases)
+[run 1/1  32/65] H036: escalated, 3 q, 0 fix, 3.15s (131s elapsed of ~65 cases)
+[run 1/1  33/65] H037: escalated, 1 q, 1 fix, 6.1s (137s elapsed of ~65 cases)
+[run 1/1  34/65] H038: escalated, 3 q, 0 fix, 3.13s (140s elapsed of ~65 cases)
+[run 1/1  35/65] H039: escalated, 1 q, 0 fix, 1.25s (141s elapsed of ~65 cases)
+[run 1/1  36/65] H040: escalated, 1 q, 0 fix, 2.4s (144s elapsed of ~65 cases)
+[run 1/1  37/65] H041: escalated, 3 q, 0 fix, 2.35s (146s elapsed of ~65 cases)
+[run 1/1  38/65] H042: escalated, 1 q, 0 fix, 1.73s (148s elapsed of ~65 cases)
+[run 1/1  39/65] H043: escalated, 3 q, 0 fix, 4.73s (153s elapsed of ~65 cases)
+[run 1/1  40/65] H044: escalated, 3 q, 0 fix, 2.8s (155s elapsed of ~65 cases)
+[run 1/1  41/65] H045: escalated, 3 q, 0 fix, 7.96s (163s elapsed of ~65 cases)
+[run 1/1  42/65] H046: resolved, 2 q, 1 fix, 2.55s (166s elapsed of ~65 cases)
+[run 1/1  43/65] H047: escalated, 1 q, 2 fix, 6.59s (173s elapsed of ~65 cases)
+[run 1/1  44/65] H048: escalated, 1 q, 0 fix, 2.13s (175s elapsed of ~65 cases)
+[run 1/1  45/65] H049: escalated, 1 q, 0 fix, 2.91s (178s elapsed of ~65 cases)
+[run 1/1  46/65] H050: escalated, 1 q, 0 fix, 1.24s (179s elapsed of ~65 cases)
+[run 1/1  47/65] H051: escalated, 3 q, 0 fix, 2.79s (182s elapsed of ~65 cases)
+[run 1/1  48/65] H052: escalated, 3 q, 0 fix, 2.43s (184s elapsed of ~65 cases)
+[run 1/1  49/65] H053: escalated, 1 q, 0 fix, 1.6s (186s elapsed of ~65 cases)
+[run 1/1  50/65] H054: rejected, 1 q, 0 fix, 1.06s (187s elapsed of ~65 cases)
+[run 1/1  51/65] H055: escalated, 1 q, 0 fix, 1.8s (189s elapsed of ~65 cases)
+[run 1/1  52/65] H056: escalated, 3 q, 0 fix, 3.92s (192s elapsed of ~65 cases)
+[run 1/1  53/65] H057: escalated, 2 q, 0 fix, 1.95s (194s elapsed of ~65 cases)
+[run 1/1  54/65] H058: escalated, 1 q, 0 fix, 2.71s (197s elapsed of ~65 cases)
+[run 1/1  55/65] H059: escalated, 1 q, 0 fix, 2.47s (200s elapsed of ~65 cases)
+[run 1/1  56/65] H060: escalated, 3 q, 0 fix, 2.47s (202s elapsed of ~65 cases)
+[run 1/1  57/65] H061: escalated, 1 q, 0 fix, 4.21s (206s elapsed of ~65 cases)
+[run 1/1  58/65] H062: escalated, 1 q, 0 fix, 1.9s (208s elapsed of ~65 cases)
+[run 1/1  59/65] H063: escalated, 3 q, 0 fix, 2.79s (211s elapsed of ~65 cases)
+[run 1/1  60/65] H064: escalated, 1 q, 0 fix, 3.15s (214s elapsed of ~65 cases)
+[run 1/1  61/65] H065: escalated, 1 q, 0 fix, 3.63s (218s elapsed of ~65 cases)
+[run 1/1  62/65] H066: escalated, 1 q, 0 fix, 1.57s (219s elapsed of ~65 cases)
+[run 1/1  63/65] H067: escalated, 3 q, 0 fix, 7.72s (227s elapsed of ~65 cases)
+[run 1/1  64/65] H069: rejected, 1 q, 0 fix, 2.07s (229s elapsed of ~65 cases)
+[run 1/1  65/65] H070: escalated, 1 q, 0 fix, 2.41s (231s elapsed of ~65 cases)
+running the Clarifier on its own ...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 3375.90it/s]
+
+HEADLINE
+  1 first-attempt correct (gold)           23.1% (3/13)
+  1 fixed within 2 attempts (gold)         23.1% (3/13)
+  2 fully supported fixes                  n/a
+  3 recall@3 of gold issue                 69.2% (9/13)
+  3 MRR                                    0.487
+  4 wrong-fix rate                         3.1% (2/65)
+  4 escalation recall                      100.0% (52/52)
+  4 escalation precision                   83.9% (52/62)
+  5 questions per case                     p50 3 / p95 3 / mean 2.06 / max 3 (n=65)
+  6 cost per verified resolution (USD)     n/a
+  6 end-to-end seconds                     p50 2.91 / p95 7.72 / mean 3.56 / max 15.84 (n=65)
+
+report: reports\regression\after_heldout.md
+json:   reports\regression\after_heldout.json

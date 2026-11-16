@@ -1,0 +1,38 @@
+{
+ "report": {
+  "original": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81
+   }
+  },
+  "log_noise": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81,
+    "improved": 0,
+    "worsened": 0
+   }
+  },
+  "chatter": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81,
+    "improved": 0,
+    "worsened": 0
+   }
+  }
+ },
+ "worsened_examples": [],
+ "seed": 0,
+ "seconds": 60
+}

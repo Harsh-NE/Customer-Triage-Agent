@@ -1,0 +1,384 @@
+{
+ "report": {
+  "original": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "typos": {
+   "retrieval": {
+    "recall@1": 0.42,
+    "recall@3": 0.63,
+    "recall@8": 0.778,
+    "mrr": 0.548,
+    "n": 81,
+    "improved": 2,
+    "worsened": 15
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 27
+   }
+  },
+  "shouting": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81,
+    "improved": 0,
+    "worsened": 0
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "lowercase": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81,
+    "improved": 0,
+    "worsened": 0
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "chatter": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81,
+    "improved": 0,
+    "worsened": 0
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "log_noise": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81,
+    "improved": 0,
+    "worsened": 0
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "two_issues": {
+   "retrieval": {
+    "recall@1": 0.432,
+    "recall@3": 0.605,
+    "recall@8": 0.79,
+    "mrr": 0.538,
+    "n": 81,
+    "improved": 6,
+    "worsened": 21
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 1,
+    "ready_and_top1_right": 1,
+    "top1_right": 16,
+    "gold_in_top3": 26
+   }
+  }
+ },
+ "worsened_examples": [
+  {
+   "kind": "typos",
+   "id": "S03",
+   "was": 5,
+   "now": 6,
+   "text": "getting a 429 when our CI pluls images from Docker Hub"
+  },
+  {
+   "kind": "typos",
+   "id": "S17",
+   "was": 6,
+   "now": null,
+   "text": "docekr pull fails for me on rootless Docekr"
+  },
+  {
+   "kind": "typos",
+   "id": "S18",
+   "was": 1,
+   "now": 2,
+   "text": "I can't remove a docker volume, it says uanble to remove filesystem"
+  },
+  {
+   "kind": "typos",
+   "id": "H003",
+   "was": 4,
+   "now": 5,
+   "text": "How to get into psql of a running postgres container?. I created a postgres container using the tutorial on the fig website ( I named the container db. The cont"
+  },
+  {
+   "kind": "typos",
+   "id": "H018",
+   "was": 3,
+   "now": 4,
+   "text": "My Dcoker container does not have IP address. Why?. I started a `rethinkDB` docker container using the command Now the container started successfully. I did `do"
+  },
+  {
+   "kind": "typos",
+   "id": "H051",
+   "was": 5,
+   "now": null,
+   "text": "docker-compose build error when uisng parent dir & dockerifle for build. I have the following structure: In my `tests/docker-compose.yml` I have the following s"
+  },
+  {
+   "kind": "typos",
+   "id": "H056",
+   "was": 1,
+   "now": 2,
+   "text": "Not able to connect with host interface service inside docker container. I am a newbie of docker and running docker isnide vargant host. I am running redis serv"
+  },
+  {
+   "kind": "typos",
+   "id": "P04",
+   "was": 3,
+   "now": null,
+   "text": "mcafee antivirus stops docker deskotp from statring up"
+  },
+  {
+   "kind": "typos",
+   "id": "P05",
+   "was": 1,
+   "now": null,
+   "text": "docker for wnidows says access dneied when i launch it"
+  },
+  {
+   "kind": "typos",
+   "id": "P09",
+   "was": 1,
+   "now": 2,
+   "text": "docker volume path with backslashes beraks when i use git bash on widnows"
+  },
+  {
+   "kind": "typos",
+   "id": "P12",
+   "was": 5,
+   "now": 6,
+   "text": "the dokcer desktop window is all green and giltchy"
+  },
+  {
+   "kind": "typos",
+   "id": "P23",
+   "was": 4,
+   "now": 5,
+   "text": "rootelss dockerd fails to strat rootlesskit error newuidmap"
+  },
+  {
+   "kind": "typos",
+   "id": "P24",
+   "was": 1,
+   "now": null,
+   "text": "pulling images falis with lchwon invlaid argument on rootless docker"
+  },
+  {
+   "kind": "typos",
+   "id": "P32",
+   "was": 3,
+   "now": 4,
+   "text": "entra id group cliams are the wrong format for docker sso"
+  },
+  {
+   "kind": "typos",
+   "id": "P33",
+   "was": 2,
+   "now": null,
+   "text": "scim isnt syncing attribute changes for users that alraedy exist"
+  },
+  {
+   "kind": "two_issues",
+   "id": "S02",
+   "was": 5,
+   "now": null,
+   "text": "Docker Hub pulls are failing with a 429 error Also, why is my laptop fan so loud?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "S03",
+   "was": 5,
+   "now": 6,
+   "text": "getting a 429 when our CI pulls images from Docker Hub Also, how do I change the default shell in my terminal?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "S04",
+   "was": 1,
+   "now": 5,
+   "text": "pulling from Docker Hub gives a 500 error Also, how do I schedule a cron job?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "S06",
+   "was": 2,
+   "now": 3,
+   "text": "containers on our Linux server can't resolve hostnames, DNS lookups fail inside containers Also, how do I change the default shell in my terminal?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "S17",
+   "was": 6,
+   "now": 7,
+   "text": "docker pull fails for me on rootless Docker Also, how do I schedule a cron job?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "S20",
+   "was": 2,
+   "now": 3,
+   "text": "my Docker sandbox ran out of disk space Also, why is my laptop fan so loud?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "H018",
+   "was": 3,
+   "now": 5,
+   "text": "My Docker container does not have IP address. Why?. I started a `rethinkDB` docker container using the command Now the container started successfully. I did `do"
+  },
+  {
+   "kind": "two_issues",
+   "id": "H042",
+   "was": 1,
+   "now": 3,
+   "text": "How can I escape a $ dollar sign in a docker compose file?. Also, how do I schedule a cron job?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "H051",
+   "was": 5,
+   "now": null,
+   "text": "docker-compose build error when using parent dir & dockerfile for build. I have the following structure: In my `tests/docker-compose.yml` I have the following s"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P01",
+   "was": 2,
+   "now": 3,
+   "text": "docker for mac says the app is damaged and wont open Also, my printer keeps going offline."
+  },
+  {
+   "kind": "two_issues",
+   "id": "P02",
+   "was": 1,
+   "now": 5,
+   "text": "my macbook m1 docker desktop wont launch says the cpu is not supported Also, how do I change the default shell in my terminal?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P04",
+   "was": 3,
+   "now": 5,
+   "text": "mcafee antivirus stops docker desktop from starting up Also, how do I schedule a cron job?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P05",
+   "was": 1,
+   "now": 3,
+   "text": "docker for windows says access denied when i launch it Also, my printer keeps going offline."
+  },
+  {
+   "kind": "two_issues",
+   "id": "P12",
+   "was": 5,
+   "now": 6,
+   "text": "the docker desktop window is all green and glitchy Also, how do I rename a git branch?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P13",
+   "was": 2,
+   "now": null,
+   "text": "permission denied chown on the mounted database folder Also, how do I change the default shell in my terminal?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P28",
+   "was": 1,
+   "now": 5,
+   "text": "saml sso says the name id is not an email Also, how do I change the default shell in my terminal?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P30",
+   "was": 1,
+   "now": 2,
+   "text": "our org is out of seats so sso users cannot log in Also, why is my laptop fan so loud?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P31",
+   "was": 3,
+   "now": 5,
+   "text": "i added the dns txt record but sso still says the domain is not verified Also, how do I change the default shell in my terminal?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P33",
+   "was": 2,
+   "now": null,
+   "text": "scim isnt syncing attribute changes for users that already exist Also, how do I schedule a cron job?"
+  },
+  {
+   "kind": "two_issues",
+   "id": "P40",
+   "was": 4,
+   "now": 6,
+   "text": "can i attach a usb stick to a container Also, my printer keeps going offline."
+  },
+  {
+   "kind": "two_issues",
+   "id": "P42",
+   "was": 2,
+   "now": 6,
+   "text": "sbx agent cannot pip install packages because of the network policy Also, how do I change the default shell in my terminal?"
+  }
+ ],
+ "seed": 0,
+ "seconds": 597
+}

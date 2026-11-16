@@ -1,0 +1,23 @@
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 10199.51it/s]
+{
+ "penalty": 0.5,
+ "queries": 136,
+ "off": {
+  "results": 680,
+  "stale_share": 0.004,
+  "median_age_years": 5.1
+ },
+ "penalty_on": {
+  "results": 680,
+  "stale_share": 0.001,
+  "median_age_years": 5.1
+ },
+ "top1_changed": 2,
+ "seconds": 89
+}
+  Q: can docker desktop be installed on windows server 2022
+     before: Windows Server 2022: Install docker container runtime for Linux images using WSL
+     after:  Docker Desktop 4.12.0 windows installation fails
+  Q: can i attach a usb stick to a container
+     before: ADB on docker container does not read Android device connected to host
+     after:  Docker Desktop for Mac OSCatalina Mount SD Card Volume in Container as loop devi

@@ -1,0 +1,332 @@
+{
+ "rate limit": [
+  {
+   "q": "docker pull fails with 'You have reached your pull rate limit' HTTP 429",
+   "product": null,
+   "platform": null,
+   "errors": [
+    "You have reached your pull rate limit"
+   ],
+   "codes": [
+    "HTTP 429 response code"
+   ],
+   "canonical": "docker-hub|?|docker pull fails with 'you have reached your pull rate limit' http 429",
+   "top1": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)",
+   "top3": [
+    "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)",
+    "Docker Hub pull usage and limits > View pull rate and limit",
+    "Troubleshoot Docker Hub > Too many requests (429 response code)"
+   ],
+   "status": "ready",
+   "reason": "clear"
+  },
+  {
+   "q": "Docker Hub is throttling me, too many pulls, I get a 429 when pulling images",
+   "product": "docker-hub",
+   "platform": null,
+   "errors": [],
+   "codes": [
+    "HTTP 429 response code"
+   ],
+   "canonical": null,
+   "top1": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)",
+   "top3": [
+    "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)",
+    "Docker Hub usage and limits > Abuse rate limit",
+    "Docker Hub pull usage and limits > View pull rate and limit"
+   ],
+   "status": "ask",
+   "reason": "asking:pick:content/manuals/docker-hub/troubleshoot.md::You have reached your pull rate limit (429 response code)||content/manuals/docker-hub/troubleshoot.md::Too many requests (429 response code)"
+  },
+  {
+   "q": "getting toomanyrequests when I docker pull, says I've hit the pull rate limit",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": "docker-hub|?|getting toomanyrequests when i docker pull, says i've hit the pull rate limit",
+   "top1": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)",
+   "top3": [
+    "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)",
+    "Docker Hub pull usage and limits > View pull rate and limit",
+    "Docker Hub usage and limits > Abuse rate limit"
+   ],
+   "status": "ready",
+   "reason": "clear"
+  },
+  {
+   "q": "pulls from hub are blocked: rate limit reached, how do I raise the limit",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)",
+   "top3": [
+    "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)",
+    "Docker Hub pull usage and limits > View pull rate and limit",
+    "Docker Hub usage and limits > Abuse rate limit"
+   ],
+   "status": "ask",
+   "reason": "asking:confirm:content/manuals/docker-hub/troubleshoot.md::You have reached your pull rate limit (429 response code)"
+  }
+ ],
+ "daemon not running": [
+  {
+   "q": "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?",
+   "product": "engine",
+   "platform": null,
+   "errors": [
+    "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?"
+   ],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshooting the Docker daemon > Unable to connect to the Docker daemon",
+   "top3": [
+    "Troubleshooting the Docker daemon > Unable to connect to the Docker daemon",
+    "FAQs for Docker Desktop for Linux > How do I use Docker SDKs with Docker Desktop for Linux?",
+    "General FAQs for Desktop > How do I connect to the remote Docker Engine API?"
+   ],
+   "status": "ask",
+   "reason": "asking:confirm:content/manuals/engine/daemon/troubleshoot.md::Unable to connect to the Docker daemon"
+  },
+  {
+   "q": "docker ps says it can't talk to the daemon, is docker even running?",
+   "product": "engine",
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshooting the Docker daemon > Unable to connect to the Docker daemon",
+   "top3": [
+    "Troubleshooting the Docker daemon > Unable to connect to the Docker daemon",
+    "Troubleshooting the Docker daemon > Check whether Docker is running",
+    "Troubleshooting the Docker daemon > Troubleshoot conflicts between the `daemon.json` and startup scripts"
+   ],
+   "status": "ask",
+   "reason": "asking:error_open"
+  },
+  {
+   "q": "every docker command fails, the docker daemon doesn't seem to be up on my linux box",
+   "product": "engine",
+   "platform": "linux",
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshooting the Docker daemon > Unable to connect to the Docker daemon",
+   "top3": [
+    "Troubleshooting the Docker daemon > Unable to connect to the Docker daemon",
+    "Troubleshoot Docker Hub > 500 response code",
+    "Troubleshooting > Report an issue"
+   ],
+   "status": "ask",
+   "reason": "asking:error_open"
+  }
+ ],
+ "port in use": [
+  {
+   "q": "Bind for 0.0.0.0:8080 failed: port is already allocated",
+   "product": null,
+   "platform": null,
+   "errors": [
+    "Bind for 0.0.0.0:8080 failed: port is already allocated"
+   ],
+   "codes": [],
+   "canonical": "desktop|?|bind for 0.0.0.0:8080 failed: port is already allocated",
+   "top1": "Troubleshoot topics for Docker Desktop > `port already allocated` errors",
+   "top3": [
+    "Troubleshoot topics for Docker Desktop > `port already allocated` errors",
+    "Publishing and exposing ports > Publishing on a specific host IP",
+    "Port publishing and mapping > Setting the default bind address for containers"
+   ],
+   "status": "ready",
+   "reason": "clear"
+  },
+  {
+   "q": "I can't start my container, port 8080 is already in use",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshoot topics for Docker Desktop > `port already allocated` errors",
+   "top3": [
+    "Troubleshoot topics for Docker Desktop > `port already allocated` errors",
+    "Sharing local files with containers > Run a container",
+    "Publishing and exposing ports > Use the Docker CLI"
+   ],
+   "status": "ask",
+   "reason": "asking:product_area"
+  },
+  {
+   "q": "docker run -p 8080:80 fails because something else is using the port",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshooting > Networking errors",
+   "top3": [
+    "Troubleshooting > Networking errors",
+    "Legacy container links > Connect using network port mapping",
+    "Publishing and exposing ports > Publishing to ephemeral ports"
+   ],
+   "status": "ask",
+   "reason": "asking:product_area"
+  }
+ ],
+ "desktop stuck starting (windows)": [
+  {
+   "q": "Docker Desktop is stuck on starting on Windows with WSL 2",
+   "product": "desktop",
+   "platform": "windows",
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Docker Desktop WSL 2 backend on Windows > Turn on Docker Desktop WSL 2",
+   "top3": [
+    "Docker Desktop WSL 2 backend on Windows > Turn on Docker Desktop WSL 2",
+    "Install Docker Desktop on Windows > System requirements",
+    "Virtual Machine Manager > WSL 2"
+   ],
+   "status": "ask",
+   "reason": "asking:detail"
+  },
+  {
+   "q": "docker desktop never finishes starting after I installed wsl2 on windows 11",
+   "product": "desktop",
+   "platform": "windows",
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshoot topics for Docker Desktop > Docker Desktop fails due to Virtualization not working",
+   "top3": [
+    "Troubleshoot topics for Docker Desktop > Docker Desktop fails due to Virtualization not working",
+    "Docker Desktop WSL 2 backend on Windows > Turn on Docker Desktop WSL 2",
+    "Install Docker Desktop from the Microsoft Store on Windows > WSL considerations"
+   ],
+   "status": "ask",
+   "reason": "asking:detail"
+  },
+  {
+   "q": "Docker Desktop for Windows hangs on Starting the Docker Engine",
+   "product": null,
+   "platform": "windows",
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "FAQs for Docker Desktop for Windows > Why is Windows 10 or Windows 11 required?",
+   "top3": [
+    "FAQs for Docker Desktop for Windows > Why is Windows 10 or Windows 11 required?",
+    "Install Docker Desktop on Windows > System requirements",
+    "Docker Desktop WSL 2 backend on Windows > Turn on Docker Desktop WSL 2"
+   ],
+   "status": "ask",
+   "reason": "asking:confirm:content/manuals/desktop/troubleshoot-and-support/faqs/windowsfaqs.md::Why is Windows 10 or Windows 11 required?"
+  }
+ ],
+ "socket permission denied": [
+  {
+   "q": "permission denied while trying to connect to the Docker daemon socket",
+   "product": "engine",
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "General FAQs for Desktop > How do I connect to the remote Docker Engine API?",
+   "top3": [
+    "General FAQs for Desktop > How do I connect to the remote Docker Engine API?",
+    "Troubleshooting the Docker daemon > Unable to connect to the Docker daemon",
+    "Protect the Docker daemon socket > Use SSH to protect the Docker daemon socket"
+   ],
+   "status": "ask",
+   "reason": "asking:error_open"
+  },
+  {
+   "q": "got permission denied on /var/run/docker.sock when I run docker ps as my user",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshoot topics for Docker Desktop > `Docker Desktop Access Denied` error message when starting Docker Desktop",
+   "top3": [
+    "Troubleshoot topics for Docker Desktop > `Docker Desktop Access Denied` error message when starting Docker Desktop",
+    "Protect the Docker daemon socket > Use SSH to protect the Docker daemon socket",
+    "Uninstall Docker Compose > Remove for all users"
+   ],
+   "status": "ask",
+   "reason": "asking:detail"
+  },
+  {
+   "q": "I need sudo for every docker command, how do I run docker without it",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "General FAQs for Desktop > How do I run Docker Desktop without administrator privileges?",
+   "top3": [
+    "General FAQs for Desktop > How do I run Docker Desktop without administrator privileges?",
+    "Install Docker Desktop on Mac > Install and run Docker Desktop on Mac",
+    "Install Docker Desktop on Windows > Administrator privileges"
+   ],
+   "status": "ask",
+   "reason": "asking:product_area"
+  }
+ ],
+ "OOM killed": [
+  {
+   "q": "container exited with code 137 OOMKilled",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [
+    "exit code 137"
+   ],
+   "canonical": null,
+   "top1": "Troubleshooting the Docker daemon > Out of memory issues",
+   "top3": [
+    "Troubleshooting the Docker daemon > Out of memory issues",
+    "Scan Docker Hardened Images > Automate DHI scanning in CI/CD with Docker Scout",
+    "Checking your build configuration > Fail build on check violations"
+   ],
+   "status": "ask",
+   "reason": "asking:error_open"
+  },
+  {
+   "q": "my container keeps getting killed, I think it runs out of memory",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [],
+   "canonical": null,
+   "top1": "Troubleshooting the Docker daemon > Out of memory issues",
+   "top3": [
+    "Troubleshooting the Docker daemon > Out of memory issues",
+    "Resource constraints > Understand the risks of running out of memory",
+    "Overriding container defaults > Manage the resources"
+   ],
+   "status": "ask",
+   "reason": "asking:product_area"
+  },
+  {
+   "q": "docker inspect shows OOMKilled true and exit code 137",
+   "product": null,
+   "platform": null,
+   "errors": [],
+   "codes": [
+    "exit code 137"
+   ],
+   "canonical": null,
+   "top1": "Scan Docker Hardened Images > Automate DHI scanning in CI/CD with Docker Scout",
+   "top3": [
+    "Scan Docker Hardened Images > Automate DHI scanning in CI/CD with Docker Scout",
+    "Checking your build configuration > Fail build on check violations",
+    "Docker > Docker commands"
+   ],
+   "status": "ask",
+   "reason": "asking:detail"
+  }
+ ]
+}

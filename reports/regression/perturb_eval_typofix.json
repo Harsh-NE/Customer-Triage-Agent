@@ -1,0 +1,35 @@
+{
+ "report": {
+  "original": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.704,
+    "recall@8": 0.84,
+    "mrr": 0.602,
+    "n": 81
+   }
+  },
+  "typos": {
+   "retrieval": {
+    "recall@1": 0.457,
+    "recall@3": 0.704,
+    "recall@8": 0.84,
+    "mrr": 0.595,
+    "n": 81,
+    "improved": 0,
+    "worsened": 1
+   }
+  }
+ },
+ "worsened_examples": [
+  {
+   "kind": "typos",
+   "id": "H056",
+   "was": 1,
+   "now": 2,
+   "text": "Not able to connect with host interface service inside docker container. I am a newbie of docker and running docker isnide vargant host. I am running redis serv"
+  }
+ ],
+ "seed": 0,
+ "seconds": 85
+}

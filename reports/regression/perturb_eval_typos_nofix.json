@@ -1,0 +1,133 @@
+{
+ "report": {
+  "original": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81
+   }
+  },
+  "typos": {
+   "retrieval": {
+    "recall@1": 0.42,
+    "recall@3": 0.63,
+    "recall@8": 0.778,
+    "mrr": 0.548,
+    "n": 81,
+    "improved": 2,
+    "worsened": 15
+   }
+  }
+ },
+ "worsened_examples": [
+  {
+   "kind": "typos",
+   "id": "S03",
+   "was": 5,
+   "now": 6,
+   "text": "getting a 429 when our CI pluls images from Docker Hub"
+  },
+  {
+   "kind": "typos",
+   "id": "S17",
+   "was": 6,
+   "now": null,
+   "text": "docekr pull fails for me on rootless Docekr"
+  },
+  {
+   "kind": "typos",
+   "id": "S18",
+   "was": 1,
+   "now": 2,
+   "text": "I can't remove a docker volume, it says uanble to remove filesystem"
+  },
+  {
+   "kind": "typos",
+   "id": "H003",
+   "was": 4,
+   "now": 5,
+   "text": "How to get into psql of a running postgres container?. I created a postgres container using the tutorial on the fig website ( I named the container db. The cont"
+  },
+  {
+   "kind": "typos",
+   "id": "H018",
+   "was": 3,
+   "now": 4,
+   "text": "My Dcoker container does not have IP address. Why?. I started a `rethinkDB` docker container using the command Now the container started successfully. I did `do"
+  },
+  {
+   "kind": "typos",
+   "id": "H051",
+   "was": 5,
+   "now": null,
+   "text": "docker-compose build error when uisng parent dir & dockerifle for build. I have the following structure: In my `tests/docker-compose.yml` I have the following s"
+  },
+  {
+   "kind": "typos",
+   "id": "H056",
+   "was": 1,
+   "now": 2,
+   "text": "Not able to connect with host interface service inside docker container. I am a newbie of docker and running docker isnide vargant host. I am running redis serv"
+  },
+  {
+   "kind": "typos",
+   "id": "P04",
+   "was": 3,
+   "now": null,
+   "text": "mcafee antivirus stops docker deskotp from statring up"
+  },
+  {
+   "kind": "typos",
+   "id": "P05",
+   "was": 1,
+   "now": null,
+   "text": "docker for wnidows says access dneied when i launch it"
+  },
+  {
+   "kind": "typos",
+   "id": "P09",
+   "was": 1,
+   "now": 2,
+   "text": "docker volume path with backslashes beraks when i use git bash on widnows"
+  },
+  {
+   "kind": "typos",
+   "id": "P12",
+   "was": 5,
+   "now": 6,
+   "text": "the dokcer desktop window is all green and giltchy"
+  },
+  {
+   "kind": "typos",
+   "id": "P23",
+   "was": 4,
+   "now": 5,
+   "text": "rootelss dockerd fails to strat rootlesskit error newuidmap"
+  },
+  {
+   "kind": "typos",
+   "id": "P24",
+   "was": 1,
+   "now": null,
+   "text": "pulling images falis with lchwon invlaid argument on rootless docker"
+  },
+  {
+   "kind": "typos",
+   "id": "P32",
+   "was": 3,
+   "now": 4,
+   "text": "entra id group cliams are the wrong format for docker sso"
+  },
+  {
+   "kind": "typos",
+   "id": "P33",
+   "was": 2,
+   "now": null,
+   "text": "scim isnt syncing attribute changes for users that alraedy exist"
+  }
+ ],
+ "seed": 0,
+ "seconds": 80
+}

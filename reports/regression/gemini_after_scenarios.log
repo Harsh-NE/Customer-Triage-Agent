@@ -1,0 +1,6 @@
+C:\Users\anura\AppData\Roaming\Python\Python314\site-packages\langchain_core\utils\pydantic.py:42: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1 import BaseModel as BaseModelV1
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 2543.73it/s]
+[run 1/1  1/29] S01: resolved, 0 q, 1 fix, 75.41s (75s elapsed of ~29 cases)
+[run 1/1  2/29] S02: resolved, 1 q, 1 fix, 24.37s (100s elapsed of ~29 cases)
+[run 1/1  3/29] S03: resolved, 2 q, 1 fix, 15.73s (116s elapsed of ~29 cases)

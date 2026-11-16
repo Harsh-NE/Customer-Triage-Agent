@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "git_commit": "32a3728",
+    "pythonhashseed": "0",
+    "date": "2026-11-03 17:14",
+    "env": {}
+  },
+  "minor": {
+    "ontology_off_vs_on": {
+      "off": {
+        "scenarios": {
+          "recall@1": 0.385,
+          "recall@3": 0.769,
+          "recall@8": 0.846,
+          "mrr": 0.545,
+          "n": 13
+        },
+        "paraphrases": {
+          "recall@1": 0.524,
+          "recall@3": 0.714,
+          "recall@8": 0.833,
+          "mrr": 0.631,
+          "n": 42
+        }
+      },
+      "both": {
+        "scenarios": {
+          "recall@1": 0.462,
+          "recall@3": 0.692,
+          "recall@8": 0.769,
+          "mrr": 0.571,
+          "n": 13
+        },
+        "paraphrases": {
+          "recall@1": 0.524,
+          "recall@3": 0.786,
+          "recall@8": 0.952,
+          "mrr": 0.676,
+          "n": 42
+        }
+      }
+    }
+  }
+}

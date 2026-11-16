@@ -1,0 +1,5 @@
+13092 indexed tickets; excluded 66 for leakage (65 held-out source tickets; 1 near-copy titles (Jaccard >= 0.7)); 105 error groups of >= 4 tickets (846 tickets)
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  89%|████████▉ | 177/199 [00:00<00:00, 1767.57it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 1876.80it/s]
+  checked 50/105
+  checked 100/105
+wrote D:\CustomerSupportTriage-Microsoft\data\curated\ticket_gap_clusters.csv, D:\CustomerSupportTriage-Microsoft\data\curated\cards.jsonl and D:\CustomerSupportTriage-Microsoft\reports\TICKET_GAP_ANALYSIS.md

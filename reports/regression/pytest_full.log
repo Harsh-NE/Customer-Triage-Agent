@@ -1,0 +1,40 @@
+........................................................................ [ 16%]
+.............................FF......................................... [ 33%]
+........................................................................ [ 50%]
+........................................................................ [ 67%]
+........................................................................ [ 84%]
+.................................................................        [100%]
+================================== FAILURES ===================================
+_____ test_a_verbatim_documented_error_wins_over_an_uncovered_filler_word _____
+
+    def test_a_verbatim_documented_error_wins_over_an_uncovered_filler_word():
+        hyps = [_with_missing(_h("lead", 0.556, error_message=DOC), ["server"]), _h("other", 0.155), _h("third", 0.11)]
+        assert decide(hyps, CFG).reason == "uncovered_term" and decide(hyps, CFG).ambiguous         # without the quote the word still triggers a question
+>       assert not decide(hyps, CFG, verbatim=True).ambiguous and decide(hyps, CFG, verbatim=True).reason == "clear"
+E       AssertionError: assert (not True)
+E        +  where True = SignatureConfidence(p_top=0.556, margin=0.401, top_score=0.556, ambiguous=True, reason='uncovered_term').ambiguous
+E        +    where SignatureConfidence(p_top=0.556, margin=0.401, top_score=0.556, ambiguous=True, reason='uncovered_term') = decide([Hypothesis(key='lead', label='lead', weight=0.556, best_score=0.556, chunk_ids=['lead'], features={'error_message': '...hird', label='third', weight=0.11, best_score=0.11, chunk_ids=['third'], features={}, grounding=1.0, missing_terms=[])], ClarifierConfig(max_clarify_turns=3, max_tool_calls_per_turn=3, top_k=8, softmax_temperature=0.08, ready_p_top=0.5, re...m_min_hypotheses=4, llm_phrase_questions=False, max_options_in_question=4, context_token_budget=700, keep_last_turns=4), verbatim=True)
+
+tests\test_differential.py:253: AssertionError
+_ test_the_verbatim_shortcut_still_cannot_override_weak_evidence_or_ungrounded_leaders _
+
+    def test_the_verbatim_shortcut_still_cannot_override_weak_evidence_or_ungrounded_leaders():
+        weak = _with_missing(_h("lead", 0.6, error_message=DOC), ["server"])
+        weak.best_score = 0.01
+>       assert decide([weak, _h("other", 0.1)], CFG, verbatim=True).reason == "no_evidence"
+E       AssertionError: assert 'uncovered_term' == 'no_evidence'
+E         
+E         - no_evidence
+E         + uncovered_term
+
+tests\test_differential.py:259: AssertionError
+============================== warnings summary ===============================
+C:\Users\anura\AppData\Roaming\Python\Python314\site-packages\langchain_core\utils\pydantic.py:42
+  C:\Users\anura\AppData\Roaming\Python\Python314\site-packages\langchain_core\utils\pydantic.py:42: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+    from pydantic.v1 import BaseModel as BaseModelV1
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_differential.py::test_a_verbatim_documented_error_wins_over_an_uncovered_filler_word
+FAILED tests/test_differential.py::test_the_verbatim_shortcut_still_cannot_override_weak_evidence_or_ungrounded_leaders
+2 failed, 423 passed, 1 warning in 147.90s (0:02:27)

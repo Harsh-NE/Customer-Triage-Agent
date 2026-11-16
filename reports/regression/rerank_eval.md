@@ -1,0 +1,80 @@
+# Reranker experiment: results
+
+_Generated 2026-11-03 18:02 by `python -m triage.eval.rerank_eval`. Real KB, hybrid retriever, cross-encoder `ms-marco-MiniLM-L-6-v2`. Retrieval only; see the module docstring for what this cannot say._
+
+## paraphrases (n=42)
+
+| variant | recall@1 | recall@3 | recall@8 | MRR | improved / worsened vs off |
+|---|---|---|---|---|---|
+| off | 0.524 | 0.786 | 0.952 | 0.676 | 0 / 0 |
+| order@20 | 0.595 | 0.738 | 0.929 | 0.697 | 10 / 12 |
+| blend0.3@20 | 0.595 | 0.762 | 0.929 | 0.709 | 8 / 7 |
+| blend0.5@20 | 0.595 | 0.762 | 0.929 | 0.704 | 8 / 9 |
+| blend0.7@20 | 0.619 | 0.786 | 0.929 | 0.719 | 9 / 8 |
+| cross-encoder-only@20 | 0.595 | 0.738 | 0.929 | 0.697 | 10 / 12 |
+| order@10 | 0.619 | 0.786 | 0.929 | 0.729 | 11 / 9 |
+| blend0.5@10 | 0.595 | 0.81 | 0.929 | 0.722 | 10 / 6 |
+
+## scenario_openings (n=20)
+
+| variant | recall@1 | recall@3 | recall@8 | MRR | improved / worsened vs off |
+|---|---|---|---|---|---|
+| off | 0.5 | 0.65 | 0.8 | 0.603 | 0 / 0 |
+| order@20 | 0.6 | 0.65 | 0.8 | 0.648 | 3 / 2 |
+| blend0.3@20 | 0.5 | 0.65 | 0.8 | 0.6 | 1 / 2 |
+| blend0.5@20 | 0.5 | 0.65 | 0.8 | 0.594 | 2 / 2 |
+| blend0.7@20 | 0.55 | 0.7 | 0.8 | 0.634 | 2 / 2 |
+| cross-encoder-only@20 | 0.6 | 0.65 | 0.8 | 0.648 | 3 / 2 |
+| order@10 | 0.6 | 0.65 | 0.8 | 0.656 | 4 / 2 |
+| blend0.5@10 | 0.5 | 0.65 | 0.8 | 0.6 | 3 / 2 |
+
+## heldout_gold (n=13)
+
+| variant | recall@1 | recall@3 | recall@8 | MRR | improved / worsened vs off |
+|---|---|---|---|---|---|
+| off | 0.462 | 0.692 | 0.769 | 0.571 | 0 / 0 |
+| order@20 | 0.154 | 0.462 | 0.615 | 0.313 | 1 / 7 |
+| blend0.3@20 | 0.308 | 0.462 | 0.769 | 0.416 | 1 / 5 |
+| blend0.5@20 | 0.308 | 0.462 | 0.692 | 0.405 | 1 / 5 |
+| blend0.7@20 | 0.308 | 0.462 | 0.692 | 0.403 | 1 / 5 |
+| cross-encoder-only@20 | 0.154 | 0.462 | 0.615 | 0.313 | 1 / 7 |
+| order@10 | 0.154 | 0.462 | 0.692 | 0.321 | 0 / 7 |
+| blend0.5@10 | 0.308 | 0.462 | 0.769 | 0.412 | 0 / 5 |
+
+## heldout_confirmed_only (n=7)
+
+| variant | recall@1 | recall@3 | recall@8 | MRR | improved / worsened vs off |
+|---|---|---|---|---|---|
+| off | 0.571 | 0.571 | 0.714 | 0.607 | - |
+| order@20 | 0.143 | 0.571 | 0.714 | 0.362 | - |
+| blend0.3@20 | 0.429 | 0.571 | 0.857 | 0.533 | - |
+| blend0.5@20 | 0.429 | 0.571 | 0.857 | 0.533 | - |
+| blend0.7@20 | 0.429 | 0.571 | 0.857 | 0.529 | - |
+| cross-encoder-only@20 | 0.143 | 0.571 | 0.714 | 0.362 | - |
+| order@10 | 0.143 | 0.571 | 0.714 | 0.354 | - |
+| blend0.5@10 | 0.429 | 0.571 | 0.714 | 0.505 | - |
+
+## Does the top score tell answerable from unanswerable? (what the gate relies on)
+
+| variant | scenarios AUC (20 vs 9) | held-out AUC (13 vs 52) | held-out median top score: gold / KB-gap |
+|---|---|---|---|
+| off | 0.928 | 0.645 | 0.681 / 0.668 |
+| order@20 | 0.933 | 0.66 | 0.681 / 0.671 |
+| blend0.3@20 | 0.944 | 0.655 | 0.767 / 0.746 |
+| blend0.5@20 | 0.944 | 0.632 | 0.821 / 0.809 |
+| blend0.7@20 | 0.944 | 0.595 | 0.872 / 0.871 |
+| cross-encoder-only@20 | 0.883 | 0.522 | 0.963 / 0.972 |
+| order@10 | 0.933 | 0.672 | 0.681 / 0.668 |
+| blend0.5@10 | 0.944 | 0.623 | 0.821 / 0.807 |
+
+AUC 0.5 means no better than chance; 1.0 is perfect. The held-out "KB gap" labels are unverified drafts.
+
+## Cost per search (CPU, model already loaded, cross-encoder cache cleared before every search)
+
+| configuration | mean ms | p50 ms | p95 ms | searches timed |
+|---|---|---|---|---|
+| off | 414 | 361 | 812 | 25 |
+| rerank, pool 20 | 5977 | 6152 | 6517 | 25 |
+| rerank, pool 10 | 3444 | 3218 | 5296 | 25 |
+
+A ticket makes 7-9 Clarifier searches plus 1-2 Resolver retrievals, so multiply the per-search difference accordingly.

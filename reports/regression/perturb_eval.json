@@ -1,0 +1,412 @@
+{
+ "report": {
+  "original": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "typos": {
+   "retrieval": {
+    "recall@1": 0.42,
+    "recall@3": 0.63,
+    "recall@8": 0.778,
+    "mrr": 0.548,
+    "n": 81,
+    "improved": 2,
+    "worsened": 15
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 27
+   }
+  },
+  "shouting": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81,
+    "improved": 0,
+    "worsened": 0
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "lowercase": {
+   "retrieval": {
+    "recall@1": 0.469,
+    "recall@3": 0.691,
+    "recall@8": 0.84,
+    "mrr": 0.598,
+    "n": 81,
+    "improved": 0,
+    "worsened": 0
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "chatter": {
+   "retrieval": {
+    "recall@1": 0.481,
+    "recall@3": 0.679,
+    "recall@8": 0.815,
+    "mrr": 0.592,
+    "n": 81,
+    "improved": 10,
+    "worsened": 11
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "log_noise": {
+   "retrieval": {
+    "recall@1": 0.235,
+    "recall@3": 0.469,
+    "recall@8": 0.654,
+    "mrr": 0.378,
+    "n": 81,
+    "improved": 10,
+    "worsened": 37
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 2,
+    "ready_and_top1_right": 2,
+    "top1_right": 17,
+    "gold_in_top3": 24
+   }
+  },
+  "two_issues": {
+   "retrieval": {
+    "recall@1": 0.432,
+    "recall@3": 0.605,
+    "recall@8": 0.79,
+    "mrr": 0.538,
+    "n": 81,
+    "improved": 6,
+    "worsened": 21
+   },
+   "clarifier": {
+    "n": 39,
+    "ready": 1,
+    "ready_and_top1_right": 1,
+    "top1_right": 16,
+    "gold_in_top3": 26
+   }
+  }
+ },
+ "worsened_examples": [
+  {
+   "kind": "typos",
+   "id": "S03",
+   "was": 5,
+   "now": 6,
+   "text": "getting a 429 when our CI pluls images from Docker Hub"
+  },
+  {
+   "kind": "typos",
+   "id": "S17",
+   "was": 6,
+   "now": null,
+   "text": "docekr pull fails for me on rootless Docekr"
+  },
+  {
+   "kind": "typos",
+   "id": "S18",
+   "was": 1,
+   "now": 2,
+   "text": "I can't remove a docker volume, it says uanble to remove filesystem"
+  },
+  {
+   "kind": "typos",
+   "id": "H003",
+   "was": 4,
+   "now": 5,
+   "text": "How to get into psql of a running postgres container?. I created a postgres container using the tutorial on the fig website ( I named the container db. The cont"
+  },
+  {
+   "kind": "typos",
+   "id": "H018",
+   "was": 3,
+   "now": 4,
+   "text": "My Dcoker container does not have IP address. Why?. I started a `rethinkDB` docker container using the command Now the container started successfully. I did `do"
+  },
+  {
+   "kind": "typos",
+   "id": "H051",
+   "was": 5,
+   "now": null,
+   "text": "docker-compose build error when uisng parent dir & dockerifle for build. I have the following structure: In my `tests/docker-compose.yml` I have the following s"
+  },
+  {
+   "kind": "typos",
+   "id": "H056",
+   "was": 1,
+   "now": 2,
+   "text": "Not able to connect with host interface service inside docker container. I am a newbie of docker and running docker isnide vargant host. I am running redis serv"
+  },
+  {
+   "kind": "typos",
+   "id": "P04",
+   "was": 3,
+   "now": null,
+   "text": "mcafee antivirus stops docker deskotp from statring up"
+  },
+  {
+   "kind": "typos",
+   "id": "P05",
+   "was": 1,
+   "now": null,
+   "text": "docker for wnidows says access dneied when i launch it"
+  },
+  {
+   "kind": "typos",
+   "id": "P09",
+   "was": 1,
+   "now": 2,
+   "text": "docker volume path with backslashes beraks when i use git bash on widnows"
+  },
+  {
+   "kind": "typos",
+   "id": "P12",
+   "was": 5,
+   "now": 6,
+   "text": "the dokcer desktop window is all green and giltchy"
+  },
+  {
+   "kind": "typos",
+   "id": "P23",
+   "was": 4,
+   "now": 5,
+   "text": "rootelss dockerd fails to strat rootlesskit error newuidmap"
+  },
+  {
+   "kind": "typos",
+   "id": "P24",
+   "was": 1,
+   "now": null,
+   "text": "pulling images falis with lchwon invlaid argument on rootless docker"
+  },
+  {
+   "kind": "typos",
+   "id": "P32",
+   "was": 3,
+   "now": 4,
+   "text": "entra id group cliams are the wrong format for docker sso"
+  },
+  {
+   "kind": "typos",
+   "id": "P33",
+   "was": 2,
+   "now": null,
+   "text": "scim isnt syncing attribute changes for users that alraedy exist"
+  },
+  {
+   "kind": "chatter",
+   "id": "S04",
+   "was": 1,
+   "now": 3,
+   "text": "hi, pulling from Docker Hub gives a 500 error thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "chatter",
+   "id": "H018",
+   "was": 3,
+   "now": 4,
+   "text": "hi, My Docker container does not have IP address. Why?. I started a `rethinkDB` docker container using the command Now the container started successfully. I did"
+  },
+  {
+   "kind": "chatter",
+   "id": "H042",
+   "was": 1,
+   "now": null,
+   "text": "hi, How can I escape a $ dollar sign in a docker compose file?. thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "chatter",
+   "id": "H051",
+   "was": 5,
+   "now": null,
+   "text": "hi, docker-compose build error when using parent dir & dockerfile for build. I have the following structure: In my `tests/docker-compose.yml` I have the followi"
+  },
+  {
+   "kind": "chatter",
+   "id": "P01",
+   "was": 2,
+   "now": 5,
+   "text": "hi, docker for mac says the app is damaged and wont open thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "chatter",
+   "id": "P02",
+   "was": 1,
+   "now": 2,
+   "text": "hi, my macbook m1 docker desktop wont launch says the cpu is not supported thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "chatter",
+   "id": "P13",
+   "was": 2,
+   "now": null,
+   "text": "hi, permission denied chown on the mounted database folder thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "chatter",
+   "id": "P22",
+   "was": 1,
+   "now": 2,
+   "text": "hi, cant delete a container device or resource busy unable to remove filesystem thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "chatter",
+   "id": "P23",
+   "was": 4,
+   "now": 5,
+   "text": "hi, rootless dockerd fails to start rootlesskit error newuidmap thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "chatter",
+   "id": "P33",
+   "was": 2,
+   "now": null,
+   "text": "hi, scim isnt syncing attribute changes for users that already exist thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "chatter",
+   "id": "P41",
+   "was": 4,
+   "now": 5,
+   "text": "hi, install docker desktop without being an administrator thanks in advance, been stuck on this for hours"
+  },
+  {
+   "kind": "log_noise",
+   "id": "S02",
+   "was": 5,
+   "now": null,
+   "text": "Docker Hub pulls are failing with a 429 error\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z DEBUG [cache] evicted 14 "
+  },
+  {
+   "kind": "log_noise",
+   "id": "S03",
+   "was": 5,
+   "now": null,
+   "text": "getting a 429 when our CI pulls images from Docker Hub\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z DEBUG [cache] ev"
+  },
+  {
+   "kind": "log_noise",
+   "id": "S04",
+   "was": 1,
+   "now": 4,
+   "text": "pulling from Docker Hub gives a 500 error\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z DEBUG [cache] evicted 14 entr"
+  },
+  {
+   "kind": "log_noise",
+   "id": "S05",
+   "was": 1,
+   "now": 4,
+   "text": "docker commands fail and say they can't connect to the daemon\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z DEBUG [ca"
+  },
+  {
+   "kind": "log_noise",
+   "id": "S11",
+   "was": 1,
+   "now": 3,
+   "text": "Docker Desktop on my Mac says my CPU is incompatible\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z DEBUG [cache] evic"
+  },
+  {
+   "kind": "log_noise",
+   "id": "S12",
+   "was": 1,
+   "now": 4,
+   "text": "shell scripts I mount into containers fail with weird syntax errors, we develop on Windows\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2"
+  },
+  {
+   "kind": "log_noise",
+   "id": "S16",
+   "was": 1,
+   "now": 5,
+   "text": "SCIM provisioning is not updating users that already existed in Docker\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z "
+  },
+  {
+   "kind": "log_noise",
+   "id": "S19",
+   "was": 1,
+   "now": 2,
+   "text": "my containers keep getting killed, I think they run out of memory\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z DEBUG"
+  },
+  {
+   "kind": "log_noise",
+   "id": "S20",
+   "was": 2,
+   "now": 5,
+   "text": "my Docker sandbox ran out of disk space\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z DEBUG [cache] evicted 14 entrie"
+  },
+  {
+   "kind": "log_noise",
+   "id": "H003",
+   "was": 4,
+   "now": null,
+   "text": "How to get into psql of a running postgres container?. I created a postgres container using the tutorial on the fig website ( I named the container db. The cont"
+  },
+  {
+   "kind": "log_noise",
+   "id": "H018",
+   "was": 3,
+   "now": null,
+   "text": "My Docker container does not have IP address. Why?. I started a `rethinkDB` docker container using the command Now the container started successfully. I did `do"
+  },
+  {
+   "kind": "log_noise",
+   "id": "H042",
+   "was": 1,
+   "now": null,
+   "text": "How can I escape a $ dollar sign in a docker compose file?.\n\n2026-03-01T10:20:00Z INFO [scheduler] heartbeat ok, 3 workers idle\n2026-03-02T11:21:01Z DEBUG [cach"
+  },
+  {
+   "kind": "log_noise",
+   "id": "H046",
+   "was": 3,
+   "now": null,
+   "text": "Building quarkus native Linux/amd64 (x86_64) image from Apple M1 (Arm). I am trying to build Quarkus 2.8.0 for x86 platfom of native docker container from Apple"
+  },
+  {
+   "kind": "log_noise",
+   "id": "H051",
+   "was": 5,
+   "now": null,
+   "text": "docker-compose build error when using parent dir & dockerfile for build. I have the following structure: In my `tests/docker-compose.yml` I have the following s"
+  }
+ ],
+ "seed": 0,
+ "seconds": 303
+}

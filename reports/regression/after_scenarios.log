@@ -1,0 +1,50 @@
+C:\Users\anura\AppData\Roaming\Python\Python314\site-packages\langchain_core\utils\pydantic.py:42: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1 import BaseModel as BaseModelV1
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 4043.52it/s]
+[run 1/1  1/29] S01: resolved, 0 q, 1 fix, 15.18s (15s elapsed of ~29 cases)
+[run 1/1  2/29] S02: resolved, 1 q, 1 fix, 2.31s (17s elapsed of ~29 cases)
+[run 1/1  3/29] S03: resolved, 2 q, 1 fix, 4.62s (22s elapsed of ~29 cases)
+[run 1/1  4/29] S04: resolved, 2 q, 1 fix, 2.64s (25s elapsed of ~29 cases)
+[run 1/1  5/29] S05: resolved, 1 q, 1 fix, 2.29s (27s elapsed of ~29 cases)
+[run 1/1  6/29] S06: resolved, 1 q, 1 fix, 1.67s (29s elapsed of ~29 cases)
+[run 1/1  7/29] S07: resolved, 3 q, 1 fix, 3.63s (32s elapsed of ~29 cases)
+[run 1/1  8/29] S08: escalated, 1 q, 0 fix, 0.95s (33s elapsed of ~29 cases)
+[run 1/1  9/29] S09: resolved, 1 q, 1 fix, 2.95s (36s elapsed of ~29 cases)
+[run 1/1  10/29] S10: resolved, 1 q, 1 fix, 2.31s (39s elapsed of ~29 cases)
+[run 1/1  11/29] S11: resolved, 0 q, 1 fix, 0.99s (40s elapsed of ~29 cases)
+[run 1/1  12/29] S12: resolved, 1 q, 1 fix, 2.16s (42s elapsed of ~29 cases)
+[run 1/1  13/29] S13: resolved, 2 q, 1 fix, 3.28s (45s elapsed of ~29 cases)
+[run 1/1  14/29] S14: resolved, 2 q, 1 fix, 5.15s (50s elapsed of ~29 cases)
+[run 1/1  15/29] S15: resolved, 1 q, 1 fix, 1.72s (52s elapsed of ~29 cases)
+[run 1/1  16/29] S16: resolved, 1 q, 1 fix, 1.81s (54s elapsed of ~29 cases)
+[run 1/1  17/29] S17: escalated, 3 q, 0 fix, 3.21s (57s elapsed of ~29 cases)
+[run 1/1  18/29] S18: resolved, 1 q, 1 fix, 1.9s (59s elapsed of ~29 cases)
+[run 1/1  19/29] S19: resolved, 1 q, 1 fix, 2.14s (61s elapsed of ~29 cases)
+[run 1/1  20/29] S20: resolved, 2 q, 1 fix, 2.73s (64s elapsed of ~29 cases)
+[run 1/1  21/29] S21: escalated, 1 q, 0 fix, 3.12s (67s elapsed of ~29 cases)
+[run 1/1  22/29] S22: rejected, 0 q, 0 fix, 0.02s (67s elapsed of ~29 cases)
+[run 1/1  23/29] S23: escalated, 3 q, 0 fix, 1.93s (69s elapsed of ~29 cases)
+[run 1/1  24/29] S24: escalated, 3 q, 0 fix, 1.8s (71s elapsed of ~29 cases)
+[run 1/1  25/29] S25: escalated, 1 q, 2 fix, 2.75s (73s elapsed of ~29 cases)
+[run 1/1  26/29] S26: rejected, 3 q, 0 fix, 3.89s (77s elapsed of ~29 cases)
+[run 1/1  27/29] S27: rejected, 3 q, 0 fix, 3.2s (80s elapsed of ~29 cases)
+[run 1/1  28/29] S28: rejected, 1 q, 0 fix, 1.24s (82s elapsed of ~29 cases)
+[run 1/1  29/29] S29: escalated, 1 q, 0 fix, 1.49s (83s elapsed of ~29 cases)
+running the Clarifier on its own ...
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 3371.08it/s]
+
+HEADLINE
+  1 first-attempt correct (gold)           90.0% (18/20)
+  1 fixed within 2 attempts (gold)         90.0% (18/20)
+  2 fully supported fixes                  n/a
+  3 recall@3 of gold issue                 95.0% (19/20)
+  3 MRR                                    0.925
+  4 wrong-fix rate                         3.4% (1/29)
+  4 escalation recall                      100.0% (9/9)
+  4 escalation precision                   81.8% (9/11)
+  5 questions per case                     p50 1 / p95 3 / mean 1.48 / max 3 (n=29)
+  6 cost per verified resolution (USD)     n/a
+  6 end-to-end seconds                     p50 2.31 / p95 5.15 / mean 2.86 / max 15.18 (n=29)
+
+report: reports\regression\after_scenarios.md
+json:   reports\regression\after_scenarios.json
