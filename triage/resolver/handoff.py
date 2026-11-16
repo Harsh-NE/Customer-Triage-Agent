@@ -81,7 +81,7 @@ def to_resolver_signature(result: ClarifierResult, session: SessionMemory) -> Pr
     if sig is None:
         raise ValueError("a READY/UNRESOLVED ClarifierResult always carries a signature")
     f = sig.fields
-    customer_text = "\n".join(U.strip_chatter(t.text) for t in session.customer_turns()).strip()     # already PII-redacted; greetings and pleas removed
+    customer_text = "\n".join(U.condense_logs(U.strip_chatter(t.text)) for t in session.customer_turns()).strip()     # already PII-redacted; greetings and pleas removed
     codes: list[int] = []
     for text in [*f.error_codes, *f.error_messages]:
         for m in _EXIT_CODE.findall(text):

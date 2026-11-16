@@ -398,12 +398,38 @@ def strip_chatter(text: str) -> str:
     return cleaned if len(cleaned.split()) >= 2 else text
 
 
+# A pasted log buries the question: 1,200 characters of routine "INFO ... ok" lines took recall@8 from 0.84 to 0.65 (reports/BASELINE_PREP_REPORT.md).
+_TIME = r"(?:\d{4}-\d{2}-\d{2}[T ])?\d{2}:\d{2}:\d{2}"                                  # 2026-03-02T10:00:01 or 10:00:01
+_LEVEL = r"(?:INFO|DEBUG|TRACE|NOTICE|WARN(?:ING)?|ERROR|FATAL|CRITICAL)"
+_LOG_LINE = re.compile(rf"^\s*\[?(?:{_TIME}\S*\s+(?:\S+\s+)?)?\[?{_LEVEL}\b")             # "<time> [host] LEVEL ..." or "LEVEL: ..."; upper-case levels only
+_IS_ERROR = re.compile(r"\b(?:ERROR|FATAL|CRITICAL)\b")
+LOG_MIN_LINES = 6            # fewer log-looking lines than this is a pasted error, not a log
+LOG_KEEP_LINES = 8           # most error lines kept
+
+
+def condense_logs(text: str) -> str:
+    """The message without routine log lines. Unchanged unless at least LOG_MIN_LINES lines look like log lines and they are half or more of the message.
+    Kept: the customer's own words, plus up to LOG_KEEP_LINES different error lines (ERROR/FATAL level or an error cue like 'failed'). Never empty."""
+    lines = (text or "").splitlines()
+    is_log = [bool(_LOG_LINE.match(line)) for line in lines]
+    if sum(is_log) < LOG_MIN_LINES or sum(is_log) < sum(1 for line in lines if line.strip()) / 2:
+        return text
+    kept, errors = [], set()
+    for line, log in zip(lines, is_log):
+        if not log:
+            kept.append(line)
+        elif (_IS_ERROR.search(line) or _ERROR_LINE.search(line)) and len(errors) < LOG_KEEP_LINES and line.strip() not in errors:
+            errors.add(line.strip())
+            kept.append(line)
+    return "\n".join(kept).strip() or text
+
+
 def extract(message: str, llm: LLM | None, known_products: list[str], known: ExtractedFields | None = None,
             pending_question: str | None = None) -> ExtractionResult:
     """LLM extraction with graceful degradation: any LLM/JSON failure falls back to the
     heuristic extractor, so a flaky API never blocks a customer. With llm=None it is
     always heuristic (free). Never raises."""
-    message = strip_chatter(message)
+    message = condense_logs(strip_chatter(message))
     if llm is None:
         return ExtractionResult(heuristic_extract(message, known_products), "heuristic")
     try:

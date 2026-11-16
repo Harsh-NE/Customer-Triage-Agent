@@ -106,3 +106,24 @@ def test_database_events_and_online_numbers(tmp_path):
     online = M.online_from_db(db)
     assert online["time_to_first_agent_reply_seconds"]["p50"] == 7.0
     assert online["cost_per_conversation_usd"]["mean"] == 0.01 and online["helpful_rate"]["k"] == 1 and online["mean_rating"] == 5
+
+
+def test_stage_timing_events_become_per_stage_latency():
+    events = [{"event": "stage_timing", "stage": "gate", "latency_ms": 2.0}, {"event": "stage_timing", "stage": "gate", "latency_ms": 4.0},
+              {"event": "stage_timing", "stage": "draft", "latency_ms": 3000.0}, {"event": "llm_call", "latency_ms": 2900.0, "node": "draft"}]
+    stages = M.ops_from_events(events)["stage_latency_ms"]
+    assert set(stages) == {"gate", "draft"} and stages["gate"]["n"] == 2 and stages["gate"]["mean"] == 3.0 and stages["draft"]["p50"] == 3000.0
+
+
+def test_timed_node_logs_one_event_per_run_and_keeps_the_result_and_errors():
+    import pytest
+    from triage.resolver.oplog import EventLogger, timed_node
+    log = EventLogger()
+    node = timed_node(log, "gate", lambda state: {"next": "draft", **state})
+    assert node({"x": 1}) == {"next": "draft", "x": 1}
+    boom = timed_node(log, "verify", lambda state: 1 / 0)
+    with pytest.raises(ZeroDivisionError):
+        boom({})
+    assert [(e["stage"], e["event"]) for e in log.events] == [("gate", "stage_timing"), ("verify", "stage_timing")]
+    assert all(e["latency_ms"] >= 0 for e in log.events)
+

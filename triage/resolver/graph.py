@@ -30,6 +30,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
+from triage import writeback
 from triage.resolver.cache import NegativeCache, SemanticCache
 from triage.resolver.config import ResolverConfig
 from triage.resolver.contracts import (CacheStatus, EscalationReason, Evidence, GateDecision, Outcome,
@@ -38,7 +39,7 @@ from triage.resolver.escalate import build_payload, customer_message
 from triage.resolver.sentiment import SentimentState, should_early_escalate, update_sentiment
 from triage.resolver.guardrails import DOMAIN_TERMS, check_input, content_free, hard_escalation
 from triage.resolver.llm import LLM, FakeLLM
-from triage.resolver.oplog import NULL_LOGGER, EventLogger, estimate_cost
+from triage.resolver.oplog import NULL_LOGGER, EventLogger, estimate_cost, timed_node
 from triage.resolver.gate import assess
 from triage.resolver.steps import (BUTTON_REPLY_LABELS, classify_reply, draft_resolution, expand_queries, multi_draft_resolution,
                                    render_message, select_best_draft, summarize_fix_history, verify_draft)
@@ -54,6 +55,7 @@ class ResolverDeps:
     logger: EventLogger = NULL_LOGGER
     cfg: ResolverConfig = field(default_factory=ResolverConfig)
     ontology: Optional[Any] = None       # triage.ontology.Ontology: used only for the optional definitions-only background
+    jev: Optional[Any] = None            # triage.jev.JevClient when USE_JEV is on. No node calls it yet: the decision points are not chosen
 
 
 def _sig(state: TriageState) -> ProblemSignature:
@@ -291,6 +293,12 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
         if attempts and attempts[-1].get("customer_reply") is None:
             attempts[-1]["customer_reply"] = reply
             attempts[-1]["reply_label"] = label.value
+        if label == ReplyLabel.NOT_FIXED and len(attempts) == 1 and state.get("cache_entry_id") and deps.cache is not None:
+            # The cache supplied this customer's answer (or its evidence) and it did not work. Stop serving that entry, or the next similar
+            # customer gets the same wrong answer: the ablation run saw a 0.9237 match answer a rootless-pull question with "Docker daemon not
+            # running", twice. A good entry may be lost with it; the next confirmed fix for that problem simply writes it again.
+            if deps.cache.invalidate_entry(state["cache_entry_id"]):
+                log.log("cache_evicted", ticket_id=state.get("ticket_id"), entry=state["cache_entry_id"], status=state.get("cache_status"))
         sentiment = update_sentiment(SentimentState.from_dict(state.get("sentiment")), reply)
         log.log("sentiment", ticket_id=state.get("ticket_id"), turn_score=sentiment.scores[-1], current=round(sentiment.current, 3))
         return {"reply_label": label.value, "attempts": attempts, "sentiment": sentiment.to_dict()}
@@ -338,12 +346,16 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
         return _node
 
     def close_resolved(state: TriageState) -> dict[str, Any]:
-        if deps.cache is not None and state.get("cache_status") not in (
-                CacheStatus.HIT_EXACT.value, CacheStatus.HIT_SEMANTIC.value):
+        # Only the first attempt can be the cached answer: a fix found after the cached one failed is new and is stored.
+        from_cache = (state.get("cache_status") in (CacheStatus.HIT_EXACT.value, CacheStatus.HIT_SEMANTIC.value)
+                      and len(state.get("attempts") or []) <= 1)
+        if deps.cache is not None and not from_cache:
             last = (state.get("attempts") or [{}])[-1]
             cited = set(last.get("evidence_ids") or [])
             evidence = [e for e in state.get("evidence") or [] if e["evidence_id"] in cited]
             deps.cache.put(_sig(state), state.get("draft") or {}, evidence, confirmed_by="customer")
+        if not from_cache:
+            writeback.on_resolved(state)               # queued for the historical dataset when TICKET_WRITEBACK=1 (a cache hit adds nothing new)
         if deps.negative_cache is not None:
             deps.negative_cache.invalidate_for_signature(_sig(state))
         msg = "Glad that fixed it. I've recorded the solution so similar issues get resolved faster."
@@ -386,7 +398,7 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
                      ("escalate_off_topic", set_reason(EscalationReason.OUT_OF_SCOPE)),
                      ("close_resolved", close_resolved), ("to_clarifier", to_clarifier),
                      ("escalate", escalate)]:
-        g.add_node(name, fn)
+        g.add_node(name, timed_node(log, name, fn))
 
     g.add_edge(START, "guard")
     g.add_conditional_edges("guard", route_guard, ["escalate", "to_clarifier", "cache_lookup"])

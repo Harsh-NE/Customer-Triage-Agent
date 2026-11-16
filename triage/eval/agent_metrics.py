@@ -302,6 +302,8 @@ def ops_from_events(events: list[dict]) -> dict:
         "cache_lookups": dict(cache), "cache_rejected_by_gate": sum(bool(e.get("rejected_by_gate")) for e in by["cache_lookup"]),
         "retrieval_tiers": dict(Counter(e.get("tier") for e in by["retrieval"])),
         "retrieval_latency_ms": dist([e.get("latency_ms") for e in by["retrieval"]]),
+        "stage_latency_ms": {stage: dist([e.get("latency_ms") for e in by["stage_timing"] if e.get("stage") == stage])
+                             for stage in sorted({e.get("stage") for e in by["stage_timing"] if e.get("stage")})},
         "gate_decisions": dict(Counter(e.get("decision") for e in by["gate"])),
         "verifier_steps_dropped": sum(len(e.get("dropped") or []) if isinstance(e.get("dropped"), list) else int(e.get("dropped") or 0) for e in by["verify"]),
         "verifier_steps_kept": sum(len(e.get("kept") or []) if isinstance(e.get("kept"), list) else int(e.get("kept") or 0) for e in by["verify"]),
@@ -329,7 +331,7 @@ WANTED = {"trace id on every event": ["trace_id"], "config / threshold version":
           "KB / index / ontology version": ["kb_version", "index_version", "ontology_version"],
           "evidence ids shown to the drafter": ["evidence_ids", "evidence_ids_shown"], "evidence ids cited in the fix": ["cited_ids", "evidence_ids_cited"],
           "question wording": ["question_text", "question"], "customer answer, parsed": ["parsed_answer", "answer_parsed"],
-          "per-stage latency": ["stage_latency_ms"], "limit-hit flags (3 questions, 2 attempts, timeout)": ["limit_hit", "budget_exceeded", "timeout"],
+          "per-stage latency": ["stage"], "limit-hit flags (3 questions, 2 attempts, timeout)": ["limit_hit", "budget_exceeded", "timeout"],
           "decision reason (answer / ask / escalate)": ["reasons", "reason"]}
 
 

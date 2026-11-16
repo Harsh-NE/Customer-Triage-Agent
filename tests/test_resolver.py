@@ -147,7 +147,78 @@ def test_cache_invalidation_on_doc_change():
     assert c.lookup(a).status == CacheStatus.MISS
 
 
+def test_invalidate_entry_turns_off_that_entry_only_and_survives_a_restart(tmp_path):
+    c = SemanticCache(path=tmp_path / "cache.json")
+    a, b = (ProblemSignature.from_dict(SIGS[k]) for k in ("port_conflict", "permission_denied"))
+    entry_a = c.put(a, {}, [], confirmed_by="customer")
+    c.put(b, {}, [], confirmed_by="customer")
+    assert c.invalidate_entry(entry_a.entry_id) is True
+    assert c.invalidate_entry(entry_a.entry_id) is False                  # already off
+    assert c.invalidate_entry("C-unknown") is False
+    assert c.lookup(a).status == CacheStatus.MISS and c.lookup(b).status == CacheStatus.HIT_EXACT
+    assert SemanticCache(path=tmp_path / "cache.json").lookup(a).status == CacheStatus.MISS
+
+
 # ---------------------------------------------------------------- resolver flows
+def cached_entry_ids(deps):
+    return {e.entry_id for e in deps.cache.entries if e.valid}
+
+
+def test_a_cached_answer_the_customer_rejects_is_not_served_again(deps):
+    app = build_resolver_app(deps)
+    run(app, SIGS["port_conflict"], ["that worked, thanks"], "a")                      # a confirmed answer enters the cache
+    (entry_id,) = cached_entry_ids(deps)
+    _, st = run(app, SIGS["port_conflict"], ["still the same error"], "b")             # the cache serves it; this customer says it failed
+    assert st["cache_status"] == CacheStatus.HIT_EXACT.value and st["attempts"][0]["reply_label"] == "not_fixed"
+    evicted = [e for e in deps.logger.events if e["event"] == "cache_evicted"]
+    assert [e["entry"] for e in evicted] == [entry_id] and entry_id not in cached_entry_ids(deps)
+    assert deps.cache.lookup(ProblemSignature.from_dict(SIGS["port_conflict"])).status == CacheStatus.MISS      # the next customer is not served it
+
+
+@pytest.fixture
+def roomy_deps(tmp_path):
+    """Like `deps`, but the knowledge base has more passages about the port error, so a second fix can be found after the first one fails."""
+    rows = [json.loads(line) for line in (FX / "kb_mini.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()]
+    for n in range(3, 8):
+        rows.append({"chunk_id": f"docs/engine/network/ports.md#{n}", "doc_id": f"docs/engine/network/ports.md#{n}", "url": "https://docs.docker.com/engine/network/",
+                     "text": f"The error port is already allocated can come from a stale container that kept the host port. Remedy {n}: run `docker rm -f stale{n}` "
+                             f"and publish the port again with `-p {8080 + n}:80`.", "source": "docker/docs",
+                     "metadata": {"product_area": "engine", "component": "networking"}})
+    (tmp_path / "kb.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    kb = LexicalRetriever(load_kb_jsonl(tmp_path / "kb.jsonl"), "kb")
+    tickets = LexicalRetriever(load_tickets_jsonl(FX / "tickets_mini.jsonl"), "tickets")
+    return ResolverDeps(retriever=TieredRetriever(kb, tickets), llm=FakeLLM(), cache=SemanticCache(), logger=EventLogger())
+
+
+def test_a_fix_found_after_the_cached_one_failed_is_cached_in_its_place(roomy_deps):
+    deps = roomy_deps
+    app = build_resolver_app(deps)
+    run(app, SIGS["port_conflict"], ["that worked, thanks"], "a")
+    (old_id,) = cached_entry_ids(deps)
+    _, st = run(app, SIGS["port_conflict"], ["still the same error", "that worked, thanks"], "b")
+    assert st["cache_status"] == CacheStatus.HIT_EXACT.value and st["outcome"] == "resolved"
+    assert len(st["attempts"]) == 2
+    (new_id,) = cached_entry_ids(deps)
+    assert new_id != old_id                                                            # the second fix was stored, not mistaken for a cache hit
+    assert deps.cache.lookup(ProblemSignature.from_dict(SIGS["port_conflict"])).entry.entry_id == new_id
+
+
+def test_a_reply_that_is_not_a_rejection_keeps_the_cached_answer(deps):
+    app = build_resolver_app(deps)
+    run(app, SIGS["port_conflict"], ["that worked, thanks"], "a")
+    before = cached_entry_ids(deps)
+    run(app, SIGS["port_conflict"], ["actually I forgot to say I am on Windows"], "b")     # new information, not a rejection
+    assert cached_entry_ids(deps) == before and not [e for e in deps.logger.events if e["event"] == "cache_evicted"]
+    run(app, SIGS["port_conflict"], ["works, thanks"], "c")                              # and a confirmation keeps it too
+    assert cached_entry_ids(deps) == before
+
+
+def test_a_fresh_answer_that_fails_does_not_touch_the_cache(deps):
+    app = build_resolver_app(deps)
+    run(app, SIGS["permission_denied"], ["still the same error"], "x")                  # nothing was cached, so nothing to evict
+    assert not [e for e in deps.logger.events if e["event"] == "cache_evicted"] and not cached_entry_ids(deps)
+
+
 def test_resolve_then_cache_hit_on_repeat(deps):
     app = build_resolver_app(deps)
     out, st = run(app, SIGS["port_conflict"], ["that worked, thanks"], "a")

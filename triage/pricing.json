@@ -9,6 +9,12 @@
       "cached_input": 0.03,
       "source": "https://openrouter.ai/api/v1/models  (id: google/gemini-3.5-flash-lite)",
       "note": "OpenRouter list price. Google's own API price and free tier can differ; edit this file if you are billed directly. Thinking tokens, if any, are billed as output."
+    },
+    "jev-latest": {
+      "input": 0.042,
+      "output": 0.0,
+      "source": "https://typesafe.ai  ($42 per billion input tokens; output is not charged in the sources found)",
+      "note": "Read from the vendor's page on 2026-11-15. Third-party listings differ slightly (up to $0.058 per 1M); confirm on your invoice."
     }
   }
 }

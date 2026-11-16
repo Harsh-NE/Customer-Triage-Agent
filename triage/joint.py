@@ -24,19 +24,20 @@ from langgraph.graph import END, START, StateGraph
 from triage import config
 from triage.clarifier import Clarifier
 from triage.config import ClarifierConfig
+from triage.features import Features
 from triage.resolver.cache import NegativeCache, SemanticCache
 from triage.resolver.config import ResolverConfig
 from triage.resolver.contracts import TriageState
 from triage.resolver.graph import ResolverDeps, build_resolver_graph
 from triage.resolver.handoff import make_clarifier_node
 from triage.resolver.llm import LLM, get_llm
-from triage.resolver.oplog import EventLogger
+from triage.resolver.oplog import EventLogger, timed_node
 
 
 def build_joint_graph(clarifier: Clarifier, deps: ResolverDeps, checkpointer=None):
     resolver = build_resolver_graph(deps).compile()
     g = StateGraph(TriageState)
-    g.add_node("clarifier", make_clarifier_node(clarifier, scope_llm=deps.llm, logger=deps.logger))
+    g.add_node("clarifier", timed_node(deps.logger, "clarifier", make_clarifier_node(clarifier, scope_llm=deps.llm, logger=deps.logger)))
     g.add_node("resolver", resolver)
     g.add_edge(START, "clarifier")
     g.add_conditional_edges("clarifier", lambda s: "clarifier" if s.get("clarifier_pending") else "resolver",
@@ -72,31 +73,37 @@ def build_supplementary(model):
 
 
 def build_default_deps(llm: Optional[LLM] = None, *, cache_path: Optional[Path] = None, log_path: Optional[Path] = None,
-                       resolver_cfg: Optional[ResolverConfig] = None, logger: Optional[EventLogger] = None):
+                       resolver_cfg: Optional[ResolverConfig] = None, logger: Optional[EventLogger] = None,
+                       features: Optional[Features] = None):
     """Real stores, one shared embedding model. Returns (retrievers, ResolverDeps): the KB retriever is also what the
-    Clarifier searches with, so both agents see the same index."""
+    Clarifier searches with, so both agents see the same index. `features` (default: the USE_* environment, see
+    triage/features.py) switches the knowledge graph, the Jev client and the caches."""
     from sentence_transformers import SentenceTransformer
 
     from triage.hybrid import HybridKBRetriever, TicketRetriever
     from triage.resolver.adapters import KBEvidenceRetriever, TicketEvidenceRetriever, kb_doc_hashes
     from triage.resolver.interface import TieredRetriever
 
+    features = features or Features.from_env()
     env = config.get_env()
     try:                                                  # local cache first: no network round-trip
         model = SentenceTransformer(env["EMBEDDING_MODEL"], local_files_only=True)
     except Exception:  # noqa: BLE001
         model = SentenceTransformer(env["EMBEDDING_MODEL"])
-    kb = HybridKBRetriever(model=model)
+    kb = HybridKBRetriever(model=model, ontology_mode=None if features.use_kg else "off")
     tickets = TicketRetriever(model=model)
     root = config.PROJECT_ROOT / "data" / "processed" / "docker" / "resolver"
     llm = llm or get_llm()
     # The cache holds DRAFTED answers, so it is per LLM: answers written by the offline FakeLLM must never be served to a
     # customer in a run that uses a real model (and vice versa).
     tag = re.sub(r"[^a-z0-9]+", "-", str(getattr(llm, "name", "llm")).lower()).strip("-")
-    cache = SemanticCache(embedder=SharedModelEmbedder(model), path=cache_path or root / f"cache__{tag}.json")
+    cache = negative = None
+    if features.use_semantic_cache:
+        cache = SemanticCache(embedder=SharedModelEmbedder(model), path=cache_path or root / f"cache__{tag}.json")
+        negative = NegativeCache(embedder=SharedModelEmbedder(model), path=root / f"negative__{tag}.json")     # per LLM, like the cache
     supplementary = build_supplementary(model)
     chunks = config.PROJECT_ROOT / "data" / "processed" / "docker" / "chunks_metadata.jsonl"
-    if chunks.exists():
+    if cache is not None and chunks.exists():
         hashes = kb_doc_hashes(chunks)
         supp_chunks = root.parent / "chunks_supplementary.jsonl"
         if supplementary is not None and supp_chunks.exists():       # answers citing third-party chunks are checked like official ones
@@ -109,15 +116,23 @@ def build_default_deps(llm: Optional[LLM] = None, *, cache_path: Optional[Path] 
                       ("RESOLVER_CHECK_URLS", "check_urls")):        # opt-in features: each costs extra model or network calls
         if os.environ.get(var) == "1":
             setattr(cfg, attr, True)
-    negative = NegativeCache(embedder=SharedModelEmbedder(model), path=root / f"negative__{tag}.json")     # per LLM, like the cache
+    jev = None
+    if features.use_jev:
+        from triage.jev import JevClient
+        jev = JevClient.from_env()                         # None without TYPESAFE_API_KEY; nothing calls it yet either way
     deps = ResolverDeps(retriever=TieredRetriever(KBEvidenceRetriever(kb, supplementary=supplementary), TicketEvidenceRetriever(tickets)),
                         llm=llm, cache=cache, negative_cache=negative, logger=logger or EventLogger(log_path or root / "events.jsonl"),
-                        cfg=cfg, ontology=kb.ontology)
+                        cfg=cfg, ontology=kb.ontology, jev=jev)
     return kb, deps
+
+
+def build_clarifier(kb, cfg: Optional[ClarifierConfig] = None) -> Clarifier:
+    """The deterministic Clarifier on the same index as `kb`. It uses the knowledge graph exactly when `kb` does, so USE_KG switches both."""
+    return Clarifier(None, kb, cfg, ontology=kb.ontology or False)
 
 
 def build_default_app(llm: Optional[LLM] = None, clarifier_cfg: Optional[ClarifierConfig] = None, **kw) -> Any:
     """The whole system on the real stores. `llm` drives the Resolver's draft/classify steps (default: LLM_PROVIDER env,
     'fake' offline). The Clarifier stays on its deterministic default (heuristic extraction)."""
     kb, deps = build_default_deps(llm, **kw)
-    return build_joint_graph(Clarifier(None, kb, clarifier_cfg), deps)
+    return build_joint_graph(build_clarifier(kb, clarifier_cfg), deps)

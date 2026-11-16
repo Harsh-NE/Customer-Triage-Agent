@@ -11,6 +11,7 @@ Usage:
 """
 from __future__ import annotations
 
+import functools
 import json
 import threading
 import time
@@ -61,6 +62,19 @@ class EventLogger:
 
     def of_type(self, event_type: str) -> list[dict[str, Any]]:
         return [e for e in self.events if e["event"] == event_type]
+
+
+def timed_node(logger: "EventLogger", stage: str, fn):
+    """Wrap a graph node so every run logs one `stage_timing` event (stage name, wall milliseconds, inclusive of the LLM and retrieval calls inside
+    it). Behaviour is unchanged; exceptions pass through after the timing is logged. agent_metrics turns these into per-stage latency."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            logger.log("stage_timing", stage=stage, latency_ms=round((time.perf_counter() - start) * 1000, 2))
+    return wrapper
 
 
 NULL_LOGGER = EventLogger(None)

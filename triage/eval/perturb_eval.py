@@ -94,13 +94,21 @@ def clarifier_first_turn(kb, query: str, gold: list[dict]) -> dict:
     return {"ready": result.status.value == "ready", "top1_right": right, "gold_in_top3": any(g["issue"].lower().strip("`") in label.lower() for g in gold for label in labels[:3])}
 
 
-def evaluate(kb, items: list[dict], kinds: tuple[str, ...], seed: int, with_clarifier: bool) -> dict:
+def pipeline_prep(text: str) -> str:
+    """What the Resolver does to a message before searching: chatter and routine log lines removed, then the adapter's 800-character cap."""
+    from triage.resolver.adapters import QUERY_CHARS
+    from triage.understand import condense_logs, strip_chatter
+    return condense_logs(strip_chatter(text))[:QUERY_CHARS]
+
+
+def evaluate(kb, items: list[dict], kinds: tuple[str, ...], seed: int, with_clarifier: bool, prep=None) -> dict:
+    """prep: optional text -> text applied to the perturbed message before retrieval (None = raw, the old behaviour of this report)."""
     out: dict = {}
     for kind in ("original", *kinds):
         ranks, clar = {}, []
         for item in items:
             text = item["query"] if kind == "original" else perturb(item["query"], kind, seed)
-            ranks[item["id"]] = issue_rank(kb.search(text, top_k=8), item["gold"])
+            ranks[item["id"]] = issue_rank(kb.search(prep(text) if prep else text, top_k=8), item["gold"])
             if with_clarifier and item["set"] != "paraphrase":
                 clar.append(clarifier_first_turn(kb, text, item["gold"]))
         out[kind] = {"ranks": ranks, "clarifier": clar}
@@ -146,6 +154,9 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--no-clarifier", action="store_true")
+    ap.add_argument("--prep", choices=("raw", "pipeline", "typofix"), default="raw",
+                    help="raw: search the perturbed text as is (the original report); pipeline: apply strip_chatter + condense_logs + the 800-character cap first; "
+                         "typofix: pipeline plus spelling correction against the KB vocabulary (triage/spell.py)")
     ap.add_argument("--out-json", type=Path, default=REPORT_DIR / "regression" / "perturb_eval.json")
     ap.add_argument("--out-md", type=Path, default=REPORT_DIR / "regression" / "perturb_eval.md")
     args = ap.parse_args()
@@ -153,9 +164,16 @@ def main() -> None:
     from triage.hybrid import HybridKBRetriever
     kb = HybridKBRetriever(rerank_mode="off", kb_filters="")
     kb._ensure()
+    prep = None
+    if args.prep == "pipeline":
+        prep = pipeline_prep
+    elif args.prep == "typofix":
+        from triage.spell import Speller
+        speller = Speller(kb.vocabulary())
+        prep = lambda text: speller.correct(pipeline_prep(text))                # noqa: E731
     items = answerable_items()[:args.limit]
     started = time.time()
-    results = evaluate(kb, items, tuple(args.kinds), args.seed, not args.no_clarifier)
+    results = evaluate(kb, items, tuple(args.kinds), args.seed, not args.no_clarifier, prep)
     report = summarize(results)
     write_markdown(args.out_md, report, len(items))
     examples = []

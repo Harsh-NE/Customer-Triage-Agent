@@ -69,10 +69,12 @@ def is_gold_row(row: dict, gold: dict) -> bool:
             and gold["issue_contains"].lower() in row["issue"].lower())
 
 
-def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_messages: int = 14, customer_seed: int | None = None) -> dict:
+def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_messages: int = 14, customer_seed: int | None = None,
+                 run_tag: str = "") -> dict:
+    """`run_tag` keeps the conversation separate when the same scenario is asked again in one run (the ablation's repeat pass)."""
     first_input = len(rec.gate_inputs)
     rec.exclude = {s.hidden["source_ticket_id"]} if s.hidden.get("source_ticket_id") else set()
-    tid = f"E2E-{s.id}" + (f"-r{customer_seed}" if customer_seed is not None else "")
+    tid = f"E2E-{s.id}" + (f"-r{customer_seed}" if customer_seed is not None else "") + run_tag
     cfg = {"configurable": {"thread_id": tid}}
     customer = RuleBasedCustomer(s, seed=customer_seed)
     t0 = time.time()
@@ -81,6 +83,7 @@ def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_me
     sent: list[dict] = []
     asked: list[dict] = []
     questions = 0
+    first_fix_s = None
     for _ in range(max_messages):
         if "__interrupt__" not in out:
             break
@@ -90,6 +93,7 @@ def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_me
             reply = customer.reply(v["message"])
             asked.append({"message": v["message"], "reply": reply})
         else:
+            first_fix_s = first_fix_s if first_fix_s is not None else round(time.time() - t0, 2)
             tier, evidence = rec.calls[-1] if rec.calls else ("kb", [])
             cited = sorted({i for grp in _CITED.findall(v["message"]) for i in grp.split(", ")})
             good = bool(s.gold) and any(is_gold(e, s.gold) for e in evidence if e.evidence_id in cited)
@@ -110,7 +114,7 @@ def run_scenario(app, rec: Recording, s: Scenario, verbose: bool = False, max_me
             "first_gold": bool(sent and sent[0]["gold"]), "resolved_gold": outcome == "resolved" and any(f["gold"] for f in sent),
             "clarifier": (st.get("signature") or {}).get("clarifier", {}), "clarify_returns": st.get("clarify_returns", 0),
             "gate_inputs": gate_inputs, "gate_final": st.get("gate_detail"), "confidence": st.get("confidence"),
-            "asked": asked, "first_reply_s": first_reply_s, "total_s": round(time.time() - t0, 2)}
+            "asked": asked, "first_reply_s": first_reply_s, "first_fix_s": first_fix_s, "total_s": round(time.time() - t0, 2)}
 
 
 def llm_usage(events: Path, offset: int) -> dict:
@@ -120,7 +124,12 @@ def llm_usage(events: Path, offset: int) -> dict:
     with events.open("rb") as f:
         f.seek(offset)
         lines = f.read().decode("utf-8", "ignore").splitlines()
-    calls = [e for e in map(json.loads, filter(None, lines)) if e.get("event") == "llm_call"]
+    return usage_of(list(map(json.loads, filter(None, lines))))
+
+
+def usage_of(events: list[dict]) -> dict:
+    """The same summary from events already in memory."""
+    calls = [e for e in events if e.get("event") == "llm_call"]
     costs = [e.get("cost_usd") for e in calls]
     lat = sorted(e["latency_ms"] for e in calls if e.get("latency_ms") is not None)
     return {"llm_calls": len(calls), "input_tokens": sum(e.get("input_tokens") or 0 for e in calls),

@@ -178,3 +178,20 @@ def test_ticket_retriever_filters_and_excludes(tickets):
     assert base and tickets.search(q, top_k=5, exclude_ids={base[0].ticket_id})[0].ticket_id != base[0].ticket_id
     assert all(h.kind_guess == "troubleshooting" for h in tickets.search("docker build fails", top_k=5, kind="troubleshooting"))
     assert any(m.startswith("topic:") for h in tickets.search("docker build fails", top_k=5, topics=["build"]) for m in h.matched)
+
+
+def test_typo_fix_is_off_unless_asked_for(monkeypatch):
+    monkeypatch.delenv("TYPO_FIX", raising=False)
+    assert HybridKBRetriever(ontology_mode="off")._typo_fix is False
+    monkeypatch.setenv("TYPO_FIX", "1")
+    assert HybridKBRetriever(ontology_mode="off")._typo_fix is True
+    assert HybridKBRetriever(ontology_mode="off", typo_fix=False)._typo_fix is False          # an explicit argument wins over the environment
+
+
+@pytest.mark.real_store
+def test_typo_fix_repairs_a_misspelt_word_before_searching(monkeypatch):
+    monkeypatch.delenv("TYPO_FIX", raising=False)
+    on = HybridKBRetriever(ontology_mode="off", typo_fix=True)
+    off = HybridKBRetriever(ontology_mode="off", typo_fix=False)
+    q = "my contianer exits immediately after starting"
+    assert [c.chunk_id for c in on.search(q, top_k=5)] == [c.chunk_id for c in off.search("my container exits immediately after starting", top_k=5)]

@@ -157,6 +157,14 @@ def test_clear_report_goes_straight_to_the_resolver_and_resolves(app):
     assert [t["content"] for t in st["transcript"] if t["role"] == "user"] == [RATE_LIMIT, "that worked, thanks"]
 
 
+def test_every_stage_that_runs_logs_its_timing(app, deps):
+    converse(app, RATE_LIMIT, ["that worked, thanks"])
+    stages = [e["stage"] for e in deps.logger.events if e["event"] == "stage_timing"]
+    for expected in ("clarifier", "guard", "retrieve", "gate", "draft", "verify", "send"):
+        assert expected in stages, f"no timing for {expected}: {stages}"
+    assert all(e["latency_ms"] >= 0 for e in deps.logger.events if e["event"] == "stage_timing")
+
+
 def test_ambiguous_report_asks_through_interrupt_then_the_resolver_answers_once(app):
     kinds, st = converse(app, "docker pull on Docker Hub keeps failing with a 429", ["Too Many Requests", "works now"])
     assert kinds == ["clarifier_question", "resolver_message"] and st["outcome"] == "resolved"

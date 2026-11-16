@@ -189,6 +189,15 @@ class SemanticCache:
         return entry
 
     # -- invalidation
+    def invalidate_entry(self, entry_id: str) -> bool:
+        """Stop serving one entry: a customer was given its answer and said it did not work. True if it was live."""
+        for e in self.entries:
+            if e.entry_id == entry_id and e.valid:
+                e.valid = False
+                self.save()
+                return True
+        return False
+
     def invalidate_stale(self, manifest: dict[str, Any]) -> int:
         """manifest = store_manifest.json, expects {"doc_hashes": {doc_id: hash}}."""
         current = manifest.get("doc_hashes", {})

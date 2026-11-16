@@ -23,7 +23,7 @@ from typing import Any, Optional
 from langgraph.types import Command
 from sqlalchemy import func, select
 
-from triage import ocr
+from triage import ocr, writeback
 from triage.api.db import (AgentEvent, CaseAction, CaseNote, Conversation, Message, User, iso, utcnow)
 
 PRIORITIES = ("P1", "P2", "P3", "P4")
@@ -357,6 +357,18 @@ class ConversationService:
             self._log(s, conv_id, user, "note")
             s.commit()
 
+    @staticmethod
+    def _promote(s, c: Conversation, resolution: str) -> None:
+        """The engineer ticked "promote": queue this fix for the historical dataset (nothing happens unless TICKET_WRITEBACK=1).
+        The case is already resolved and saved, so a write-back problem must never fail the request."""
+        if not writeback.enabled():
+            return
+        try:
+            customer = s.scalars(select(Message.content).where(Message.conversation_id == c.id, Message.role == "customer").order_by(Message.id)).all()
+            writeback.on_engineer_resolved(c.title, "\n".join(customer), resolution, (c.summary or {}).get("signature"), ref=c.id)
+        except Exception:  # noqa: BLE001
+            pass
+
     def resolve(self, user: User, conv_id: str, resolution: str, promote: bool) -> None:
         if not resolution.strip():
             raise ServiceError(422, "a resolution is required")
@@ -370,6 +382,8 @@ class ConversationService:
             self._add_message(s, conv_id, "engineer", "resolution", resolution.strip(), author_id=user.id)
             self._log(s, conv_id, user, "resolve", {"promote_to_kb": promote})
             s.commit()
+            if promote:
+                self._promote(s, c, resolution.strip())
 
     def reopen(self, user: User, conv_id: str) -> None:
         with self.sf() as s:

@@ -31,6 +31,7 @@ PROVIDER_API_KEY_ENV = {
     "gemini": "GEMINI_API_KEY",
     "anthropic": "ANTHROPIC_API_KEY",
     "openai": "OPENAI_API_KEY",
+    "jev": "TYPESAFE_API_KEY",          # the hosted Jev decision API (triage/jev.py), not a text-generation provider
 }
 
 

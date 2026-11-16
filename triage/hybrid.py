@@ -94,15 +94,21 @@ class HybridKBRetriever(ChromaRetriever):
 
     ENTITY_LIST_WEIGHT = 0.5      # shared entities are a supporting signal: half the vote of the dense and keyword rankings
     KNOWN_ISSUE_WEIGHT = 2.0      # a confident match to a curated known issue is as strong as ranking first in BOTH other lists
+    VECTOR_WEIGHT = 1.0           # votes of the dense and keyword rankings; 1:1 is the shipped setting (retrieval_eval sweeps them)
+    LEXICAL_WEIGHT = 1.0
+    RRF_K = RRF_K
 
     def __init__(self, bm25_path: str | None = None, pool: int = 30, ontology=None, ontology_mode: str | None = None,
                  rerank_mode: str | None = None, rerank_pool: int | None = None, rerank_blend: float | None = None, reranker=None,
-                 kb_filters: str | list[str] | None = None, **kwargs) -> None:
+                 kb_filters: str | list[str] | None = None, typo_fix: bool | None = None, **kwargs) -> None:
         """ontology_mode: off | expand (alias terms added to the BM25 query) | entities (a third ranked list of chunks that share the
         query's specific entities or belong to a matched known issue, fused by RRF) | both.
         rerank_mode: off | order | blend (see triage/rerank.py); None reads RERANK from the environment, default off.
-        kb_filters: names from KB_FILTERS (comma-separated string or list); None reads KB_FILTERS from the environment, default none."""
+        kb_filters: names from KB_FILTERS (comma-separated string or list); None reads KB_FILTERS from the environment, default none.
+        typo_fix: correct likely typos against the KB vocabulary before searching (triage/spell.py); None reads TYPO_FIX=1 from the environment, default off."""
         super().__init__(**kwargs)
+        self._typo_fix = (os.environ.get("TYPO_FIX", "") == "1") if typo_fix is None else bool(typo_fix)
+        self._speller = None
         self.set_filters(os.environ.get("KB_FILTERS", "") if kb_filters is None else kb_filters)
         env_mode, env_pool, env_blend = rerank_mod.settings_from_env()
         self.set_rerank(env_mode if rerank_mode is None else rerank_mode, env_pool if rerank_pool is None else rerank_pool,
@@ -183,6 +189,12 @@ class HybridKBRetriever(ChromaRetriever):
             self._entity_index = EntityIndex.build(self._ontology, rows)
         return self._entity_index
 
+    def vocabulary(self) -> dict[str, float]:
+        """The keyword index's words with their idf (a low idf is a common word); loads the index if needed. Used by triage/spell.py."""
+        if self._bm25 is None:
+            self._bm25, self._bm25_ids = _load_bm25(self._bm25_path, "chunk_ids")
+        return self._bm25.idf
+
     def fetch(self, chunk_ids: list[str]) -> list[Candidate]:
         """Chunks by id (optional retriever capability; the Resolver adapter uses it to re-load the Clarifier's leading issue)."""
         if not chunk_ids:
@@ -195,6 +207,11 @@ class HybridKBRetriever(ChromaRetriever):
         self._ensure()
         if self._bm25 is None:
             self._bm25, self._bm25_ids = _load_bm25(self._bm25_path, "chunk_ids")
+        if self._typo_fix:
+            if self._speller is None:
+                from triage.spell import Speller
+                self._speller = Speller(self._bm25.idf)
+            query = self._speller.correct(query)
 
         q_emb = self._model.encode([BGE_QUERY_INSTRUCTION + query])[0].tolist()
         res = self._collection.query(query_embeddings=[q_emb], n_results=self._pool,
@@ -208,7 +225,7 @@ class HybridKBRetriever(ChromaRetriever):
             extra = self._ontology.expand(query)
             bm25_query = f"{query} {' '.join(extra)}" if extra else query
         lexical_ranked = bm25_top(self._bm25, self._bm25_ids, bm25_query, self._pool)
-        lists, weights = [vector_ranked, lexical_ranked], [1.0, 1.0]
+        lists, weights = [vector_ranked, lexical_ranked], [self.VECTOR_WEIGHT, self.LEXICAL_WEIGHT]
         if self._mode in ("entities", "both"):
             index = self.entity_index()
             known = index.known_issue_chunks(query)
@@ -222,7 +239,7 @@ class HybridKBRetriever(ChromaRetriever):
 
         reading = self._rerank_mode != "off"                   # the cross-encoder re-reads a wider pool than the caller asked for
         n_take = (max(top_k, self._rerank_pool) if reading else top_k) + (FILTER_EXTRA if self._filters else 0)
-        chosen = [cid for cid, _ in sorted(rrf_fuse(lists, weights=weights).items(), key=lambda kv: -kv[1])][:n_take]
+        chosen = [cid for cid, _ in sorted(rrf_fuse(lists, k=self.RRF_K, weights=weights).items(), key=lambda kv: -kv[1])][:n_take]
 
         lexical_only = [cid for cid in chosen if cid not in by_id]       # found by BM25 / the ontology but not by dense search
         if lexical_only:
@@ -250,6 +267,7 @@ TRUST_ORDER = {"low": 0, "medium": 1, "high": 2}
 RESOLUTION_KIND_WEIGHT = {
     "accepted_answer": 1.0, "maintainer_comment": 1.0, "official_answer": 1.0, "forum_accepted_answer": 0.95,
     "forum_op_confirmed_reply": 0.9, "community_comment": 0.85, "curated_answer": 0.8,
+    "customer_confirmed": 0.9, "engineer_resolved": 1.0,          # written back by triage/writeback.py: the customer said it worked / an engineer approved it
 }
 EXIT_CODE_BOOST = 1.5          # the ticket mentions the exit code the customer reported
 EXIT_CODE_MISMATCH = 0.85      # the ticket is about other exit codes only
@@ -379,10 +397,21 @@ class TicketRetriever:
         self._bm25 = None
         self._ids: list[str] = []
         self._db: sqlite3.Connection | None = None
+        self._stamp = None                              # the manifest time the loaded store was read at
+
+    def _manifest_stamp(self):
+        """When the store was last changed (triage/ticket_ingest.py writes the manifest last), or None."""
+        path = self._root / "tickets_manifest.json"
+        return path.stat().st_mtime if path.exists() else None
 
     def _ensure(self) -> None:
-        if self._collection is not None:
+        """Load the store, and load it again if an ingest changed it since (so a running app sees newly written-back tickets)."""
+        stamp = self._manifest_stamp()
+        if self._collection is not None and stamp == self._stamp:
             return
+        if self._db is not None:
+            self._db.close()
+        self._stamp = stamp
         import chromadb
         slug = re.sub(r"[^a-zA-Z0-9]+", "-", self._model_name).strip("-").lower()
         self._collection = chromadb.PersistentClient(path=str(self._root / "vector")).get_collection(f"tickets__{slug}")

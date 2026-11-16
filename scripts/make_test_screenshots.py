@@ -28,7 +28,8 @@ def font(size: int) -> ImageFont.ImageFont:
     return ImageFont.load_default()
 
 
-def draw(name: str, lines: list[str], theme=DARK, size: int = 20, width: int = 1100, blur: float = 0, scale: float = 1.0) -> None:
+def render(lines: list[str], theme=DARK, size: int = 20, width: int = 1100, blur: float = 0, scale: float = 1.0) -> Image.Image:
+    """The screenshot as an image (also used by triage/eval/ocr_eval.py to measure OCR accuracy against the known text)."""
     f = font(size)
     pad, gap = 20, size + 8
     img = Image.new("RGB", (width, pad * 2 + gap * len(lines)), theme[0])
@@ -39,6 +40,11 @@ def draw(name: str, lines: list[str], theme=DARK, size: int = 20, width: int = 1
         img = img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
     if blur:
         img = img.filter(ImageFilter.GaussianBlur(blur))
+    return img
+
+
+def draw(name: str, lines: list[str], theme=DARK, size: int = 20, width: int = 1100, blur: float = 0, scale: float = 1.0) -> None:
+    img = render(lines, theme, size, width, blur, scale)
     OUT.mkdir(parents=True, exist_ok=True)
     img.save(OUT / f"{name}.png")
 

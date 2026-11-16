@@ -434,3 +434,50 @@ def test_a_message_that_says_docker_costs_no_scope_call_and_one_without_it_does(
     no_docker_word = client.post("/api/conversations", json={"message": "image pulls fail with 'You have reached your pull rate limit' HTTP 429 on the hub"}, headers=h).json()
     assert not any(label.startswith("LLM scope") for label in llm_nodes(client, says_docker["id"]))
     assert any(label.startswith("LLM scope") for label in llm_nodes(client, no_docker_word["id"]))        # still asked, and still logged with tokens and cost
+
+
+# ---------------------------------------------------------------- write-back to the historical dataset (triage/writeback.py)
+@pytest.fixture
+def queue(tmp_path, monkeypatch):
+    """Write-back switched on, its queue in a temp folder (never the real ticket store), the evaluation-question check off."""
+    from triage import writeback
+    monkeypatch.setenv("TICKET_WRITEBACK", "1")
+    monkeypatch.setattr(writeback, "store_root", lambda: tmp_path / "store")
+    monkeypatch.setattr(writeback, "evaluation_questions", lambda: [])
+    return writeback.Queue()
+
+
+def test_a_fix_the_customer_confirms_is_queued_for_the_dataset(client, queue):
+    h = login(client, "alice")
+    cid = client.post("/api/conversations", json={"message": RATE_LIMIT}, headers=h).json()["id"]
+    client.post(f"/api/conversations/{cid}/messages", json={"action": "resolved"}, headers=h)
+    rows = queue.rows("approved")
+    assert len(rows) == 1 and rows[0]["kind"] == "customer_confirmed" and "429" in rows[0]["problem"] and rows[0]["resolution"]
+
+
+def test_an_engineer_resolution_is_queued_only_when_promote_is_ticked(client, queue):
+    h, eng = login(client, "alice"), login(client, "enid", "engineer")
+    plain, ticked = escalate(client, h)["id"], escalate(client, h)["id"]
+    fix = "Authenticate with docker login using a personal access token, then run the pull again to confirm that the error is gone."
+    client.post(f"/api/cases/{plain}/resolve", json={"resolution": fix, "promote_to_kb": False}, headers=eng)
+    assert sum(queue.counts().values()) == 0
+    client.post(f"/api/cases/{ticked}/resolve", json={"resolution": fix, "promote_to_kb": True}, headers=eng)
+    rows = queue.rows("approved")
+    assert len(rows) == 1 and rows[0]["kind"] == "engineer_resolved" and rows[0]["resolution"] == fix and "429" in rows[0]["problem"]
+
+
+def test_nothing_is_queued_when_the_switch_is_off(client, queue, monkeypatch):
+    monkeypatch.delenv("TICKET_WRITEBACK")
+    h = login(client, "alice")
+    cid = client.post("/api/conversations", json={"message": RATE_LIMIT}, headers=h).json()["id"]
+    client.post(f"/api/conversations/{cid}/messages", json={"action": "resolved"}, headers=h)
+    assert sum(queue.counts().values()) == 0
+
+
+def test_a_write_back_failure_never_fails_the_customers_request(client, queue, monkeypatch):
+    from triage import writeback
+    monkeypatch.setattr(writeback.Queue, "add", lambda *a, **k: 1 / 0)
+    h = login(client, "alice")
+    cid = client.post("/api/conversations", json={"message": RATE_LIMIT}, headers=h).json()["id"]
+    done = client.post(f"/api/conversations/{cid}/messages", json={"action": "resolved"}, headers=h)
+    assert done.status_code == 200 and done.json()["status"] == "resolved"
