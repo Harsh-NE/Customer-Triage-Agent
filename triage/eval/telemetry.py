@@ -32,6 +32,7 @@ def case_record(arm: str, phase: str, row: dict, events: list[dict], features: d
     status = lookups[0]["status"] if lookups else "none"
     first_fix = row["fixes_sent"][0] if row["fixes_sent"] else None
     llm, jev = usage_of(events), [e for e in events if e["event"] == "jev_call"]
+    jev_p = next((e["p"] for e in jev if e.get("p") is not None), None)
     return {
         "arm": arm, "phase": phase, "features": features, "id": row["id"], "opening": row["opening"],
         "has_gold": row["has_gold"], "outcome": row["outcome"], "escalation_reason": row["escalation_reason"],
@@ -44,7 +45,8 @@ def case_record(arm: str, phase: str, row: dict, events: list[dict], features: d
         "llm_calls": llm["llm_calls"], "input_tokens": llm["input_tokens"], "output_tokens": llm["output_tokens"],
         "cost_usd": llm["cost_usd"],
         "jev_calls": len(jev), "jev_input_tokens": sum(e.get("input_tokens") or 0 for e in jev),
-        "jev_cost_usd": _sum_or_none([e.get("cost_usd") for e in jev]) if jev else 0.0,
+        "jev_cost_usd": _sum_or_none([e.get("cost_usd") for e in jev if not e.get("error")]) if jev else 0.0,
+        "jev_p": jev_p, "jev_overrides": sum(bool(e.get("override")) for e in jev), "jev_errors": sum(bool(e.get("error")) for e in jev),
     }
 
 
@@ -78,6 +80,7 @@ def cost_summary(records: list[dict]) -> dict:
             "llm_errors": sum(r.get("llm_errors", 0) for r in records), "llm_retries": sum(r.get("llm_retries", 0) for r in records),
             "input_tokens": sum(r["input_tokens"] + r["jev_input_tokens"] for r in records),
             "output_tokens": sum(r["output_tokens"] for r in records), "jev_calls": sum(r["jev_calls"] for r in records),
+            "jev_overrides": sum(r.get("jev_overrides", 0) for r in records), "jev_errors": sum(r.get("jev_errors", 0) for r in records),
             "cost_usd": None if llm_cost is None or jev_cost is None else round(llm_cost + jev_cost, 9)}
 
 

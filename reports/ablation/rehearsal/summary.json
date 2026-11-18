@@ -1,0 +1,450 @@
+{
+  "meta": {
+    "date": "2026-11-16 00:23",
+    "git_commit": "7191c5d",
+    "pythonhashseed": null,
+    "llm": "fake",
+    "model": null,
+    "seconds": 63.7,
+    "scenario_files": [
+      "triage/eval/scenarios.jsonl"
+    ],
+    "scenarios": 3,
+    "stream": {
+      "first_ask": 3,
+      "repeat": 1,
+      "seed": 0
+    },
+    "arms": {
+      "A": {
+        "use_kg": false,
+        "use_jev": false,
+        "use_semantic_cache": true,
+        "name": "baseline (no KG, no Jev)"
+      },
+      "B": {
+        "use_kg": true,
+        "use_jev": false,
+        "use_semantic_cache": true,
+        "name": "+ KG"
+      },
+      "C": {
+        "use_kg": true,
+        "use_jev": true,
+        "use_semantic_cache": true,
+        "name": "+ KG + Jev"
+      }
+    },
+    "baseline_arm": "A",
+    "notes": [
+      "use_jev is on but no pipeline step calls Jev yet: this arm equals the arm without it."
+    ]
+  },
+  "arms": {
+    "A": {
+      "metrics": {
+        "first_attempt_correct": {
+          "value": 1.0,
+          "k": 3,
+          "n": 3
+        },
+        "wrong_fix_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "wrong_first_fix_answerable": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "escalation_recall": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "escalation_precision": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "unnecessary_escalation": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "recall_at_3": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "mrr": 1.0,
+        "questions_per_case": 0.67,
+        "first_fix_p50_ms": 1350.0,
+        "first_fix_p95_ms": 2190.0,
+        "citation_validity": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "retrieval_p50_ms": 307.17,
+        "retrieval_p95_ms": 424.62,
+        "repeat_speedup": 1.32
+      },
+      "cache": {
+        "cases_that_consulted_the_cache": 4,
+        "hit_rate": {
+          "value": 0.5,
+          "k": 2,
+          "n": 4
+        },
+        "redraft_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 4
+        },
+        "precision": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "false_hit_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 2
+        }
+      },
+      "latency": {
+        "end_to_end_ms": {
+          "p50": 1390.0,
+          "p95": 2210.0,
+          "mean": 1532.5,
+          "max": 2210.0,
+          "n": 4
+        },
+        "first_fix_ms": {
+          "p50": 1290.0,
+          "p95": 2190.0,
+          "mean": 1477.5,
+          "max": 2190.0,
+          "n": 4
+        },
+        "retrieval_ms": {
+          "p50": 307.17,
+          "p95": 424.62,
+          "mean": 365.89,
+          "max": 424.62,
+          "n": 2
+        },
+        "end_to_end_ms_by_phase": {
+          "first_ask": {
+            "p50": 1440.0,
+            "p95": 2210.0,
+            "mean": 1680.0,
+            "max": 2210.0,
+            "n": 3
+          },
+          "repeat": {
+            "p50": 1090.0,
+            "p95": 1090.0,
+            "mean": 1090.0,
+            "max": 1090.0,
+            "n": 1
+          }
+        },
+        "repeat_speedup": 1.32
+      },
+      "cost": {
+        "cases": 4,
+        "llm_calls": 6,
+        "llm_errors": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "jev_calls": 0,
+        "cost_usd": null
+      },
+      "cache_savings": {
+        "served_from_cache": 2,
+        "avoided_llm_calls": 4,
+        "avoided_input_tokens": 0,
+        "avoided_output_tokens": 0,
+        "avoided_cost_usd": null
+      },
+      "vs_baseline": {
+        "llm_calls_saved_vs_baseline": 0.0,
+        "input_tokens_saved_vs_baseline": null,
+        "cost_usd_saved_vs_baseline": null
+      }
+    },
+    "B": {
+      "metrics": {
+        "first_attempt_correct": {
+          "value": 1.0,
+          "k": 3,
+          "n": 3
+        },
+        "wrong_fix_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "wrong_first_fix_answerable": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "escalation_recall": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "escalation_precision": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "unnecessary_escalation": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "recall_at_3": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "mrr": 1.0,
+        "questions_per_case": 1,
+        "first_fix_p50_ms": 1730.0,
+        "first_fix_p95_ms": 2840.0,
+        "citation_validity": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "retrieval_p50_ms": 364.88,
+        "retrieval_p95_ms": 384.71,
+        "repeat_speedup": 1.43
+      },
+      "cache": {
+        "cases_that_consulted_the_cache": 4,
+        "hit_rate": {
+          "value": 0.5,
+          "k": 2,
+          "n": 4
+        },
+        "redraft_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 4
+        },
+        "precision": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "false_hit_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 2
+        }
+      },
+      "latency": {
+        "end_to_end_ms": {
+          "p50": 1280.0,
+          "p95": 2860.0,
+          "mean": 1810.0,
+          "max": 2860.0,
+          "n": 4
+        },
+        "first_fix_ms": {
+          "p50": 1270.0,
+          "p95": 2840.0,
+          "mean": 1752.5,
+          "max": 2840.0,
+          "n": 4
+        },
+        "retrieval_ms": {
+          "p50": 364.88,
+          "p95": 384.71,
+          "mean": 374.79,
+          "max": 384.71,
+          "n": 2
+        },
+        "end_to_end_ms_by_phase": {
+          "first_ask": {
+            "p50": 1830.0,
+            "p95": 2860.0,
+            "mean": 1986.67,
+            "max": 2860.0,
+            "n": 3
+          },
+          "repeat": {
+            "p50": 1280.0,
+            "p95": 1280.0,
+            "mean": 1280.0,
+            "max": 1280.0,
+            "n": 1
+          }
+        },
+        "repeat_speedup": 1.43
+      },
+      "cost": {
+        "cases": 4,
+        "llm_calls": 6,
+        "llm_errors": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "jev_calls": 0,
+        "cost_usd": null
+      },
+      "cache_savings": {
+        "served_from_cache": 2,
+        "avoided_llm_calls": 4,
+        "avoided_input_tokens": 0,
+        "avoided_output_tokens": 0,
+        "avoided_cost_usd": null
+      },
+      "vs_baseline": {
+        "llm_calls_saved_vs_baseline": 0.0,
+        "input_tokens_saved_vs_baseline": null,
+        "cost_usd_saved_vs_baseline": null
+      }
+    },
+    "C": {
+      "metrics": {
+        "first_attempt_correct": {
+          "value": 1.0,
+          "k": 3,
+          "n": 3
+        },
+        "wrong_fix_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "wrong_first_fix_answerable": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "escalation_recall": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "escalation_precision": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "unnecessary_escalation": {
+          "value": 0.0,
+          "k": 0,
+          "n": 3
+        },
+        "recall_at_3": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "mrr": 1.0,
+        "questions_per_case": 1,
+        "first_fix_p50_ms": 1570.0,
+        "first_fix_p95_ms": 2550.0,
+        "citation_validity": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "retrieval_p50_ms": 342.27,
+        "retrieval_p95_ms": 354.4,
+        "repeat_speedup": 1.27
+      },
+      "cache": {
+        "cases_that_consulted_the_cache": 4,
+        "hit_rate": {
+          "value": 0.5,
+          "k": 2,
+          "n": 4
+        },
+        "redraft_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 4
+        },
+        "precision": {
+          "value": 1.0,
+          "k": 2,
+          "n": 2
+        },
+        "false_hit_rate": {
+          "value": 0.0,
+          "k": 0,
+          "n": 2
+        }
+      },
+      "latency": {
+        "end_to_end_ms": {
+          "p50": 1310.0,
+          "p95": 2560.0,
+          "mean": 1680.0,
+          "max": 2560.0,
+          "n": 4
+        },
+        "first_fix_ms": {
+          "p50": 1290.0,
+          "p95": 2550.0,
+          "mean": 1625.0,
+          "max": 2550.0,
+          "n": 4
+        },
+        "retrieval_ms": {
+          "p50": 342.27,
+          "p95": 354.4,
+          "mean": 348.33,
+          "max": 354.4,
+          "n": 2
+        },
+        "end_to_end_ms_by_phase": {
+          "first_ask": {
+            "p50": 1660.0,
+            "p95": 2560.0,
+            "mean": 1803.33,
+            "max": 2560.0,
+            "n": 3
+          },
+          "repeat": {
+            "p50": 1310.0,
+            "p95": 1310.0,
+            "mean": 1310.0,
+            "max": 1310.0,
+            "n": 1
+          }
+        },
+        "repeat_speedup": 1.27
+      },
+      "cost": {
+        "cases": 4,
+        "llm_calls": 6,
+        "llm_errors": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "jev_calls": 0,
+        "cost_usd": null
+      },
+      "cache_savings": {
+        "served_from_cache": 2,
+        "avoided_llm_calls": 4,
+        "avoided_input_tokens": 0,
+        "avoided_output_tokens": 0,
+        "avoided_cost_usd": null
+      },
+      "vs_baseline": {
+        "llm_calls_saved_vs_baseline": 0.0,
+        "input_tokens_saved_vs_baseline": null,
+        "cost_usd_saved_vs_baseline": null
+      }
+    }
+  }
+}

@@ -31,6 +31,17 @@ def test_case_record_reads_cache_cost_and_timing_from_the_events():
     assert r["retrieval_ms"] == [300.0] and r["stage_ms"] == {"gate": 1.5} and r["first_fix_s"] == 1.0
 
 
+def test_jev_calls_overrides_errors_and_the_first_probability_are_recorded():
+    events = [{"event": "jev_call", "p": 0.95, "override": True, "input_tokens": 300, "cost_usd": 0.00001},
+              {"event": "jev_call", "p": 0.2, "override": False, "input_tokens": 300, "cost_usd": 0.00001},
+              {"event": "jev_call", "error": "RuntimeError: 503"}]
+    r = T.case_record("C", "first_ask", row(), events, {})
+    assert (r["jev_calls"], r["jev_p"], r["jev_overrides"], r["jev_errors"]) == (3, 0.95, 1, 1)
+    assert (r["jev_input_tokens"], r["jev_cost_usd"]) == (600, 0.00002)                 # a failed call costs nothing
+    cost = T.cost_summary([r])
+    assert (cost["jev_calls"], cost["jev_overrides"], cost["jev_errors"]) == (3, 1, 1)
+
+
 def test_a_case_that_never_consulted_the_cache_is_marked_none():
     r = T.case_record("A", "first_ask", row(), [], {})
     assert r["cache_status"] == "none" and not r["cache_served"] and r["jev_cost_usd"] == 0.0

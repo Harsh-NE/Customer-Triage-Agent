@@ -1,0 +1,474 @@
+id,question,gold_page,gold_section,section_text,reference
+H003,How to get into psql of a running postgres container?. I created a postgres container using the tutorial on the fig website ( I named the container db. The container is running and my app connects to it fine.,content/guides/postgresql.md,Connecting to the database,"You can interact with PostgreSQL running in a container even without `psql` installed on your host machine.
+
+**Interactive shell**
+
+Open a `psql` session inside the container:
+
+```console
+$ docker exec -it postgres-container psql -U postgres
+```
+
+Connect to a specific database:
+
+```console
+$ docker exec -it postgres-container psql -U postgres -d mydb
+```",
+H004,"With Docker, how can I bind mount but also preserve container files?. I want to use a Docker container to run a utility (specifically Terraform) using local files. In order to quickly iterate on the code (such as `my_stuff.tf`) I want to bind mount my working directory.",content/manuals/engine/storage/bind-mounts.md,Bind-mounting over existing data,,
+H007,"How to pass through environment variables in docker run through an env file?. Given this Dockerfile: I expected to be able to pass multiple variables through an `.env` file with the `key=value` format. My `delete.sh` only looks like this: I expected to see the env variables, yet they all are empty. The `--env-file` options seems to be not working.",content/get-started/docker-concepts/running-containers/overriding-container-defaults.md,Setting environment variables,"This option sets an environment variable `foo` inside the container with the value `bar`.
+
+```console
+$ docker run -e foo=bar postgres env
+```
+
+You will see output like the following:
+
+```console
+HOSTNAME=2042f2e6ebe4
+foo=bar
+```
+
+**Tip:** The `.env` file acts as a convenient way to set environment variables for your Docker containers without cluttering your command line with numerous `-e` flags. To use a `.env` file, you can pass `--env-file` option with the `docker run` command. ```console $ docker run --env-file .env postgres env ```",
+H009,Docker Swarm Overlay Network Not Working Between Nodes. i am trying to connect my docker services together in docker swarm. the network is made of 2 raspberry pi's. i can create an overlay network called `test-overlay` and i can see that services on either raspberry pi node can connect to the network.,content/manuals/engine/network/drivers/overlay.md,Requirements,"Docker hosts must be part of a swarm to use overlay networks, even when
+connecting standalone containers. The following ports must be open between
+participating hosts:
+
+| Ports                  | Description                                                                                                                                             |
+| :--------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `2377/tcp`             | The default Swarm control plane port, is configurable with [`docker swarm join --listen-addr`](/reference/cli/docker/swarm/join/#listen-addr) |
+| `4789/udp`             | The default overlay traffic port, configurable with [`docker swarm init --data-path-port`](/reference/cli/docker/swarm/init/#data-path-port)          |
+| `7946/tcp`, `7946/udp` | Used for communication among nodes, not configurable                                                                                                    |",
+H013,"Docker Connecting PHP container to MySQL. I have two containers, a apache-php container, and a mysql db container. I am trying to get my php script to query my sql database.",content/guides/databases.md,Connect to a containerized database from another container,"Connecting to a containerized database from another container is a common
+scenario in microservices architecture and during development processes.
+Docker's networking capabilities make it easy to establish this connection
+without having to expose the database to the host network. This is achieved by
+placing both the database container and the container that needs to access it on
+the same Docker network.
+
+Before you begin, you must remove any containers you previously ran for this
+guide. To stop and remove a container, either:
+
+- In a terminal, run `docker rm --force my-mysql` to remove the container
+  named `my-mysql`.
+- Or, in the Docker Desktop Dashboard, select the **Delete** icon next to your
+  container in the **Containers** view.
+
+To create a network and run containers on it:
+
+1. Run the following command to create a Docker network named my-network.
+
+```console
+   $ docker network create my-network
+   ```
+
+2. Run your database container and specify the network using the `--network`
+   option. This runs the container on the my-network network.
+
+```console
+   $ docker run --name my-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -e MYSQL_DATABASE=mydb --network my-network -d mysql:latest
+   ```
+
+3. Run your other containers and specify the network using the `--network`
+   option. For this example, you'll run a phpMyAdmin container that can connect
+   to your database.
+
+1. Run a phpMyAdmin container. Use the `--network` option to specify the
+      network, the `-p` option to let",
+H014,Docker Compose optional extra_hosts entry from ENV variable. My goal is to conditionally include an entry in `extra_hosts` in my docker compose file.,content/reference/compose-file/interpolation.md,Overview,,
+H021,Why is my .env.local not recognized by docker-compose for the container_name attribute?. In my starter docker project i have a `.env` file which is strangely loaded automatically. But now I wanted to rename the `.env` to `.env.local`. I also added in my `docker-compose.yml` the attribute `env_file: .env.local`.,content/manuals/compose/how-tos/environment-variables/variable-interpolation.md,`.env` file,"An `.env` file in Docker Compose is a text file used to define variables that should be made available for interpolation when running `docker compose up`. This file typically contains key-value pairs of variables, and it lets you  centralize and manage configuration in one place. The `.env` file is useful if you have multiple variables you need to store.
+
+The `.env` file is the default method for setting variables. The `.env` file should be placed at the root of the project directory next to your `compose.yaml` file. For more information on formatting an environment file, see [Syntax for environment files](#env-file-syntax).
+
+Basic example:
+
+```console
+$ cat .env
+## define COMPOSE_DEBUG based on DEV_MODE, defaults to false
+COMPOSE_DEBUG=${DEV_MODE:-false}
+
+$ cat compose.yaml
+  services:
+    webapp:
+      image: my-webapp-image
+      environment:
+        - DEBUG=${COMPOSE_DEBUG}
+
+$ DEV_MODE=true docker compose config
+services:
+  webapp:
+    environment:
+      DEBUG: ""true""
+```
+
+**Additional information**
+
+- If you define a variable in your `.env` file, you can reference it directly in your `compose.yaml` with the [`environment` attribute](/reference/compose-file/services.md#environment). For example, if your `.env` file contains the environment variable `DEBUG=1` and your `compose.yaml` file looks like this:
+   ```yaml
+    services:
+      webapp:
+        image: my-webapp-image
+        environment:
+          - DEBUG=${DEBUG}
+   ```
+   Docker Compose replaces `${DEBUG}` with the",
+H028,"How to get port of docker-compose from env_file?. I want to use port number defined in env file, is it possible? The below is the content of my docker-compose.yml: And this is the content of env_file.env But some errors raised: If it's possible, how should I do it? Thanks @user, thanks for your previous response.",content/manuals/compose/how-tos/environment-variables/variable-interpolation.md,`.env` file,"An `.env` file in Docker Compose is a text file used to define variables that should be made available for interpolation when running `docker compose up`. This file typically contains key-value pairs of variables, and it lets you  centralize and manage configuration in one place. The `.env` file is useful if you have multiple variables you need to store.
+
+The `.env` file is the default method for setting variables. The `.env` file should be placed at the root of the project directory next to your `compose.yaml` file. For more information on formatting an environment file, see [Syntax for environment files](#env-file-syntax).
+
+Basic example:
+
+```console
+$ cat .env
+## define COMPOSE_DEBUG based on DEV_MODE, defaults to false
+COMPOSE_DEBUG=${DEV_MODE:-false}
+
+$ cat compose.yaml
+  services:
+    webapp:
+      image: my-webapp-image
+      environment:
+        - DEBUG=${COMPOSE_DEBUG}
+
+$ DEV_MODE=true docker compose config
+services:
+  webapp:
+    environment:
+      DEBUG: ""true""
+```
+
+**Additional information**
+
+- If you define a variable in your `.env` file, you can reference it directly in your `compose.yaml` with the [`environment` attribute](/reference/compose-file/services.md#environment). For example, if your `.env` file contains the environment variable `DEBUG=1` and your `compose.yaml` file looks like this:
+   ```yaml
+    services:
+      webapp:
+        image: my-webapp-image
+        environment:
+          - DEBUG=${DEBUG}
+   ```
+   Docker Compose replaces `${DEBUG}` with the",
+H030,"Unable to access ports from services across nodes in overlay network in swarm mode. I use the following compose file for stack deployment For the sake of convenience, I'll use `test_serv1` running via `container` in `host1` and `test_serv2` running via `container2` in `host2` for the rest of this port since actual host and container names keep changing for me.",content/manuals/engine/network/drivers/overlay.md,Requirements,,
+H032,How to correctly pass ssh key file from Jenkins credentials variable into to docker build command?. This question is a follow up to this question How to pass jenkins credentials into docker build command?,content/manuals/build/building/secrets.md,SSH mounts,"If the credential you want to use in your build is an SSH agent socket or key,
+you can use the SSH mount instead of a secret mount. Cloning private Git
+repositories is a common use case for SSH mounts.
+
+The following example clones a private GitHub repository using a [Dockerfile
+SSH mount](/reference/dockerfile.md#run---mounttypessh).
+
+```dockerfile
+# syntax=docker/dockerfile:1
+FROM alpine
+ADD git@github.com:me/myprivaterepo.git /src/
+```
+
+To pass an SSH socket the build, you use the [`docker build --ssh`
+flag](/reference/cli/docker/buildx/build/#ssh), or equivalent
+options for [Bake](../bake/reference.md#targetssh).
+
+```console
+$ docker buildx build --ssh default .
+```",
+H034,"Docker Build missing intermediate layers in console output. don't know weather it is an issue with Docker / Shell / BigSur Update, but a normal Docker Build Command like: recently started to change the default output and is now missing the intermediate layers: ( VS.",content/manuals/build/building/multi-stage.md,Differences between legacy builder and BuildKit,"On the other hand, building the same target without BuildKit results in all
+stages being processed:
+
+```console
+$ DOCKER_BUILDKIT=0 docker build --no-cache -f Dockerfile --target stage2 .
+Sending build context to Docker daemon  219.1kB
+Step 1/6 : FROM ubuntu AS base
+ ---> a7870fd478f4
+Step 2/6 : RUN echo ""base""
+ ---> Running in e850d0e42eca
+base
+Removing intermediate container e850d0e42eca
+ ---> d9f69f23cac8
+Step 3/6 : FROM base AS stage1
+ ---> d9f69f23cac8
+Step 4/6 : RUN echo ""stage1""
+ ---> Running in 758ba6c1a9a3
+stage1
+Removing intermediate container 758ba6c1a9a3
+ ---> 396baa55b8c3
+Step 5/6 : FROM base AS stage2
+ ---> d9f69f23cac8
+Step 6/6 : RUN echo ""stage2""
+ ---> Running in bbc025b93175
+stage2
+Removing intermediate container bbc025b93175
+ ---> 09fc3770a9c4
+Successfully built 09fc3770a9c4
+```
+
+The legacy builder processes `stage1`, even if `stage2` doesn't depend on it.
+The legacy Docker Engine builder processes all stages of a Dockerfile leading
+up to the selected `--target`. It will build a stage even if the selected
+target doesn't depend on that stage.
+
+[BuildKit](../buildkit/_index.md) only builds the stages that the target stage
+depends on.
+
+For example, given the following Dockerfile:
+
+```dockerfile
+# syntax=docker/dockerfile:1
+FROM ubuntu AS base
+RUN echo ""base""
+
+FROM base AS stage1
+RUN echo ""stage1""
+
+FROM base AS stage2
+RUN echo ""stage2""
+```
+
+With [BuildKit enabled](../buildkit/_index.md#getting-started), building the
+`stage2` target in this Dockerfile means only ",
+H042,How can I escape a $ dollar sign in a docker compose file?.,content/reference/compose-file/interpolation.md,Overview,"{{% include ""compose/interpolation.md"" %}}
+
+For braced expressions, the following formats are supported:
+- Direct substitution
+  - `${VAR}` -> value of `VAR`
+- Default value
+  - `${VAR:-default}` -> value of `VAR` if set and non-empty, otherwise `default`
+  - `${VAR-default}` -> value of `VAR` if set, otherwise `default`
+- Required value
+  - `${VAR:?error}` -> value of `VAR` if set and non-empty, otherwise exit with error
+  - `${VAR?error}` -> value of `VAR` if set, otherwise exit with error
+- Alternative value
+  - `${VAR:+replacement}` -> `replacement` if `VAR` is set and non-empty, otherwise empty
+  - `${VAR+replacement}` -> `replacement` if `VAR` is set, otherwise empty
+
+Interpolation can also be nested:
+
+- `${VARIABLE:-${FOO}}`
+- `${VARIABLE?$FOO}`
+- `${VARIABLE:-${FOO:-default}}`
+
+Other extended shell-style features, such as `${VARIABLE/foo/bar}`, are not
+supported by Compose.
+
+Compose processes any string following a `$` sign as long as it makes it
+a valid variable definition - either an alphanumeric name (`[_a-zA-Z][_a-zA-Z0-9]*`)
+or a braced string starting with `${`. In other circumstances, it will be preserved without attempting to interpolate a value.
+
+You can use a `$$` (double-dollar sign) when your configuration needs a literal
+dollar sign. This also prevents Compose from interpolating a value, so a `$$`
+allows you to refer to environment variables that you don't want processed by
+Compose.
+
+```yml
+web:
+  build: .
+  command: ""$$VAR_NOT_INTERPOLATED_BY_COMPOSE""
+``",
+H043,"Docker Compose with PHP, MySQL, nginx connection issue. I have problem to connect to MySQL container. docker-compose.yml PHP test script: This script reponse me : What's wrong with my code? because I think It's should be fine If anyone have a better solution Thank you for your help.",content/guides/databases.md,Use Docker Compose to run a database,"Docker Compose is a tool for defining and running multi-container Docker
+applications. With a single command, you can configure all your application's
+services (like databases, web apps, etc.) and manage them. In this example,
+you'll create a Compose file and use it to run a MySQL database container and a phpMyAdmin container.
+
+To run your containers with Docker Compose:
+
+1. Create a Docker Compose file.
+
+1. Create a file named `compose.yaml` in your project directory. This file
+      will define the services, networks, and volumes.
+   2. Add the following content to the `compose.yaml` file.
+
+```yaml
+      services:
+        db:
+          image: mysql:latest
+          environment:
+            MYSQL_ROOT_PASSWORD: my-secret-pw
+            MYSQL_DATABASE: mydb
+          ports:
+            - 3307:3306
+          volumes:
+            - my-db-volume:/var/lib/mysql
+
+        phpmyadmin:
+          image: phpmyadmin/phpmyadmin:latest
+          environment:
+            PMA_HOST: db
+            PMA_PORT: 3306
+            MYSQL_ROOT_PASSWORD: my-secret-pw
+          ports:
+            - 8080:80
+          depends_on:
+            - db
+
+      volumes:
+        my-db-volume:
+      ```
+
+For the database service:
+
+- `db` is the name of the service.
+      - `image: mysql:latest` specifies that the service uses the latest MySQL
+        image from Docker Hub.
+      - `environment` lists the environment variables used by MySQL to
+        initialize the database, such as the root password and the datab",
+H046,Building quarkus native Linux/amd64 (x86_64) image from Apple M1 (Arm). I am trying to build Quarkus 2.8.0 for x86 platfom of native docker container from Apple M1 Macbook and deploy it in Linux amd64 Portainer.,content/manuals/build/building/multi-platform.md,Simple multi-platform build using emulation,"This example demonstrates how to build a simple multi-platform image using
+emulation with QEMU. The image contains a single file that prints the
+architecture of the container.
+
+Prerequisites:
+
+- Docker Desktop, or Docker Engine with [QEMU installed](#install-qemu-manually)
+
+Steps:
+
+1. Create an empty directory and navigate to it:
+
+   ```console
+   $ mkdir multi-platform
+   $ cd multi-platform
+   ```
+
+2. Create a simple Dockerfile that prints the architecture of the container:
+
+   ```dockerfile
+   # syntax=docker/dockerfile:1
+   FROM alpine
+   RUN uname -m > /arch
+   ```
+
+3. Build the image for `linux/amd64` and `linux/arm64`:
+
+   ```console
+   $ docker build --platform linux/amd64,linux/arm64 -t multi-platform .
+   ```
+
+4. Run the image and print the architecture:
+
+   ```console
+   $ docker run --rm multi-platform cat /arch
+   ```
+
+   - If you're running on an x86-64 machine, you should see `x86_64`.
+   - If you're running on an ARM machine, you should see `aarch64`.",
+H056,Not able to connect with host interface service inside docker container. I am a newbie of docker and running docker inside vagrant host. I am running redis service on host interface which is working an I am able to connect with it on host interface like localhost:6379. But I am not able to connect with it inside a docker container.,content/manuals/desktop/features/networking/networking-how-tos.md,Connect a container to a service on the host,"The host has a changing IP address, or none if you have no network access. To connect to services running on your host, use the special DNS name:
+
+| Name                      | Description                                      |
+| ------------------------- | ------------------------------------------------ |
+| `host.docker.internal`    | Resolves to the internal IP address of your host |
+| `gateway.docker.internal` | Resolves to the gateway IP of the Docker VM      |
+
+**Example**
+
+Run a simple HTTP server on port `8000`:
+
+```console
+$ python -m http.server 8000
+```
+
+Then run a container, install `curl`, and try to connect to the host using the following commands:
+
+```console
+$ docker run --rm -it alpine sh
+# apk add curl
+# curl http://host.docker.internal:8000
+# exit
+```",
+H006,docker-compose env file set by command line. So i want to use a custom env file depends on a custom enviroment variable passed via command line.,content/manuals/compose/how-tos/environment-variables/variable-interpolation.md,Substitute with `--env-file`,"You can set default values for multiple environment variables, in an `.env` file and then pass the file as an argument in the CLI.
+
+The advantage of this method is that you can store the file anywhere and name it appropriately, for example,
+This file path is relative to the current working directory where the Docker Compose command is executed. Passing the file path is done using the `--env-file` option:
+
+```console
+$ docker compose --env-file ./config/.env.dev up
+```
+
+**Additional information**
+
+- This method is useful if you want to temporarily override an `.env` file that is already referenced in your `compose.yaml` file. For example you may have different `.env` files for production ( `.env.prod`) and testing (`.env.test`).
+  In the following example, there are two environment files, `.env` and `.env.dev`. Both have different values set for `TAG`.
+
+```console
+  $ cat .env
+  TAG=v1.5
+  $ cat ./config/.env.dev
+  TAG=v1.6
+  $ cat compose.yaml
+  services:
+    web:
+      image: ""webapp:${TAG}""
+  ```
+
+If the `--env-file` is not used in the command line, the `.env` file is loaded by default:
+
+```console
+  $ docker compose config
+  services:
+    web:
+      image: 'webapp:v1.5'
+  ```
+
+Passing the `--env-file` argument overrides the default file path:
+
+```console
+  $ docker compose --env-file ./config/.env.dev config
+  services:
+    web:
+      image: 'webapp:v1.6'
+  ```
+
+When an invalid file path is being passed as an `--env-file` argument, Compose returns an error:
+
+```console
+  $",
+H018,My Docker container does not have IP address. Why?. I started a `rethinkDB` docker container using the command Now the container started successfully. I did `docker ps` Now I want to find out the IP address of this container. So I did It's returning me nothing. I couldn't find IP address for this container.,content/manuals/engine/network/drivers/host.md,Overview,"If you use the `host` network mode for a container, that container's network
+stack isn't isolated from the Docker host (the container shares the host's
+networking namespace), and the container doesn't get its own IP-address allocated.
+For instance, if you run a container which binds to port 80 and you use `host`
+networking, the container's application is available on port 80 on the host's IP
+address.
+
+**Note:** Given that the container does not have its own IP-address when using `host` mode networking, [port mapping](../port-publishing.md) doesn't take effect, and the `-p`, `--publish`, `-P`, and `--publish-all` options are ignored, producing a warning instead: ```console WARNING: Published ports are discarded when using host network mode ```
+
+Host mode networking can be useful for the following use cases:
+
+- To optimize performance
+- In situations where a container needs to handle a large range of ports
+
+This is because it doesn't require network address translation (NAT), and no ""userland-proxy"" is created for each port.",
+H033,Running docker without sudo on Ubuntu 14.04. I attempted to set up Docker so that I do not have to type `sudo` before using it.,content/manuals/engine/install/linux-postinstall.md,Manage Docker as a non-root user,"The Docker daemon binds to a Unix socket, not a TCP port. By default it's the
+`root` user that owns the Unix socket, and other users can only access it using
+`sudo`. The Docker daemon always runs as the `root` user.
+
+When the Docker daemon starts, it creates a Unix socket accessible by members of the `docker` group.
+On some Linux distributions, the system automatically creates this group when installing Docker Engine using a package manager.
+In that case, you don't need to create the group manually.
+
+There are two ways to run `docker` commands without `sudo` while the Docker daemon runs as `root`:
+
+- [Add your user to the `docker` group](#add-your-user-to-the-docker-group) for access throughout your login session.
+- [Access the `docker` group on demand](#access-the-docker-group-on-demand) by entering a password-protected, Docker-enabled shell.
+
+<!-- prettier-ignore -->
+**Warning:** The `docker` group grants root-level privileges to the user. For details on how this impacts security in your system, see [Docker Daemon Attack Surface](../security/_index.md#docker-daemon-attack-surface).
+
+**Note:** To run Docker without root privileges, see [Run the Docker daemon as a non-root user (Rootless mode)](../security/rootless.md).",
+H051,docker-compose build error when using parent dir & dockerfile for build. I have the following structure: In my `tests/docker-compose.yml` I have the following service defined: When do a `docker-compose build` I get:,content/reference/compose-file/build.md,Attributes,"The `build` subsection defines configuration options that are applied by Compose to build Docker images from source.
+`build` can be specified either as a string containing a path to the build context or as a detailed structure:
+
+Using the string syntax, only the build context can be configured as either:
+
+- A relative path to the Compose file's folder. This path must be a directory and must contain a `Dockerfile`
+
+  ```yml
+  services:
+    webapp:
+      build: ./dir
+  ```
+
+- A Git repository URL. Git URLs accept context configuration in their fragment section, separated by a colon (`:`).
+  The first part represents the reference that Git checks out, and can be either a branch, a tag, or a remote reference.
+  The second part represents a subdirectory inside the repository that is used as a build context.
+
+  ```yml
+  services:
+    webapp:
+      build: https://github.com/mycompany/example.git#branch_or_tag:subdirectory
+  ```
+
+Alternatively `build` can be an object with fields defined as follows:",

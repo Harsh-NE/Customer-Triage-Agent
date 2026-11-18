@@ -116,13 +116,13 @@ def build_default_deps(llm: Optional[LLM] = None, *, cache_path: Optional[Path] 
                       ("RESOLVER_CHECK_URLS", "check_urls")):        # opt-in features: each costs extra model or network calls
         if os.environ.get(var) == "1":
             setattr(cfg, attr, True)
+    log = logger or EventLogger(log_path or root / "events.jsonl")
     jev = None
     if features.use_jev:
-        from triage.jev import JevClient
-        jev = JevClient.from_env()                         # None without TYPESAFE_API_KEY; nothing calls it yet either way
+        from triage.resolver.jev_gate import build_jev_gate
+        jev = build_jev_gate(log)                          # stops with a clear message when there is no key: arm C must never run as B
     deps = ResolverDeps(retriever=TieredRetriever(KBEvidenceRetriever(kb, supplementary=supplementary), TicketEvidenceRetriever(tickets)),
-                        llm=llm, cache=cache, negative_cache=negative, logger=logger or EventLogger(log_path or root / "events.jsonl"),
-                        cfg=cfg, ontology=kb.ontology, jev=jev)
+                        llm=llm, cache=cache, negative_cache=negative, logger=log, cfg=cfg, ontology=kb.ontology, jev=jev)
     return kb, deps
 
 

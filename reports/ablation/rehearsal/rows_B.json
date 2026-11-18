@@ -1,0 +1,369 @@
+{
+ "rows": [
+  {
+   "id": "S01",
+   "opening": "docker pull fails with 'You have reached your pull rate limit' HTTP 429 from Docker Hub",
+   "vagueness": "low",
+   "opening_facts": {
+    "product_area": "docker-hub",
+    "error_codes": [
+     "HTTP 429 response code"
+    ]
+   },
+   "has_gold": true,
+   "oos": false,
+   "kb_gap": false,
+   "outcome": "resolved",
+   "escalation_reason": null,
+   "questions": 0,
+   "fixes_sent": [
+    {
+     "tier": "kb",
+     "cited": [
+      "E1",
+      "E2"
+     ],
+     "gold": true,
+     "message": "Likely cause: When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit.\n\n1. When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit. [E1]\n2. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\n- You have reached your pull rate limit as an authenticated Docker Personal\n  user. [E1]\n3. The pull rate limit is calculated on a 6-hour basis. [E2]\n4. There is no pull rate\nlimit for users or automated systems with a paid subscription. [E2]\n\nTo confirm: Re-run the failing command and confirm the error is gone.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md; E2 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/usage/pulls.md\n\nDid this resolve the issue?",
+     "sources": [
+      "You have reached your pull rate limit (429 response code)",
+      "View pull rate and limit"
+     ],
+     "evidence": [
+      {
+       "evidence_id": "E1",
+       "tier": "kb",
+       "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md",
+       "text": "When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\n- You have reached your pull rate limit as an authenticated Docker Personal\n  user.\n- You have reached your pull rate limit as an unauthenticated user based on your\n  IPv4 address or IPv6 /64 subnet.\n\nYou can use one of the following solutions:\n\n- [Authenticate](./usage/pulls.md#authentication) or\n  [upgrade](../subscription-billing/manage/plans.md#upgrade-plans) your Docker\n  account.\n- [View your pull rate limit](./usage/pulls.md#view-hourly-pull-rate-and-limit),\n  wait until your pull rate limit decreases, and then try again."
+      },
+      {
+       "evidence_id": "E2",
+       "tier": "kb",
+       "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/usage/pulls.md",
+       "text": "The pull rate limit is calculated on a 6-hour basis. There is no pull rate\nlimit for users or automated systems with a paid subscription. Unauthenticated\nand Docker Personal users using Docker Hub will experience rate limits on image\npulls.\n\nWhen you issue a pull and you are over the limit, Docker Hub returns a\n`429` response code with the following body when the manifest is requested:\n\n```text\nYou have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\nThis error message appears in the Docker CLI or in the Docker Engine logs.\n\nTo view your current pull rate and limit:\n\n**Note:** To check your limits, you need `curl` and `jq` installed.\n\n1. Get a token.\n   - To get a token anonymously, if you are pulling anonymously:\n\n```console\n     $ TOKEN=$(curl \"https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull\" | jq -r .token)\n     ```\n\n- To get a token with a user account, if you are authenticated, insert your\n     username and password in the following command:\n\n```console\n     $ TOKEN=$(curl --user 'username:password' \"https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull\" | jq -r .token)\n     ```\n\n2. Get the headers that contain your limits. These headers are returned on both\n   GET and HEAD requests. Using GET emulates a real pull and counts towards the\n   limit. Using HEAD won't.\n\n```console\n   $ curl --head -H \"Authorization: Bearer $TOKEN\" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest\n   ```\n\n3. Examine the headers. You should see the following headers.\n\n```text\n   ratelimit-limit: 100;w=21600\n   ratelimit-remaining: 20;w=21600\n   docker-ratelimit-source: 192.0.2.1\n   ```\n\nIn the previous example, the pull limit is 100 pulls per 21600 seconds (6\n   hours), and there are 20 pulls remaining.\n\nIf you don't see any `ratelimit` header, it could be because the image or your IP\n   is unlimited in partnership with a publisher, provider, or an open source\n   organization. It could also mean that the user you are pulling as is part of a\n   paid Docker subscription. Pulling that image won't count toward pull rate limits if you\n   don't see these headers."
+      }
+     ]
+    }
+   ],
+   "first_gold": true,
+   "resolved_gold": true,
+   "clarifier": {
+    "status": "ready",
+    "reason": "clear",
+    "p_top": 0.5393,
+    "margin": 0.1904,
+    "uncovered_terms": [],
+    "questions_asked": 0,
+    "canonical_string": "docker-hub|?|docker pull fails with 'you have reached your pull rate limit' http 429 from docker hub"
+   },
+   "clarify_returns": 0,
+   "gate_inputs": [
+    {
+     "tier": "kb",
+     "completeness": 0.77,
+     "p_top": 0.5393,
+     "evidence": [
+      {
+       "evidence_id": "E1",
+       "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0001",
+       "tier": "kb",
+       "rerank_score": 0.7944,
+       "component": "troubleshoot",
+       "topics": [],
+       "issue": "You have reached your pull rate limit (429 response code)",
+       "gold": true
+      },
+      {
+       "evidence_id": "E2",
+       "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0009",
+       "tier": "kb",
+       "rerank_score": 0.7371,
+       "component": "usage",
+       "topics": [],
+       "issue": "View pull rate and limit",
+       "gold": false
+      },
+      {
+       "evidence_id": "E3",
+       "doc_id": "content/manuals/docker-hub/usage/_index.md#content__manuals__docker-hub__usage___index__0002",
+       "tier": "kb",
+       "rerank_score": 0.5534,
+       "component": "usage",
+       "topics": [],
+       "issue": "Abuse rate limit",
+       "gold": false
+      },
+      {
+       "evidence_id": "E4",
+       "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0000",
+       "tier": "kb",
+       "rerank_score": 0.415,
+       "component": "usage",
+       "topics": [],
+       "issue": "Overview",
+       "gold": false
+      },
+      {
+       "evidence_id": "E5",
+       "doc_id": "content/manuals/docker-hub/image-library/mirror.md#content__manuals__docker-hub__image-library__mirror__0004",
+       "tier": "kb",
+       "rerank_score": 0.3719,
+       "component": "image-library",
+       "topics": [],
+       "issue": "Using Registry Access Management (RAM) with a registry mirror",
+       "gold": false
+      }
+     ]
+    }
+   ],
+   "gate_final": {
+    "confidence": 0.6623,
+    "strong": true,
+    "top": 0.7944,
+    "margin": 0.0573,
+    "agreement": 0.5393,
+    "completeness": 0.77,
+    "reasons": [
+     "ok"
+    ],
+    "tier": "kb"
+   },
+   "confidence": 0.6623,
+   "asked": [],
+   "first_reply_s": 1.17,
+   "first_fix_s": 1.17,
+   "total_s": 1.27,
+   "usage": {
+    "llm_calls": 2,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": null,
+    "llm_latency_ms_p50": 0.39,
+    "llm_latency_ms_p95": 0.39
+   }
+  },
+  {
+   "id": "S02",
+   "opening": "Docker Hub pulls are failing with a 429 error",
+   "vagueness": "medium",
+   "opening_facts": {
+    "product_area": "docker-hub",
+    "error_codes": [
+     "HTTP 429 response code"
+    ]
+   },
+   "has_gold": true,
+   "oos": false,
+   "kb_gap": false,
+   "outcome": "resolved",
+   "escalation_reason": null,
+   "questions": 1,
+   "fixes_sent": [
+    {
+     "tier": "kb",
+     "cited": [
+      "E1",
+      "E2"
+     ],
+     "gold": true,
+     "message": "Likely cause: When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nToo Many Requests\n```\n\n- You have reached t.\n\n1. When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nToo Many Requests\n```\n\n- You have reached the [Abuse rate limit](./usage/_index.md#abuse-rate-limit). [E1]\n2. Check for broken CI/CD pipelines accessing Docker Hub and fix them. [E1]\n3. Docker Hub has an abuse rate limit to protect the application and\ninfrastructure. [E2]\n4. This limit applies to all requests to Hub properties including\nweb pages, APIs, and image pulls. [E2]\n\nTo confirm: Re-run the failing command and confirm the error is gone.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md; E2 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/usage/_index.md\n\nDid this resolve the issue?",
+     "sources": [
+      "Too many requests (429 response code)",
+      "Abuse rate limit"
+     ],
+     "evidence": [
+      {
+       "evidence_id": "E1",
+       "tier": "kb",
+       "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md",
+       "text": "When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nToo Many Requests\n```\n\n- You have reached the [Abuse rate limit](./usage/_index.md#abuse-rate-limit).\n\n1. Check for broken CI/CD pipelines accessing Docker Hub and fix them.\n2. Implement a retry with back-off solution in your automated scripts to ensure\n   that you're not resending thousands of requests per minute."
+      },
+      {
+       "evidence_id": "E2",
+       "tier": "kb",
+       "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/usage/_index.md",
+       "text": "Docker Hub has an abuse rate limit to protect the application and\ninfrastructure. This limit applies to all requests to Hub properties including\nweb pages, APIs, and image pulls. The limit is applied per IPv4 address or per\nIPv6 /64 subnet, and while the limit changes over time depending on load and\nother factors, it's in the order of thousands of requests per minute. The abuse\nlimit applies to all users equally regardless of account level.\n\nYou can differentiate between the pull rate limit and abuse rate limit by\nlooking at the error code. The abuse limit returns a simple `429 Too Many\nRequests` response. The pull limit returns a longer error message that includes\na link to documentation."
+      }
+     ]
+    }
+   ],
+   "first_gold": true,
+   "resolved_gold": true,
+   "clarifier": {
+    "status": "ready",
+    "reason": "clear",
+    "p_top": 0.7185,
+    "margin": 0.6245,
+    "uncovered_terms": [],
+    "questions_asked": 1,
+    "canonical_string": "docker-hub|?|docker hub pulls are failing with a 429 error; too many requests"
+   },
+   "clarify_returns": 0,
+   "gate_inputs": [
+    {
+     "tier": "kb",
+     "completeness": 0.859,
+     "p_top": 0.7185,
+     "evidence": [
+      {
+       "evidence_id": "E1",
+       "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0004",
+       "tier": "kb",
+       "rerank_score": 0.7696,
+       "component": "troubleshoot",
+       "topics": [],
+       "issue": "Too many requests (429 response code)",
+       "gold": true
+      },
+      {
+       "evidence_id": "E2",
+       "doc_id": "content/manuals/docker-hub/usage/_index.md#content__manuals__docker-hub__usage___index__0002",
+       "tier": "kb",
+       "rerank_score": 0.5899,
+       "component": "usage",
+       "topics": [],
+       "issue": "Abuse rate limit",
+       "gold": false
+      },
+      {
+       "evidence_id": "E3",
+       "doc_id": "content/manuals/docker-hub/usage/pulls.md#content__manuals__docker-hub__usage__pulls__0009",
+       "tier": "kb",
+       "rerank_score": 0.5295,
+       "component": "usage",
+       "topics": [],
+       "issue": "View pull rate and limit",
+       "gold": false
+      },
+      {
+       "evidence_id": "E4",
+       "doc_id": "content/manuals/docker-hub/troubleshoot.md#content__manuals__docker-hub__troubleshoot__0001",
+       "tier": "kb",
+       "rerank_score": 0.5286,
+       "component": "troubleshoot",
+       "topics": [],
+       "issue": "You have reached your pull rate limit (429 response code)",
+       "gold": false
+      }
+     ]
+    }
+   ],
+   "gate_final": {
+    "confidence": 0.7966,
+    "strong": true,
+    "top": 0.7696,
+    "margin": 0.1797,
+    "agreement": 0.7185,
+    "completeness": 0.859,
+    "reasons": [
+     "ok"
+    ],
+    "tier": "kb"
+   },
+   "confidence": 0.7966,
+   "asked": [
+    {
+     "message": "Could you copy the exact error message you see, including any error code?",
+     "reply": "Too Many Requests"
+    }
+   ],
+   "first_reply_s": 0.53,
+   "first_fix_s": 1.73,
+   "total_s": 1.83,
+   "usage": {
+    "llm_calls": 2,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": null,
+    "llm_latency_ms_p50": 0.42,
+    "llm_latency_ms_p95": 0.42
+   }
+  },
+  {
+   "id": "S03",
+   "opening": "getting a 429 when our CI pulls images from Docker Hub",
+   "vagueness": "medium",
+   "opening_facts": {
+    "product_area": "docker-hub",
+    "error_codes": [
+     "HTTP 429 response code"
+    ]
+   },
+   "has_gold": true,
+   "oos": false,
+   "kb_gap": false,
+   "outcome": "resolved",
+   "escalation_reason": null,
+   "questions": 2,
+   "fixes_sent": [
+    {
+     "tier": "kb",
+     "cited": [
+      "E1",
+      "E2"
+     ],
+     "gold": true,
+     "message": "Likely cause: When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit.\n\n1. When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit. [E1]\n2. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\n- You have reached your pull rate limit as an authenticated Docker Personal\n  user. [E1]\n3. The pull rate limit is calculated on a 6-hour basis. [E2]\n4. There is no pull rate\nlimit for users or automated systems with a paid subscription. [E2]\n\nTo confirm: Re-run the failing command and confirm the error is gone.\n\nSources: E1 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md; E2 https://github.com/docker/docs/blob/main/content/manuals/docker-hub/usage/pulls.md\n\nDid this resolve the issue?",
+     "sources": [
+      "You have reached your pull rate limit (429 response code)",
+      "View pull rate and limit"
+     ],
+     "evidence": [
+      {
+       "evidence_id": "E1",
+       "tier": "kb",
+       "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/troubleshoot.md",
+       "text": "When this issue occurs, you receive following error message in the Docker CLI or\nin the Docker Engine logs:\n\n```text\nYou have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\n- You have reached your pull rate limit as an authenticated Docker Personal\n  user.\n- You have reached your pull rate limit as an unauthenticated user based on your\n  IPv4 address or IPv6 /64 subnet.\n\nYou can use one of the following solutions:\n\n- [Authenticate](./usage/pulls.md#authentication) or\n  [upgrade](../subscription-billing/manage/plans.md#upgrade-plans) your Docker\n  account.\n- [View your pull rate limit](./usage/pulls.md#view-hourly-pull-rate-and-limit),\n  wait until your pull rate limit decreases, and then try again."
+      },
+      {
+       "evidence_id": "E2",
+       "tier": "kb",
+       "url": "https://github.com/docker/docs/blob/main/content/manuals/docker-hub/usage/pulls.md",
+       "text": "The pull rate limit is calculated on a 6-hour basis. There is no pull rate\nlimit for users or automated systems with a paid subscription. Unauthenticated\nand Docker Personal users using Docker Hub will experience rate limits on image\npulls.\n\nWhen you issue a pull and you are over the limit, Docker Hub returns a\n`429` response code with the following body when the manifest is requested:\n\n```text\nYou have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits\n```\n\nThis error message appears in the Docker CLI or in the Docker Engine logs.\n\nTo view your current pull rate and limit:\n\n**Note:** To check your limits, you need `curl` and `jq` installed.\n\n1. Get a token.\n   - To get a token anonymously, if you are pulling anonymously:\n\n```console\n     $ TOKEN=$(curl \"https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull\" | jq -r .token)\n     ```\n\n- To get a token with a user account, if you are authenticated, insert your\n     username and password in the following command:\n\n```console\n     $ TOKEN=$(curl --user 'username:password' \"https://auth.docker.io/token?service=registry.docker.io&scope=repository:ratelimitpreview/test:pull\" | jq -r .token)\n     ```\n\n2. Get the headers that contain your limits. These headers are returned on both\n   GET and HEAD requests. Using GET emulates a real pull and counts towards the\n   limit. Using HEAD won't.\n\n```console\n   $ curl --head -H \"Authorization: Bearer $TOKEN\" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest\n   ```\n\n3. Examine the headers. You should see the following headers.\n\n```text\n   ratelimit-limit: 100;w=21600\n   ratelimit-remaining: 20;w=21600\n   docker-ratelimit-source: 192.0.2.1\n   ```\n\nIn the previous example, the pull limit is 100 pulls per 21600 seconds (6\n   hours), and there are 20 pulls remaining.\n\nIf you don't see any `ratelimit` header, it could be because the image or your IP\n   is unlimited in partnership with a publisher, provider, or an open source\n   organization. It could also mean that the user you are pulling as is part of a\n   paid Docker subscription. Pulling that image won't count toward pull rate limits if you\n   don't see these headers."
+      }
+     ]
+    }
+   ],
+   "first_gold": true,
+   "resolved_gold": true,
+   "clarifier": {
+    "status": "ready",
+    "reason": "clear",
+    "p_top": 0.8472,
+    "margin": 0.7458,
+    "uncovered_terms": [
+     "500",
+     "images",
+     "returns"
+    ],
+    "questions_asked": 2,
+    "canonical_string": "docker-hub|?|docker hub returns 500 on pull; getting a 429 when our ci pulls images from docker hub; you have reached your pull rate limit; you may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits"
+   },
+   "clarify_returns": 0,
+   "gate_inputs": [],
+   "gate_final": null,
+   "confidence": 0.9411,
+   "asked": [
+    {
+     "message": "A few different things could be behind this. Which of these are you seeing? You can pick more than one.\n  1. 429 too many requests when pulling\n  2. Docker hub returns 500 on pull\n(or tell me if it's none of these)",
+     "reply": "Docker hub returns 500 on pull"
+    },
+    {
+     "message": "Could you copy the exact error message you see, including any error code?",
+     "reply": "You have reached your pull rate limit. You may increase the limit by authenticating and upgrading: https://www.docker.com/increase-rate-limits"
+    }
+   ],
+   "first_reply_s": 0.58,
+   "first_fix_s": 2.84,
+   "total_s": 2.86,
+   "usage": {
+    "llm_calls": 1,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "cost_usd": null,
+    "llm_latency_ms_p50": 0.1,
+    "llm_latency_ms_p95": 0.1
+   }
+  }
+ ]
+}

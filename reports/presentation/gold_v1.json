@@ -1,0 +1,367 @@
+{
+  "meta": {
+    "git_commit": "32a3728",
+    "pythonhashseed": "0",
+    "date": "2026-11-03 20:33",
+    "env": {},
+    "resolver_llm": "fake",
+    "resolver_model": null,
+    "seconds": 176.9,
+    "scenario_file": "reports\\regression\\gold_v1_all.jsonl",
+    "scenarios": 89,
+    "repeats": 1,
+    "unverified_labels": "0 of 89"
+  },
+  "major": {
+    "1_resolution": {
+      "gold_first_attempt_correct": {
+        "value": 0.211,
+        "k": 4,
+        "n": 19
+      },
+      "gold_fixed_within_2_attempts": {
+        "value": 0.211,
+        "k": 4,
+        "n": 19
+      },
+      "gold_escalated_instead": {
+        "value": 0.789,
+        "k": 15,
+        "n": 19
+      },
+      "attempts_per_resolved_gold": {
+        "p50": 1,
+        "p95": 1,
+        "mean": 1,
+        "max": 1,
+        "n": 4
+      },
+      "correct_end_all_scenarios": {
+        "value": 0.809,
+        "k": 72,
+        "n": 89
+      },
+      "outcomes": {
+        "escalated": 72,
+        "resolved": 4,
+        "rejected": 13
+      }
+    },
+    "2_faithfulness": {
+      "note": "not run: pass --judge gemini (the judge is a model call per sent fix)"
+    },
+    "3_retrieval": {
+      "gold_scenarios": 19,
+      "no_kb_evidence": 0,
+      "recall@1": {
+        "value": 0.211,
+        "k": 4,
+        "n": 19
+      },
+      "recall@3": {
+        "value": 0.632,
+        "k": 12,
+        "n": 19
+      },
+      "recall@8": {
+        "value": 0.789,
+        "k": 15,
+        "n": 19
+      },
+      "mrr": 0.393,
+      "precision@5": 0.137,
+      "context_precision": 0.394,
+      "top_rerank_score_gold": {
+        "p50": 0.56,
+        "p95": 0.89,
+        "mean": 0.58,
+        "max": 0.89,
+        "n": 19
+      },
+      "top_rerank_score_no_gold": {
+        "p50": 0.51,
+        "p95": 0.64,
+        "mean": 0.51,
+        "max": 0.69,
+        "n": 45
+      }
+    },
+    "4_safe_decisions": {
+      "wrong_fix_rate": {
+        "value": 0.022,
+        "k": 2,
+        "n": 89
+      },
+      "wrong_first_fix_on_gold": {
+        "value": 0.0,
+        "k": 0,
+        "n": 19
+      },
+      "kb_fix_on_no_answer_cases": {
+        "value": 0.029,
+        "k": 2,
+        "n": 70
+      },
+      "escalation_recall": {
+        "value": 1.0,
+        "k": 70,
+        "n": 70
+      },
+      "escalation_precision": {
+        "value": 0.824,
+        "k": 70,
+        "n": 85
+      },
+      "unnecessary_escalation_rate": {
+        "value": 0.789,
+        "k": 15,
+        "n": 19
+      },
+      "terminal_action_accuracy": {
+        "value": 0.809,
+        "k": 72,
+        "n": 89
+      },
+      "escalation_reasons": {
+        "LOW_EVIDENCE": 58,
+        "RETRY_EXHAUSTED": 2,
+        "OUT_OF_SCOPE": 13,
+        "CLARIFY_LOOP_EXHAUSTED": 6,
+        "SECURITY_OR_DATA_LOSS": 5,
+        "CRITICAL_SEVERITY": 1
+      },
+      "note": "per-turn answer/ask/escalate accuracy needs a label for every turn; this is the end-of-case version"
+    },
+    "5_customer_effort": {
+      "questions_per_case": {
+        "p50": 2,
+        "p95": 3,
+        "mean": 1.76,
+        "max": 3,
+        "n": 89
+      },
+      "questions_histogram": {
+        "0": 13,
+        "1": 30,
+        "2": 11,
+        "3": 35
+      },
+      "zero_question_rate": {
+        "value": 0.146,
+        "k": 13,
+        "n": 89
+      },
+      "zero_question_rate_clear_openings": {
+        "value": null,
+        "k": 0,
+        "n": 0
+      },
+      "redundant_question_rate": {
+        "value": 0.0,
+        "k": 0,
+        "n": 157
+      },
+      "repeated_question_rate": {
+        "value": 0.0,
+        "k": 0,
+        "n": 157
+      },
+      "not_sure_answer_rate": {
+        "value": 0.242,
+        "k": 38,
+        "n": 157
+      },
+      "question_type_mix": {
+        "symptoms": 54,
+        "trait": 41,
+        "error_open": 32,
+        "product_area": 14,
+        "error_message": 14,
+        "pick": 2
+      },
+      "ready_precision_first_fix": {
+        "value": 1.0,
+        "k": 4,
+        "n": 4
+      },
+      "note": "redundant = asked for a fact the opening message already gave (scenario opening_facts)"
+    },
+    "6_cost_and_speed": {
+      "total_cost_usd": null,
+      "cost_per_case_usd": null,
+      "cost_per_verified_resolution_usd": null,
+      "tokens_per_verified_resolution": 0,
+      "llm_calls_per_case": {
+        "p50": 0,
+        "p95": 2,
+        "mean": 0.31,
+        "max": 4,
+        "n": 89
+      },
+      "end_to_end_seconds": {
+        "p50": 1.59,
+        "p95": 5.18,
+        "mean": 1.99,
+        "max": 10.72,
+        "n": 89
+      },
+      "time_to_first_reply_seconds": {
+        "p50": 0.3,
+        "p95": 0.85,
+        "mean": 0.46,
+        "max": 9.6,
+        "n": 89
+      },
+      "note": "cost is null: the model is unpriced or no model was called (fake). Latency then covers retrieval and the Clarifier only. Add the model to triage/pricing.json to price it."
+    }
+  },
+  "minor": {
+    "drafting_and_sources": {
+      "fixes_sent": 7,
+      "citation_valid": {
+        "value": 1.0,
+        "k": 7,
+        "n": 7
+      },
+      "first_fix_tier": {
+        "kb": 6
+      },
+      "ticket_fallback_rate": {
+        "value": 0.167,
+        "k": 1,
+        "n": 6
+      },
+      "cited_per_fix": {
+        "p50": 2,
+        "p95": 2,
+        "mean": 2,
+        "max": 2,
+        "n": 7
+      }
+    },
+    "event_log_of_this_run": {
+      "events": {
+        "clarifier_turn": 234,
+        "cache_lookup": 64,
+        "retrieval": 68,
+        "gate": 68,
+        "escalation": 85,
+        "llm_call": 28,
+        "verify": 7,
+        "sentiment": 7,
+        "outcome": 4,
+        "guardrail": 25
+      },
+      "llm_errors": {
+        "value": 0.0,
+        "k": 0,
+        "n": 28
+      },
+      "llm_latency_ms": {
+        "p50": 0.04,
+        "p95": 1.96,
+        "mean": 0.37,
+        "max": 3.14,
+        "n": 28
+      },
+      "llm_calls_by_node": {
+        "scope": 14,
+        "draft": 7,
+        "classify": 7
+      },
+      "cache_lookups": {
+        "miss": 64
+      },
+      "cache_rejected_by_gate": 0,
+      "retrieval_tiers": {
+        "kb": 66,
+        "tickets": 2
+      },
+      "retrieval_latency_ms": {
+        "p50": 675.89,
+        "p95": 1960.7,
+        "mean": 795.39,
+        "max": 3381.98,
+        "n": 68
+      },
+      "gate_decisions": {
+        "escalate": 59,
+        "resolve": 7,
+        "fallback": 2
+      },
+      "verifier_steps_dropped": 0,
+      "verifier_steps_kept": 28,
+      "escalation_events": {
+        "LOW_EVIDENCE": 58,
+        "RETRY_EXHAUSTED": 2,
+        "OUT_OF_SCOPE": 13,
+        "CLARIFY_LOOP_EXHAUSTED": 6,
+        "SECURITY_OR_DATA_LOSS": 5,
+        "CRITICAL_SEVERITY": 1
+      }
+    },
+    "clarifier": {
+      "gap_and_extraction": {
+        "gap_precision": 0.0,
+        "gap_recall": null,
+        "product_area_accuracy_on_opening": null,
+        "platform_accuracy_on_opening": null,
+        "error_code_recall_on_opening": null
+      },
+      "dialogue": {
+        "scenarios": 89,
+        "with_gold": 19,
+        "out_of_scope": 10,
+        "ready_rate": 0.067,
+        "unresolved_rate": 0.933,
+        "stuck_rate": 0.0,
+        "mean_questions_per_ticket": 2.06,
+        "gold_top1": 0.263,
+        "gold_top3": 0.526,
+        "ready_precision": 1.0,
+        "wrong_ready_rate": 0.0,
+        "oos_false_ready_rate": 0.0,
+        "redundant_question_rate": 0.0,
+        "duplicate_question_rate": 0.0,
+        "question_single_question": 1.0,
+        "question_options_present": 1.0,
+        "question_length_ok": 0.995,
+        "mean_tool_calls_per_ticket": 8.25
+      }
+    },
+    "ontology_off_vs_on": {
+      "off": {
+        "scenarios": {
+          "recall@1": 0.263,
+          "recall@3": 0.579,
+          "recall@8": 0.684,
+          "mrr": 0.401,
+          "n": 19
+        },
+        "paraphrases": {
+          "recall@1": 0.524,
+          "recall@3": 0.714,
+          "recall@8": 0.833,
+          "mrr": 0.631,
+          "n": 42
+        }
+      },
+      "both": {
+        "scenarios": {
+          "recall@1": 0.316,
+          "recall@3": 0.526,
+          "recall@8": 0.632,
+          "mrr": 0.418,
+          "n": 19
+        },
+        "paraphrases": {
+          "recall@1": 0.524,
+          "recall@3": 0.786,
+          "recall@8": 0.952,
+          "mrr": 0.676,
+          "n": 42
+        }
+      }
+    }
+  }
+}

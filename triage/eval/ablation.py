@@ -20,7 +20,8 @@ Writes to reports/ablation/: queries.jsonl (one raw line per query and arm), eve
 
 python -m triage.eval.ablation --recompute reports/ablation/<run>     # re-tabulate an earlier run from its logs: no model calls
 
-Arm C equals arm B until a pipeline step calls Jev (ResolverDeps.jev is built but nothing uses it yet); the run says so.
+Arm C is arm B plus Jev as a second opinion when the confidence gate refuses (triage/resolver/jev_gate.py). It needs OPENROUTER_API_KEY, or
+JEV_BACKEND=fake for an offline rehearsal; JEV_MODE=shadow asks and logs without changing any decision.
 The run sets PYTHONHASHSEED=0 itself (the Clarifier breaks ties by hash order), so two runs of the same code are comparable.
 """
 
@@ -80,6 +81,9 @@ TELEMETRY = [
     ("Failed model calls (must be 0)", lambda s: s["cost"]["llm_errors"]),
     ("Retried model calls (their cases ran slower)", lambda s: s["cost"]["llm_retries"]),
     ("Input tokens (model + Jev)", lambda s: s["cost"]["input_tokens"]),
+    ("Jev calls", lambda s: s["cost"]["jev_calls"]),
+    ("Jev overrides (refusals turned into answers)", lambda s: s["cost"]["jev_overrides"]),
+    ("Jev errors (the rules decided)", lambda s: s["cost"]["jev_errors"]),
     ("Cost (USD)", lambda s: s["cost"]["cost_usd"]),
     ("Calls saved vs baseline arm (%)", lambda s: s["vs_baseline"]["llm_calls_saved_vs_baseline"]),
     ("Tokens saved vs baseline arm (%)", lambda s: s["vs_baseline"]["input_tokens_saved_vs_baseline"]),
@@ -377,7 +381,12 @@ def main() -> None:
     (args.out_dir / "queries.jsonl").write_text("", encoding="utf-8")             # the arms append one line per query
     arm_features = {arm: ARMS[arm] if args.cache is None else Features(**{**ARMS[arm].to_dict(), "use_semantic_cache": args.cache == "on"})
                     for arm in args.arms}
-    notes += ["use_jev is on but no pipeline step calls Jev yet: this arm equals the arm without it." for f in arm_features.values() if f.use_jev]
+    jev = None
+    if any(f.use_jev for f in arm_features.values()):
+        from triage.jev import MODEL
+        from triage.resolver.jev_gate import JevGateConfig
+        jev = {"backend": "fake" if os.environ.get("JEV_BACKEND", "").lower() == "fake" else "openrouter", "model": os.environ.get("JEV_MODEL") or MODEL,
+               **JevGateConfig.from_env().__dict__}
     done_by_arm = run_arms(arm_features, stream, llm, args.out_dir, pacer, args.max_failures)
     for arm, done in done_by_arm.items():
         rows = [row for phase, row, _ in done if phase == "first_ask"]
@@ -386,7 +395,7 @@ def main() -> None:
             "llm": args.llm, "model": getattr(llm, "model", None), "seconds": round(time.time() - started, 1),
             "scenario_files": [str(p) for p in args.scenarios or ["triage/eval/scenarios.jsonl"]], "scenarios": len(scenarios),
             "stream": {"first_ask": len(scenarios), "repeat": len(stream) - len(scenarios), "seed": args.seed},
-            "arms": {a: {**ARMS[a].to_dict(), "name": ARM_NAMES[a]} for a in args.arms}, "baseline_arm": args.arms[0], "notes": sorted(set(notes))}
+            "arms": {a: {**ARMS[a].to_dict(), "name": ARM_NAMES[a]} for a in args.arms}, "baseline_arm": args.arms[0], "jev": jev, "notes": sorted(set(notes))}
     finish(done_by_arm, meta, args.out_dir)
 
 

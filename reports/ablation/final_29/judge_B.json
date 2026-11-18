@@ -1,0 +1,565 @@
+{
+  "judge": "gemini:gemini-3.5-flash-lite",
+  "aggregate": {
+    "judged": 19,
+    "judge_errors": 0,
+    "faithfulness_mean": 0.926,
+    "unsupported_rate": 0.316,
+    "fully_supported_rate": 0.684,
+    "relevance_mean": 1.0,
+    "unsafe_rate": 0.0
+  },
+  "controls": null,
+  "results": [
+    {
+      "id": "S01#1",
+      "tier": "kb",
+      "faithfulness": 0.75,
+      "claims": [
+        {
+          "text": "You have exceeded your Docker Hub pull rate limit as an unauthenticated or Docker Personal user.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Authenticate or upgrade your Docker account to increase your pull rate limit.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Wait until your pull rate limit decreases, and then try again.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm you can successfully run `docker pull` without receiving a 429 response code or pull rate limit error message.",
+          "verdict": "unsupported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "Most claims are well-supported by the evidence, though the confirmation step is not explicitly in the text."
+    },
+    {
+      "id": "S02#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "You have reached the Docker Hub abuse rate limit, which returns a 429 Too Many Requests response when thousands of requests per minute are sent.",
+          "verdict": "supported"
+        },
+        {
+          "text": "1. Check for broken CI/CD pipelines accessing Docker Hub and fix them.",
+          "verdict": "supported"
+        },
+        {
+          "text": "2. Implement a retry with back-off solution in your automated scripts to ensure that you're not resending thousands of requests per minute.",
+          "verdict": "supported"
+        },
+        {
+          "text": "To confirm: Confirm that your automated scripts and CI/CD pipelines successfully pull images without receiving the 429 Too Many Requests error.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by the provided evidence."
+    },
+    {
+      "id": "S03#1",
+      "tier": "kb",
+      "faithfulness": 0.75,
+      "claims": [
+        {
+          "text": "You have exceeded your Docker Hub pull rate limit as an unauthenticated or Docker Personal user.",
+          "verdict": "supported"
+        },
+        {
+          "text": "1. Authenticate or upgrade your Docker account to increase your pull rate limit.",
+          "verdict": "supported"
+        },
+        {
+          "text": "2. Wait until your pull rate limit decreases, and then try again.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm you can successfully run `docker pull` without receiving a 429 response code or pull rate limit error message.",
+          "verdict": "unsupported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "Most claims are supported, though the confirmation step is not mentioned in the evidence."
+    },
+    {
+      "id": "S04#1",
+      "tier": "kb",
+      "faithfulness": 0.8,
+      "claims": [
+        {
+          "text": "A 500 status code during pulls typically indicates a temporary Docker Hub service issue.",
+          "verdict": "supported"
+        },
+        {
+          "text": "View the Docker System Status Page at https://www.dockerstatus.com/ and verify that all services are operational.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Try accessing Docker Hub again as it may be a temporary issue.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Contact Docker Support at https://www.docker.com/support/ to report the issue.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirmation is achieved when the Docker System Status Page shows services as operational and image pulls complete successfully without returning the 500 error.",
+          "verdict": "unsupported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All troubleshooting steps and the cause are supported by the evidence, though the confirmation section contains unstated details."
+    },
+    {
+      "id": "S05#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "Docker commands fail because the Docker daemon isn't running or the client is attempting to connect to an unreachable host.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Start the daemon and try running the command again.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Check whether Docker is running by asking Docker using the `docker info` command.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Check which host your client is connecting to by checking the value of the `DOCKER_HOST` variable in your environment using `env | grep DOCKER_HOST`.",
+          "verdict": "supported"
+        },
+        {
+          "text": "If `DOCKER_HOST` is set in error, use `unset DOCKER_HOST` to unset it.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm that the Docker client successfully connects to the daemon and executes commands without connection errors.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims are fully supported by the provided evidence."
+    },
+    {
+      "id": "S06#1",
+      "tier": "kb",
+      "faithfulness": 0.8,
+      "claims": [
+        {
+          "text": "Containers are unable to resolve hostnames because a local loopback DNS resolver like dnsmasq is running on the host and cannot be accessed from within the container's network namespace.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Check to see if you use dnsmasq by running ps aux | grep dnsmasq.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Specify DNS servers for Docker to use or turn off dnsmasq.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Override default DNS settings by using the --dns flag.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm that DNS lookups and hostname resolution succeed inside the container.",
+          "verdict": "unsupported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims are supported by the evidence except the confirmation closing prompt which is not in the text."
+    },
+    {
+      "id": "S07#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "Docker Desktop fails to start on Windows due to conflicts or virtualization-blocking features in installed antivirus software.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Uninstall the anti-virus software or add Docker to the exclusions/exceptions in your antivirus software.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Disable hardware-assisted virtualization or hardened mode in your anti-virus software if you encounter errors such as Wsl/Service/RegisterDistro/CreateVm/HCS/ERROR_NOT_SUPPORTED.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm that Docker Desktop starts successfully after updating your antivirus settings or temporarily uninstalling the software.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by evidence E1."
+    },
+    {
+      "id": "S09#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "The port is already in use by another application or an improperly stopped container.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Use the `resmon.exe` GUI, select Network and then Listening Ports.",
+          "verdict": "supported"
+        },
+        {
+          "text": "In PowerShell, use `netstat -aon | find /i \"listening \"` to discover the PID of the process currently using the port.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm the conflicting process has been shut down or use a different port in your Docker app.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by the evidence."
+    },
+    {
+      "id": "S10#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "TLS handshake errors when pulling from a private registry on Docker Desktop are typically caused by missing or misconfigured SSL/CA certificates or by the registry being incorrectly listed under insec",
+          "verdict": "supported"
+        },
+        {
+          "text": "Ensure that your registry is properly configured with valid SSL certificates.",
+          "verdict": "supported"
+        },
+        {
+          "text": "If using a self-signed certificate, configure Docker to trust it by adding the certificate to your system's keychain or trust store so Docker Desktop can pick it up.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Add your client certificates in `~/.docker/certs.d/<MyRegistry>:<Port>/client.cert` and `~/.docker/certs.d/<MyRegistry>:<Port>/client.key` if client authentication is required.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Restart Docker Desktop after making any changes to the keychain or to the `~/.docker/certs.d` directory.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm the fix by successfully pulling an image from your private registry using the Docker CLI.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by the provided evidence documents."
+    },
+    {
+      "id": "S11#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "Docker Desktop requires a CPU that supports virtualization and the Apple Hypervisor framework.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Check that you have installed the correct Docker Desktop for your architecture.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Run the following command in a terminal window to check if your Mac supports Apple's Hypervisor framework: sysctl kern.hv_support",
+          "verdict": "supported"
+        },
+        {
+          "text": "If your Mac supports the Hypervisor Framework, the command prints kern.hv_support: 1.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims are fully supported by the provided evidence."
+    },
+    {
+      "id": "S12#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "Shell scripts created on Windows use default Windows-style CRLF line endings instead of Unix-style LF endings, which causes containers to fail with syntax errors.",
+          "verdict": "supported"
+        },
+        {
+          "text": "1. Convert files to Unix-style line endings using: dos2unix script.sh",
+          "verdict": "supported"
+        },
+        {
+          "text": "2. In VS Code, set line endings to LF (Unix) instead of CRLF (Windows).",
+          "verdict": "supported"
+        },
+        {
+          "text": "To confirm: Run the container again to confirm the shell script executes without syntax errors.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by the provided evidence."
+    },
+    {
+      "id": "S13#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "The SSO sign-in failure and error occur because the organization has no available seats for users provisioning via Just-in-Time provisioning or SCIM.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Purchase additional Docker Business subscription seats by signing in to Docker Home (https://app.docker.com/), choosing your organization account, going to Billing, selecting the action menu from the ",
+          "verdict": "supported"
+        },
+        {
+          "text": "Alternatively, review your organization members and pending invitations, and remove inactive users or pending invitations to free up seats.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Team members can successfully sign in using SSO once additional seats are purchased or existing seat usage is freed up by removing inactive users or pending invitations.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims are fully supported by the provided evidence."
+    },
+    {
+      "id": "S14#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "The user is not assigned to the organization because Just-in-Time (JIT) provisioning is disabled and the user has not been manually invited.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Sign in to Docker Home (https://app.docker.com/) and select your organization from the top-left account drop-down.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Select Identity & auth, then SSO and SCIM.",
+          "verdict": "supported"
+        },
+        {
+          "text": "In the SSO connections table, select the Action menu and then Enable JIT provisioning.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Select Enable to confirm.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Have the affected user attempt to sign in to Docker again using SSO.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by the evidence."
+    },
+    {
+      "id": "S15#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "This error occurs because the User Principal Name (UPN) returned by the IdP does not match any verified domains associated with your Docker SSO connection.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Ensure that the IdP SSO connection is returning the correct UPN value in the assertion attributes.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Add and verify all domains and subdomains used as UPN by your IdP and associate them with your Docker SSO connection.",
+          "verdict": "supported"
+        },
+        {
+          "text": "To confirm domain ownership, add a TXT record to your Domain Name System (DNS) host using the TXT Record Value from Docker.",
+          "verdict": "supported"
+        },
+        {
+          "text": "After the record is live, go to Identity & auth, then Domain management, and select Verify.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by the provided evidence."
+    },
+    {
+      "id": "S16#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "SCIM only manages and updates users that it has provisioned, so existing users created manually or via JIT must be re-created via SCIM to be linked.",
+          "verdict": "supported"
+        },
+        {
+          "text": "1. Transfer ownership of any resources (e.g., repositories) owned by the user.",
+          "verdict": "supported"
+        },
+        {
+          "text": "2. Remove the user manually from Docker Home under Members.",
+          "verdict": "supported"
+        },
+        {
+          "text": "3. Trigger provisioning from your IdP so SCIM can re-create the user with correct attributes.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm in Docker Home under Members that the users reappear and are managed by SCIM provisioning.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by the provided evidence."
+    },
+    {
+      "id": "S17#1",
+      "tier": "kb",
+      "faithfulness": 0.833,
+      "claims": [
+        {
+          "text": "Docker commands fail because the Docker daemon isn't running or the client is attempting to connect to an unreachable host.",
+          "verdict": "supported"
+        },
+        {
+          "text": "1. Start the daemon and try running the command again. [E1]",
+          "verdict": "supported"
+        },
+        {
+          "text": "2. Check whether Docker is running by asking Docker using the `docker info` command. [E3]",
+          "verdict": "supported"
+        },
+        {
+          "text": "3. Check which host your client is connecting to by checking the value of the `DOCKER_HOST` variable in your environment using `env | grep DOCKER_HOST`. [E3]",
+          "verdict": "supported"
+        },
+        {
+          "text": "4. If `DOCKER_HOST` is set in error, use `unset DOCKER_HOST` to unset it. [E3]",
+          "verdict": "supported"
+        },
+        {
+          "text": "To confirm: Confirm that the Docker client successfully connects to the daemon and executes commands without connection errors.",
+          "verdict": "unsupported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All troubleshooting steps are supported by the evidence, though the confirmation step is a general addition."
+    },
+    {
+      "id": "S18#1",
+      "tier": "kb",
+      "faithfulness": 0.667,
+      "claims": [
+        {
+          "text": "The 'Unable to remove' error typically occurs when a container-based utility bind-mounts Docker system directories like /var/lib/docker/ and leaves open filesystem handles.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Use the `lsof` command to find the process causing the path mentioned in the error to be busy, for example: `sudo lsof /var/lib/docker/containers/74bef250361c7817bee19349c93139621b272bc8f654ae112dd4eb",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm that the conflicting process has released the path or handle so that the resource is no longer busy.",
+          "verdict": "unsupported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims are supported except the confirmation step which is not explicitly mentioned in the text."
+    },
+    {
+      "id": "S19#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "Containers are likely getting killed due to an Out of Memory (OOM) exception when they attempt to use more memory than available on the host.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Perform tests to understand the memory requirements of your application before placing it into production, and ensure that your application runs on hosts with adequate resources.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Monitor the real-time resource usage of running containers using the `docker stats` command.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Restrict how much memory a container can use by utilizing the `--memory` flag with the `docker run` command (for example, `--memory=\"512m\"`).",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm that resource usage stays within the specified limits using `docker stats` and that containers no longer experience unexpected termination.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims in the reply are directly supported by the provided evidence."
+    },
+    {
+      "id": "S20#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "The Docker sandbox ran out of disk space because the default root filesystem or Docker data disk size limit was reached.",
+          "verdict": "supported"
+        },
+        {
+          "text": "To increase the sandbox root filesystem size before creating a sandbox, set DOCKER_SANDBOXES_ROOT_SIZE such as $ DOCKER_SANDBOXES_ROOT_SIZE=40g sbx run claude.",
+          "verdict": "supported"
+        },
+        {
+          "text": "To change the Docker data disk size for a sandbox, set DOCKER_SANDBOXES_DOCKER_SIZE when you create it, for example $ DOCKER_SANDBOXES_DOCKER_SIZE=20g sbx run claude.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Alternatively, remove sandboxes you are done with to reclaim disk space by running $ sbx rm my-sandbox.",
+          "verdict": "supported"
+        },
+        {
+          "text": "You can also configure the default Docker volume disk size setting using $ sbx settings set sandbox.disk.dockerVolume 20g.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Confirm that disk space usage is reduced or that new sandboxes successfully create and operate without running out of space.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims are directly supported by the provided evidence."
+    }
+  ]
+}

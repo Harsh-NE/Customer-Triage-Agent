@@ -1,0 +1,102 @@
+{"ts": "2026-11-15T18:57:18.816843+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S01-A-warmup", "status": "ready", "reason": "clear", "questions_asked": 0, "confidence": {"p_top": 0.527, "margin": 0.186, "top_score": 0.706, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.527}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.341}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.06}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.048}, {"label": "Mirror the Docker Hub library > Using Registry Access Management (RAM) with a registry mirror", "weight": 0.023}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:57:18.819129+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 9151.27}
+{"ts": "2026-11-15T18:57:18.835164+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.33}
+{"ts": "2026-11-15T18:57:18.836380+00:00", "event": "cache_lookup", "ticket_id": "E2E-S01-A-warmup", "status": "miss", "similarity": 0.0, "rejected_by_gate": 0}
+{"ts": "2026-11-15T18:57:18.836807+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 0.58}
+{"ts": "2026-11-15T18:57:19.095578+00:00", "event": "retrieval", "ticket_id": "E2E-S01-A-warmup", "tier": "kb", "n": 5, "top_score": 0.7907, "status": "ok", "latency_ms": 257.79}
+{"ts": "2026-11-15T18:57:19.095969+00:00", "event": "stage_timing", "stage": "retrieve", "latency_ms": 258.24}
+{"ts": "2026-11-15T18:57:19.096934+00:00", "event": "gate", "ticket_id": "E2E-S01-A-warmup", "tier": "kb", "decision": "resolve", "confidence": 0.6558, "strong": true, "top": 0.7907, "margin": 0.056, "agreement": 0.5269, "completeness": 0.763, "reasons": ["ok"]}
+{"ts": "2026-11-15T18:57:19.097356+00:00", "event": "stage_timing", "stage": "gate", "latency_ms": 0.67}
+{"ts": "2026-11-15T18:57:23.362481+00:00", "event": "llm_call", "ticket_id": "E2E-S01-A-warmup", "node": "draft", "provider": "clarifier-provider:gemini", "input_tokens": 2335, "output_tokens": 256, "model": "gemini-3.5-flash-lite", "cost_usd": 0.0013405, "status": "ok", "latency_ms": 4264.13}
+{"ts": "2026-11-15T18:57:23.362899+00:00", "event": "stage_timing", "stage": "draft", "latency_ms": 4264.63}
+{"ts": "2026-11-15T18:57:23.601069+00:00", "event": "verify", "ticket_id": "E2E-S01-A-warmup", "ok": true, "kept": 3, "dropped": [{"step": "Get the headers containing your limits using `curl --head -H \"Authorization: Bearer $TOKEN\" https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest`.", "reason": "unsupported_command_or_url", "items": ["https://registry-1.docker.io/v2/ratelimitpreview/test/manifests/latest`."]}]}
+{"ts": "2026-11-15T18:57:23.601371+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 0.56}
+{"ts": "2026-11-15T18:57:23.602326+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.07}
+{"ts": "2026-11-15T18:57:23.603690+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:57:23.609987+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.03}
+{"ts": "2026-11-15T18:57:25.606000+00:00", "event": "llm_call", "ticket_id": "E2E-S01-A-warmup", "node": "classify", "provider": "clarifier-provider:gemini", "input_tokens": 361, "output_tokens": 21, "model": "gemini-3.5-flash-lite", "cost_usd": 0.0001608, "status": "ok", "latency_ms": 1994.57}
+{"ts": "2026-11-15T18:57:25.606384+00:00", "event": "sentiment", "ticket_id": "E2E-S01-A-warmup", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:57:25.606516+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 1995.11}
+{"ts": "2026-11-15T18:57:25.672250+00:00", "event": "outcome", "ticket_id": "E2E-S01-A-warmup", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:57:25.672616+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 63.6}
+{"ts": "2026-11-15T18:57:26.198595+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S01-A-0", "status": "ready", "reason": "clear", "questions_asked": 0, "confidence": {"p_top": 0.527, "margin": 0.186, "top_score": 0.706, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.527}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.341}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.06}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.048}, {"label": "Mirror the Docker Hub library > Using Registry Access Management (RAM) with a registry mirror", "weight": 0.023}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:57:26.199183+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 520.87}
+{"ts": "2026-11-15T18:57:26.202177+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.1}
+{"ts": "2026-11-15T18:57:26.203040+00:00", "event": "cache_lookup", "ticket_id": "E2E-S01-A-0", "status": "miss", "similarity": 0.0, "rejected_by_gate": 0}
+{"ts": "2026-11-15T18:57:26.203530+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 0.53}
+{"ts": "2026-11-15T18:57:26.440925+00:00", "event": "retrieval", "ticket_id": "E2E-S01-A-0", "tier": "kb", "n": 5, "top_score": 0.7907, "status": "ok", "latency_ms": 236.27}
+{"ts": "2026-11-15T18:57:26.441349+00:00", "event": "stage_timing", "stage": "retrieve", "latency_ms": 236.71}
+{"ts": "2026-11-15T18:57:26.442268+00:00", "event": "gate", "ticket_id": "E2E-S01-A-0", "tier": "kb", "decision": "resolve", "confidence": 0.6558, "strong": true, "top": 0.7907, "margin": 0.056, "agreement": 0.5269, "completeness": 0.763, "reasons": ["ok"]}
+{"ts": "2026-11-15T18:57:26.442591+00:00", "event": "stage_timing", "stage": "gate", "latency_ms": 0.41}
+{"ts": "2026-11-15T18:57:28.950844+00:00", "event": "llm_call", "ticket_id": "E2E-S01-A-0", "node": "draft", "provider": "clarifier-provider:gemini", "input_tokens": 2335, "output_tokens": 155, "model": "gemini-3.5-flash-lite", "cost_usd": 0.001088, "status": "ok", "latency_ms": 2507.44}
+{"ts": "2026-11-15T18:57:28.951168+00:00", "event": "stage_timing", "stage": "draft", "latency_ms": 2507.81}
+{"ts": "2026-11-15T18:57:28.952219+00:00", "event": "verify", "ticket_id": "E2E-S01-A-0", "ok": true, "kept": 2, "dropped": []}
+{"ts": "2026-11-15T18:57:28.952484+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 0.49}
+{"ts": "2026-11-15T18:57:28.953518+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:57:28.954338+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.03}
+{"ts": "2026-11-15T18:57:28.958862+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.02}
+{"ts": "2026-11-15T18:57:30.183892+00:00", "event": "llm_call", "ticket_id": "E2E-S01-A-0", "node": "classify", "provider": "clarifier-provider:gemini", "input_tokens": 263, "output_tokens": 21, "model": "gemini-3.5-flash-lite", "cost_usd": 0.0001314, "status": "ok", "latency_ms": 1223.76}
+{"ts": "2026-11-15T18:57:30.184547+00:00", "event": "sentiment", "ticket_id": "E2E-S01-A-0", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:57:30.185111+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 1224.99}
+{"ts": "2026-11-15T18:57:30.249360+00:00", "event": "outcome", "ticket_id": "E2E-S01-A-0", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:57:30.249832+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 61.59}
+{"ts": "2026-11-15T18:57:30.535536+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S02-A-1", "status": "ask", "reason": "asking:error_open", "questions_asked": 1, "confidence": {"p_top": 0.199, "margin": 0.012, "top_score": 0.608, "reason": "ungrounded"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.199}, {"label": "Troubleshoot topics for Docker Desktop > Certificates not set up correctly", "weight": 0.187}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.181}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.136}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.122}], "uncovered_terms": ["429", "pulls"], "tool_calls": ["search_kb", "search_kb", "ask_customer"], "extraction_source": "heuristic", "question_feature": "error_open"}
+{"ts": "2026-11-15T18:57:30.536068+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 279.06}
+{"ts": "2026-11-15T18:57:30.537845+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 0.77}
+{"ts": "2026-11-15T18:57:30.914476+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S02-A-1", "status": "ready", "reason": "clear", "questions_asked": 1, "confidence": {"p_top": 0.611, "margin": 0.531, "top_score": 0.669, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.611}, {"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.08}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.078}, {"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.07}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.059}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:57:30.915061+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 374.54}
+{"ts": "2026-11-15T18:57:30.918614+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.08}
+{"ts": "2026-11-15T18:57:30.919447+00:00", "event": "cache_lookup", "ticket_id": "E2E-S02-A-1", "status": "miss", "similarity": 0.0, "rejected_by_gate": 1}
+{"ts": "2026-11-15T18:57:30.919730+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 0.35}
+{"ts": "2026-11-15T18:57:31.124899+00:00", "event": "retrieval", "ticket_id": "E2E-S02-A-1", "tier": "kb", "n": 5, "top_score": 0.7375, "status": "ok", "latency_ms": 204.47}
+{"ts": "2026-11-15T18:57:31.125315+00:00", "event": "stage_timing", "stage": "retrieve", "latency_ms": 204.9}
+{"ts": "2026-11-15T18:57:31.126319+00:00", "event": "gate", "ticket_id": "E2E-S02-A-1", "tier": "kb", "decision": "resolve", "confidence": 0.7291, "strong": true, "top": 0.7375, "margin": 0.1517, "agreement": 0.6113, "completeness": 0.806, "reasons": ["ok"]}
+{"ts": "2026-11-15T18:57:31.126630+00:00", "event": "stage_timing", "stage": "gate", "latency_ms": 0.39}
+{"ts": "2026-11-15T18:57:33.265914+00:00", "event": "llm_call", "ticket_id": "E2E-S02-A-1", "node": "draft", "provider": "clarifier-provider:gemini", "input_tokens": 2277, "output_tokens": 147, "model": "gemini-3.5-flash-lite", "cost_usd": 0.0010506, "status": "ok", "latency_ms": 2137.25}
+{"ts": "2026-11-15T18:57:33.266378+00:00", "event": "stage_timing", "stage": "draft", "latency_ms": 2137.75}
+{"ts": "2026-11-15T18:57:33.268051+00:00", "event": "verify", "ticket_id": "E2E-S02-A-1", "ok": true, "kept": 2, "dropped": []}
+{"ts": "2026-11-15T18:57:33.268713+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 1.03}
+{"ts": "2026-11-15T18:57:33.270094+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.07}
+{"ts": "2026-11-15T18:57:33.271559+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:57:33.277409+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:57:35.087570+00:00", "event": "llm_call", "ticket_id": "E2E-S02-A-1", "node": "classify", "provider": "clarifier-provider:gemini", "input_tokens": 299, "output_tokens": 20, "model": "gemini-3.5-flash-lite", "cost_usd": 0.0001397, "status": "ok", "latency_ms": 1808.38}
+{"ts": "2026-11-15T18:57:35.088171+00:00", "event": "sentiment", "ticket_id": "E2E-S02-A-1", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:57:35.088687+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 1809.52}
+{"ts": "2026-11-15T18:57:35.139254+00:00", "event": "outcome", "ticket_id": "E2E-S02-A-1", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:57:35.139596+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 48.65}
+{"ts": "2026-11-15T18:57:35.387767+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S03-A-2", "status": "ask", "reason": "asking:detail", "questions_asked": 1, "confidence": {"p_top": 0.266, "margin": 0.063, "top_score": 0.613, "reason": "split"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.266}, {"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.203}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.15}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.132}, {"label": "Mirror the Docker Hub library > Using Registry Access Management (RAM) with a registry mirror", "weight": 0.093}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "ask_customer"], "extraction_source": "heuristic", "question_feature": "detail"}
+{"ts": "2026-11-15T18:57:35.388198+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 243.15}
+{"ts": "2026-11-15T18:57:35.390614+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 1.35}
+{"ts": "2026-11-15T18:57:36.364328+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S03-A-2", "status": "ready", "reason": "clear", "questions_asked": 1, "confidence": {"p_top": 0.638, "margin": 0.372, "top_score": 0.735, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.638}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.266}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.049}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.045}, {"label": "Docker Hub pull usage and limits > Overview", "weight": 0.001}], "uncovered_terms": ["images"], "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:57:36.365114+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 971.69}
+{"ts": "2026-11-15T18:57:36.369010+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.29}
+{"ts": "2026-11-15T18:57:36.475231+00:00", "event": "cache_lookup", "ticket_id": "E2E-S03-A-2", "status": "hit_semantic", "similarity": 0.9313, "rejected_by_gate": 1}
+{"ts": "2026-11-15T18:57:36.475694+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 105.74}
+{"ts": "2026-11-15T18:57:36.477101+00:00", "event": "verify", "ticket_id": "E2E-S03-A-2", "ok": true, "kept": 2, "dropped": []}
+{"ts": "2026-11-15T18:57:36.477602+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 0.59}
+{"ts": "2026-11-15T18:57:36.480907+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:57:36.482110+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:57:36.486763+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.03}
+{"ts": "2026-11-15T18:57:38.455462+00:00", "event": "llm_call", "ticket_id": "E2E-S03-A-2", "node": "classify", "provider": "clarifier-provider:gemini", "input_tokens": 263, "output_tokens": 21, "model": "gemini-3.5-flash-lite", "cost_usd": 0.0001314, "status": "ok", "latency_ms": 1967.31}
+{"ts": "2026-11-15T18:57:38.455926+00:00", "event": "sentiment", "ticket_id": "E2E-S03-A-2", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:57:38.456169+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 1968.04}
+{"ts": "2026-11-15T18:57:38.458688+00:00", "event": "outcome", "ticket_id": "E2E-S03-A-2", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:57:38.459065+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 0.44}
+{"ts": "2026-11-15T18:57:38.720259+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S02-A-3", "status": "ask", "reason": "asking:error_open", "questions_asked": 1, "confidence": {"p_top": 0.199, "margin": 0.012, "top_score": 0.608, "reason": "ungrounded"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.199}, {"label": "Troubleshoot topics for Docker Desktop > Certificates not set up correctly", "weight": 0.187}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.181}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.136}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.122}], "uncovered_terms": ["429", "pulls"], "tool_calls": ["search_kb", "search_kb", "ask_customer"], "extraction_source": "heuristic", "question_feature": "error_open"}
+{"ts": "2026-11-15T18:57:38.720752+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 253.17}
+{"ts": "2026-11-15T18:57:38.722471+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 0.72}
+{"ts": "2026-11-15T18:57:39.034347+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S02-A-3", "status": "ready", "reason": "clear", "questions_asked": 1, "confidence": {"p_top": 0.611, "margin": 0.531, "top_score": 0.669, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.611}, {"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.08}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.078}, {"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.07}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.059}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:57:39.034940+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 309.96}
+{"ts": "2026-11-15T18:57:39.038716+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.07}
+{"ts": "2026-11-15T18:57:39.039484+00:00", "event": "cache_lookup", "ticket_id": "E2E-S02-A-3", "status": "hit_exact", "similarity": 1.0, "rejected_by_gate": 0}
+{"ts": "2026-11-15T18:57:39.039842+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 0.41}
+{"ts": "2026-11-15T18:57:39.040603+00:00", "event": "verify", "ticket_id": "E2E-S02-A-3", "ok": true, "kept": 2, "dropped": []}
+{"ts": "2026-11-15T18:57:39.040931+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 0.37}
+{"ts": "2026-11-15T18:57:39.041581+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.03}
+{"ts": "2026-11-15T18:57:39.042371+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.03}
+{"ts": "2026-11-15T18:57:39.047537+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.02}
+{"ts": "2026-11-15T18:57:40.384716+00:00", "event": "llm_call", "ticket_id": "E2E-S02-A-3", "node": "classify", "provider": "clarifier-provider:gemini", "input_tokens": 299, "output_tokens": 20, "model": "gemini-3.5-flash-lite", "cost_usd": 0.0001397, "status": "ok", "latency_ms": 1336.1}
+{"ts": "2026-11-15T18:57:40.385292+00:00", "event": "sentiment", "ticket_id": "E2E-S02-A-3", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:57:40.385583+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 1336.98}
+{"ts": "2026-11-15T18:57:40.388425+00:00", "event": "outcome", "ticket_id": "E2E-S02-A-3", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:57:40.388792+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 0.44}

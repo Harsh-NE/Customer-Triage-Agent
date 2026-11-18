@@ -1,0 +1,105 @@
+{"ts": "2026-11-15T18:53:25.836751+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S01-C-warmup", "status": "ready", "reason": "clear", "questions_asked": 0, "confidence": {"p_top": 0.539, "margin": 0.19, "top_score": 0.706, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.539}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.349}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.062}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.049}, {"label": "Docker Hub pull usage and limits > Overview", "weight": 0.001}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:53:25.838836+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 8477.16}
+{"ts": "2026-11-15T18:53:25.845957+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.22}
+{"ts": "2026-11-15T18:53:25.848061+00:00", "event": "cache_lookup", "ticket_id": "E2E-S01-C-warmup", "status": "miss", "similarity": 0.0, "rejected_by_gate": 0}
+{"ts": "2026-11-15T18:53:25.848944+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 0.92}
+{"ts": "2026-11-15T18:53:26.276805+00:00", "event": "retrieval", "ticket_id": "E2E-S01-C-warmup", "tier": "kb", "n": 5, "top_score": 0.7944, "status": "ok", "latency_ms": 425.57}
+{"ts": "2026-11-15T18:53:26.277261+00:00", "event": "stage_timing", "stage": "retrieve", "latency_ms": 426.07}
+{"ts": "2026-11-15T18:53:26.278391+00:00", "event": "gate", "ticket_id": "E2E-S01-C-warmup", "tier": "kb", "decision": "resolve", "confidence": 0.6623, "strong": true, "top": 0.7944, "margin": 0.0573, "agreement": 0.5393, "completeness": 0.77, "reasons": ["ok"]}
+{"ts": "2026-11-15T18:53:26.279011+00:00", "event": "stage_timing", "stage": "gate", "latency_ms": 0.72}
+{"ts": "2026-11-15T18:53:26.280669+00:00", "event": "llm_call", "ticket_id": "E2E-S01-C-warmup", "node": "draft", "provider": "fake", "model": null, "cost_usd": null, "status": "ok", "latency_ms": 0.44}
+{"ts": "2026-11-15T18:53:26.281137+00:00", "event": "stage_timing", "stage": "draft", "latency_ms": 0.97}
+{"ts": "2026-11-15T18:53:26.282337+00:00", "event": "verify", "ticket_id": "E2E-S01-C-warmup", "ok": true, "kept": 4, "dropped": []}
+{"ts": "2026-11-15T18:53:26.282769+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 0.75}
+{"ts": "2026-11-15T18:53:26.284041+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.06}
+{"ts": "2026-11-15T18:53:26.285267+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:53:26.290398+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:53:26.292263+00:00", "event": "llm_call", "ticket_id": "E2E-S01-C-warmup", "node": "classify", "provider": "fake", "model": null, "cost_usd": null, "status": "ok", "latency_ms": 0.06}
+{"ts": "2026-11-15T18:53:26.292765+00:00", "event": "sentiment", "ticket_id": "E2E-S01-C-warmup", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:53:26.292967+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 0.77}
+{"ts": "2026-11-15T18:53:26.373259+00:00", "event": "outcome", "ticket_id": "E2E-S01-C-warmup", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:53:26.373826+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 79.31}
+{"ts": "2026-11-15T18:53:27.096326+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S01-C-0", "status": "ready", "reason": "clear", "questions_asked": 0, "confidence": {"p_top": 0.539, "margin": 0.19, "top_score": 0.706, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.539}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.349}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.062}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.049}, {"label": "Docker Hub pull usage and limits > Overview", "weight": 0.001}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:53:27.097071+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 714.17}
+{"ts": "2026-11-15T18:53:27.101861+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.21}
+{"ts": "2026-11-15T18:53:27.103270+00:00", "event": "cache_lookup", "ticket_id": "E2E-S01-C-0", "status": "miss", "similarity": 0.0, "rejected_by_gate": 0}
+{"ts": "2026-11-15T18:53:27.103860+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 0.61}
+{"ts": "2026-11-15T18:53:27.459841+00:00", "event": "retrieval", "ticket_id": "E2E-S01-C-0", "tier": "kb", "n": 5, "top_score": 0.7944, "status": "ok", "latency_ms": 354.4}
+{"ts": "2026-11-15T18:53:27.460315+00:00", "event": "stage_timing", "stage": "retrieve", "latency_ms": 354.91}
+{"ts": "2026-11-15T18:53:27.461790+00:00", "event": "gate", "ticket_id": "E2E-S01-C-0", "tier": "kb", "decision": "resolve", "confidence": 0.6623, "strong": true, "top": 0.7944, "margin": 0.0573, "agreement": 0.5393, "completeness": 0.77, "reasons": ["ok"]}
+{"ts": "2026-11-15T18:53:27.462316+00:00", "event": "stage_timing", "stage": "gate", "latency_ms": 0.63}
+{"ts": "2026-11-15T18:53:27.463999+00:00", "event": "llm_call", "ticket_id": "E2E-S01-C-0", "node": "draft", "provider": "fake", "model": null, "cost_usd": null, "status": "ok", "latency_ms": 0.42}
+{"ts": "2026-11-15T18:53:27.464434+00:00", "event": "stage_timing", "stage": "draft", "latency_ms": 0.91}
+{"ts": "2026-11-15T18:53:27.465674+00:00", "event": "verify", "ticket_id": "E2E-S01-C-0", "ok": true, "kept": 4, "dropped": []}
+{"ts": "2026-11-15T18:53:27.466095+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 0.75}
+{"ts": "2026-11-15T18:53:27.467206+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.07}
+{"ts": "2026-11-15T18:53:27.468384+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:53:27.474510+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 1.05}
+{"ts": "2026-11-15T18:53:27.476236+00:00", "event": "llm_call", "ticket_id": "E2E-S01-C-0", "node": "classify", "provider": "fake", "model": null, "cost_usd": null, "status": "ok", "latency_ms": 0.05}
+{"ts": "2026-11-15T18:53:27.476626+00:00", "event": "sentiment", "ticket_id": "E2E-S01-C-0", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:53:27.476866+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 0.7}
+{"ts": "2026-11-15T18:53:27.560645+00:00", "event": "outcome", "ticket_id": "E2E-S01-C-0", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:53:27.561227+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 82.65}
+{"ts": "2026-11-15T18:53:28.068559+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S02-C-1", "status": "ask", "reason": "asking:error_open", "questions_asked": 1, "confidence": {"p_top": 0.206, "margin": 0.019, "top_score": 0.608, "reason": "ungrounded"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.206}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.187}, {"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.163}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.141}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.126}], "uncovered_terms": ["429", "pulls"], "tool_calls": ["search_kb", "search_kb", "ask_customer"], "extraction_source": "heuristic", "question_feature": "error_open"}
+{"ts": "2026-11-15T18:53:28.069450+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 495.97}
+{"ts": "2026-11-15T18:53:28.072570+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 1.43}
+{"ts": "2026-11-15T18:53:28.775540+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S02-C-1", "status": "ready", "reason": "clear", "questions_asked": 1, "confidence": {"p_top": 0.719, "margin": 0.624, "top_score": 0.669, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.719}, {"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.094}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.092}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.069}, {"label": "Open WebUI integration > Slow response times", "weight": 0.015}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:53:28.776570+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 699.88}
+{"ts": "2026-11-15T18:53:28.784630+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.16}
+{"ts": "2026-11-15T18:53:28.786580+00:00", "event": "cache_lookup", "ticket_id": "E2E-S02-C-1", "status": "miss", "similarity": 0.0, "rejected_by_gate": 1}
+{"ts": "2026-11-15T18:53:28.787296+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 0.84}
+{"ts": "2026-11-15T18:53:29.131290+00:00", "event": "retrieval", "ticket_id": "E2E-S02-C-1", "tier": "kb", "n": 4, "top_score": 0.7696, "status": "ok", "latency_ms": 342.27}
+{"ts": "2026-11-15T18:53:29.131792+00:00", "event": "stage_timing", "stage": "retrieve", "latency_ms": 342.81}
+{"ts": "2026-11-15T18:53:29.132885+00:00", "event": "gate", "ticket_id": "E2E-S02-C-1", "tier": "kb", "decision": "resolve", "confidence": 0.7966, "strong": true, "top": 0.7696, "margin": 0.1797, "agreement": 0.7185, "completeness": 0.859, "reasons": ["ok"]}
+{"ts": "2026-11-15T18:53:29.133415+00:00", "event": "stage_timing", "stage": "gate", "latency_ms": 0.62}
+{"ts": "2026-11-15T18:53:29.135004+00:00", "event": "llm_call", "ticket_id": "E2E-S02-C-1", "node": "draft", "provider": "fake", "model": null, "cost_usd": null, "status": "ok", "latency_ms": 0.34}
+{"ts": "2026-11-15T18:53:29.135454+00:00", "event": "stage_timing", "stage": "draft", "latency_ms": 0.85}
+{"ts": "2026-11-15T18:53:29.136645+00:00", "event": "verify", "ticket_id": "E2E-S02-C-1", "ok": true, "kept": 4, "dropped": []}
+{"ts": "2026-11-15T18:53:29.137021+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 0.67}
+{"ts": "2026-11-15T18:53:29.138105+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.06}
+{"ts": "2026-11-15T18:53:29.139102+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:53:29.143949+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.04}
+{"ts": "2026-11-15T18:53:29.145564+00:00", "event": "llm_call", "ticket_id": "E2E-S02-C-1", "node": "classify", "provider": "fake", "model": null, "cost_usd": null, "status": "ok", "latency_ms": 0.06}
+{"ts": "2026-11-15T18:53:29.145966+00:00", "event": "sentiment", "ticket_id": "E2E-S02-C-1", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:53:29.146179+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 0.69}
+{"ts": "2026-11-15T18:53:29.220663+00:00", "event": "outcome", "ticket_id": "E2E-S02-C-1", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:53:29.221156+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 73.25}
+{"ts": "2026-11-15T18:53:29.749057+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S03-C-2", "status": "ask", "reason": "asking:pick:content/manuals/docker-hub/troubleshoot.md::Too many requests (429 response code)||content/manuals/docker-hub/troubleshoot.md::500 response code", "questions_asked": 1, "confidence": {"p_top": 0.247, "margin": 0.058, "top_score": 0.613, "reason": "uncovered_term"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.247}, {"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.188}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.139}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.123}, {"label": "Mirror the Docker Hub library > Using Registry Access Management (RAM) with a registry mirror", "weight": 0.087}], "uncovered_terms": ["pulls"], "tool_calls": ["search_kb", "search_kb", "ask_customer"], "extraction_source": "heuristic", "question_feature": "pick:content/manuals/docker-hub/troubleshoot.md::Too many requests (429 response code)||content/manuals/docker-hub/troubleshoot.md::500 response code"}
+{"ts": "2026-11-15T18:53:29.749654+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 518.24}
+{"ts": "2026-11-15T18:53:29.752058+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 1.17}
+{"ts": "2026-11-15T18:53:30.357173+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S03-C-2", "status": "ask", "reason": "asking:error_open", "questions_asked": 2, "confidence": {"p_top": 0.509, "margin": 0.373, "top_score": 0.58, "reason": "ungrounded"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.509}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.136}, {"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.119}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.116}, {"label": "Mirror the Docker Hub library > Using Registry Access Management (RAM) with a registry mirror", "weight": 0.069}], "uncovered_terms": ["429", "images", "pull", "pulls", "returns"], "tool_calls": ["search_kb", "search_kb", "ask_customer"], "extraction_source": "symptom_pick", "question_feature": "error_open"}
+{"ts": "2026-11-15T18:53:30.357732+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 602.32}
+{"ts": "2026-11-15T18:53:30.361148+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 1.51}
+{"ts": "2026-11-15T18:53:31.599095+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S03-C-2", "status": "ready", "reason": "clear", "questions_asked": 2, "confidence": {"p_top": 0.847, "margin": 0.746, "top_score": 0.847, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.847}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.101}, {"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.03}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.017}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.004}], "uncovered_terms": ["500", "images", "returns"], "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:53:31.600135+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 1235.74}
+{"ts": "2026-11-15T18:53:31.607411+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.39}
+{"ts": "2026-11-15T18:53:31.762263+00:00", "event": "cache_lookup", "ticket_id": "E2E-S03-C-2", "status": "hit_semantic", "similarity": 0.9411, "rejected_by_gate": 1}
+{"ts": "2026-11-15T18:53:31.762910+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 153.8}
+{"ts": "2026-11-15T18:53:31.765430+00:00", "event": "verify", "ticket_id": "E2E-S03-C-2", "ok": true, "kept": 4, "dropped": []}
+{"ts": "2026-11-15T18:53:31.766298+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 1.27}
+{"ts": "2026-11-15T18:53:31.768096+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.09}
+{"ts": "2026-11-15T18:53:31.769971+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.07}
+{"ts": "2026-11-15T18:53:31.777436+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.05}
+{"ts": "2026-11-15T18:53:31.780086+00:00", "event": "llm_call", "ticket_id": "E2E-S03-C-2", "node": "classify", "provider": "fake", "model": null, "cost_usd": null, "status": "ok", "latency_ms": 0.08}
+{"ts": "2026-11-15T18:53:31.780819+00:00", "event": "sentiment", "ticket_id": "E2E-S03-C-2", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:53:31.781270+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 1.29}
+{"ts": "2026-11-15T18:53:31.784068+00:00", "event": "outcome", "ticket_id": "E2E-S03-C-2", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:53:31.784490+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 0.51}
+{"ts": "2026-11-15T18:53:32.305562+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S02-C-3", "status": "ask", "reason": "asking:error_open", "questions_asked": 1, "confidence": {"p_top": 0.206, "margin": 0.019, "top_score": 0.608, "reason": "ungrounded"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > 500 response code", "weight": 0.206}, {"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.187}, {"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.163}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.141}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.126}], "uncovered_terms": ["429", "pulls"], "tool_calls": ["search_kb", "search_kb", "ask_customer"], "extraction_source": "heuristic", "question_feature": "error_open"}
+{"ts": "2026-11-15T18:53:32.306241+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 511.63}
+{"ts": "2026-11-15T18:53:32.309103+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 1.37}
+{"ts": "2026-11-15T18:53:33.062308+00:00", "event": "clarifier_turn", "ticket_id": "E2E-S02-C-3", "status": "ready", "reason": "clear", "questions_asked": 1, "confidence": {"p_top": 0.719, "margin": 0.624, "top_score": 0.669, "reason": "clear"}, "hypotheses": [{"label": "Troubleshoot Docker Hub > Too many requests (429 response code)", "weight": 0.719}, {"label": "Troubleshoot Docker Hub > You have reached your pull rate limit (429 response code)", "weight": 0.094}, {"label": "Docker Hub usage and limits > Abuse rate limit", "weight": 0.092}, {"label": "Docker Hub pull usage and limits > View pull rate and limit", "weight": 0.069}, {"label": "Open WebUI integration > Slow response times", "weight": 0.015}], "uncovered_terms": null, "tool_calls": ["search_kb", "search_kb", "search_kb"], "extraction_source": "heuristic", "question_feature": null}
+{"ts": "2026-11-15T18:53:33.063197+00:00", "event": "stage_timing", "stage": "clarifier", "latency_ms": 750.14}
+{"ts": "2026-11-15T18:53:33.070200+00:00", "event": "stage_timing", "stage": "guard", "latency_ms": 0.16}
+{"ts": "2026-11-15T18:53:33.072161+00:00", "event": "cache_lookup", "ticket_id": "E2E-S02-C-3", "status": "hit_exact", "similarity": 1.0, "rejected_by_gate": 0}
+{"ts": "2026-11-15T18:53:33.072935+00:00", "event": "stage_timing", "stage": "cache_lookup", "latency_ms": 0.88}
+{"ts": "2026-11-15T18:53:33.075147+00:00", "event": "verify", "ticket_id": "E2E-S02-C-3", "ok": true, "kept": 4, "dropped": []}
+{"ts": "2026-11-15T18:53:33.076046+00:00", "event": "stage_timing", "stage": "verify", "latency_ms": 1.09}
+{"ts": "2026-11-15T18:53:33.077771+00:00", "event": "stage_timing", "stage": "send", "latency_ms": 0.07}
+{"ts": "2026-11-15T18:53:33.079483+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.06}
+{"ts": "2026-11-15T18:53:33.086508+00:00", "event": "stage_timing", "stage": "await_reply", "latency_ms": 0.05}
+{"ts": "2026-11-15T18:53:33.089066+00:00", "event": "llm_call", "ticket_id": "E2E-S02-C-3", "node": "classify", "provider": "fake", "model": null, "cost_usd": null, "status": "ok", "latency_ms": 0.09}
+{"ts": "2026-11-15T18:53:33.089763+00:00", "event": "sentiment", "ticket_id": "E2E-S02-C-3", "turn_score": 0.0, "current": 0.0}
+{"ts": "2026-11-15T18:53:33.090166+00:00", "event": "stage_timing", "stage": "classify", "latency_ms": 1.22}
+{"ts": "2026-11-15T18:53:33.092876+00:00", "event": "outcome", "ticket_id": "E2E-S02-C-3", "outcome": "resolved", "attempts": 1}
+{"ts": "2026-11-15T18:53:33.093257+00:00", "event": "stage_timing", "stage": "close_resolved", "latency_ms": 0.46}

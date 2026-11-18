@@ -1,0 +1,293 @@
+{
+  "meta": {
+    "date": "2026-11-16 09:51",
+    "git_commit": "7191c5d",
+    "pythonhashseed": null,
+    "llm": "gemini",
+    "model": "gemini-3.5-flash-lite",
+    "seconds": 1151.3,
+    "scenario_files": [
+      "reports\\regression\\gold_v1_all.jsonl"
+    ],
+    "scenarios": 89,
+    "stream": {
+      "first_ask": 89,
+      "repeat": 0,
+      "seed": 0
+    },
+    "arms": {
+      "A": {
+        "use_kg": false,
+        "use_jev": false,
+        "use_semantic_cache": true,
+        "name": "baseline (no KG, no Jev)"
+      },
+      "B": {
+        "use_kg": true,
+        "use_jev": false,
+        "use_semantic_cache": true,
+        "name": "+ KG"
+      }
+    },
+    "baseline_arm": "A",
+    "notes": []
+  },
+  "arms": {
+    "A": {
+      "metrics": {
+        "first_attempt_correct": {
+          "value": 0.105,
+          "k": 2,
+          "n": 19
+        },
+        "wrong_fix_rate": {
+          "value": 0.022,
+          "k": 2,
+          "n": 89
+        },
+        "wrong_first_fix_answerable": {
+          "value": 0.105,
+          "k": 2,
+          "n": 19
+        },
+        "escalation_recall": {
+          "value": 1.0,
+          "k": 70,
+          "n": 70
+        },
+        "escalation_precision": {
+          "value": 0.805,
+          "k": 70,
+          "n": 87
+        },
+        "unnecessary_escalation": {
+          "value": 0.895,
+          "k": 17,
+          "n": 19
+        },
+        "recall_at_3": {
+          "value": 0.526,
+          "k": 10,
+          "n": 19
+        },
+        "mrr": 0.393,
+        "questions_per_case": 1.75,
+        "first_fix_p50_ms": 8170.0,
+        "first_fix_p95_ms": 16200.0,
+        "citation_validity": {
+          "value": 1.0,
+          "k": 4,
+          "n": 4
+        },
+        "retrieval_p50_ms": 1804.85,
+        "retrieval_p95_ms": 4263.07,
+        "repeat_speedup": null
+      },
+      "cache": {
+        "cases_that_consulted_the_cache": 0,
+        "hit_rate": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "redraft_rate": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "precision": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "false_hit_rate": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        }
+      },
+      "latency": {
+        "end_to_end_ms": {
+          "p50": 5700.0,
+          "p95": 19840.0,
+          "mean": 6559.66,
+          "max": 32480.0,
+          "n": 89
+        },
+        "first_fix_ms": {
+          "p50": 8170.0,
+          "p95": 16200.0,
+          "mean": 11710.0,
+          "max": 16200.0,
+          "n": 4
+        },
+        "retrieval_ms": {
+          "p50": 1804.85,
+          "p95": 4263.07,
+          "mean": 2271.0,
+          "max": 12165.15,
+          "n": 70
+        },
+        "end_to_end_ms_by_phase": {
+          "first_ask": {
+            "p50": 5700.0,
+            "p95": 19840.0,
+            "mean": 6559.66,
+            "max": 32480.0,
+            "n": 89
+          }
+        },
+        "repeat_speedup": null
+      },
+      "cost": {
+        "cases": 89,
+        "llm_calls": 22,
+        "llm_errors": 0,
+        "input_tokens": 20626,
+        "output_tokens": 1584,
+        "jev_calls": 0,
+        "cost_usd": 0.0102
+      },
+      "cache_savings": {
+        "served_from_cache": 0,
+        "avoided_llm_calls": 0.0,
+        "avoided_input_tokens": 0.0,
+        "avoided_output_tokens": 0,
+        "avoided_cost_usd": 0.0
+      },
+      "vs_baseline": {
+        "llm_calls_saved_vs_baseline": 0.0,
+        "input_tokens_saved_vs_baseline": 0.0,
+        "cost_usd_saved_vs_baseline": 0.0
+      }
+    },
+    "B": {
+      "metrics": {
+        "first_attempt_correct": {
+          "value": 0.158,
+          "k": 3,
+          "n": 19
+        },
+        "wrong_fix_rate": {
+          "value": 0.011,
+          "k": 1,
+          "n": 89
+        },
+        "wrong_first_fix_answerable": {
+          "value": 0.0,
+          "k": 0,
+          "n": 19
+        },
+        "escalation_recall": {
+          "value": 1.0,
+          "k": 70,
+          "n": 70
+        },
+        "escalation_precision": {
+          "value": 0.814,
+          "k": 70,
+          "n": 86
+        },
+        "unnecessary_escalation": {
+          "value": 0.842,
+          "k": 16,
+          "n": 19
+        },
+        "recall_at_3": {
+          "value": 0.579,
+          "k": 11,
+          "n": 19
+        },
+        "mrr": 0.367,
+        "questions_per_case": 1.67,
+        "first_fix_p50_ms": 7080.0,
+        "first_fix_p95_ms": 8680.0,
+        "citation_validity": {
+          "value": 1.0,
+          "k": 4,
+          "n": 4
+        },
+        "retrieval_p50_ms": 1834.88,
+        "retrieval_p95_ms": 3565.42,
+        "repeat_speedup": null
+      },
+      "cache": {
+        "cases_that_consulted_the_cache": 0,
+        "hit_rate": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "redraft_rate": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "precision": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        },
+        "false_hit_rate": {
+          "value": null,
+          "k": 0,
+          "n": 0
+        }
+      },
+      "latency": {
+        "end_to_end_ms": {
+          "p50": 4900.0,
+          "p95": 14110.0,
+          "mean": 5462.13,
+          "max": 17130.0,
+          "n": 89
+        },
+        "first_fix_ms": {
+          "p50": 7080.0,
+          "p95": 8680.0,
+          "mean": 7572.5,
+          "max": 8680.0,
+          "n": 4
+        },
+        "retrieval_ms": {
+          "p50": 1834.88,
+          "p95": 3565.42,
+          "mean": 1981.01,
+          "max": 3967.66,
+          "n": 67
+        },
+        "end_to_end_ms_by_phase": {
+          "first_ask": {
+            "p50": 4900.0,
+            "p95": 14110.0,
+            "mean": 5462.13,
+            "max": 17130.0,
+            "n": 89
+          }
+        },
+        "repeat_speedup": null
+      },
+      "cost": {
+        "cases": 89,
+        "llm_calls": 25,
+        "llm_errors": 0,
+        "input_tokens": 32247,
+        "output_tokens": 1332,
+        "jev_calls": 0,
+        "cost_usd": 0.0131
+      },
+      "cache_savings": {
+        "served_from_cache": 0,
+        "avoided_llm_calls": 0.0,
+        "avoided_input_tokens": 0.0,
+        "avoided_output_tokens": 0.0,
+        "avoided_cost_usd": 0.0
+      },
+      "vs_baseline": {
+        "llm_calls_saved_vs_baseline": -13.6,
+        "input_tokens_saved_vs_baseline": -56.3,
+        "cost_usd_saved_vs_baseline": -28.4
+      }
+    }
+  }
+}

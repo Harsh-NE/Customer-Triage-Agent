@@ -1,0 +1,19 @@
+\begin{table}[t]
+\caption{Semantic cache with the cache on, as counts. A hit is an answer served from the cache; a false hit is a hit whose first fix was not correct.}
+\label{tab:cache}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{Scenarios} & \multicolumn{2}{c}{Real questions} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+ & A & B & A & B \\
+\midrule
+Hits / lookups & 6/33 & 7/33 & 1/82 & 1/82 \\
+Correct / hits & 6/6 & 6/7 & 1/1 & 1/1 \\
+False hits / hits & 0/6 & 1/7 & 0/1 & 0/1 \\
+Repeat speed-up ($\times$) & 2.13 & 2.07 & 1.52 & 1.83 \\
+\bottomrule
+\end{tabular}
+\end{table}

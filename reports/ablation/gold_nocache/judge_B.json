@@ -1,0 +1,107 @@
+{
+  "judge": "gemini:gemini-3.5-flash-lite",
+  "aggregate": {
+    "judged": 4,
+    "judge_errors": 0,
+    "faithfulness_mean": 0.854,
+    "unsupported_rate": 0.5,
+    "fully_supported_rate": 0.5,
+    "relevance_mean": 0.625,
+    "unsafe_rate": 0.0
+  },
+  "controls": null,
+  "results": [
+    {
+      "id": "H013#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "To connect a PHP container to a MySQL container, both containers must be placed on the same Docker network.",
+          "verdict": "supported"
+        },
+        {
+          "text": "1. Create a Docker network named my-network by running `docker network create my-network`.",
+          "verdict": "supported"
+        },
+        {
+          "text": "2. Run your database container and specify the network using the `--network` option: `docker run --name my-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -e MYSQL_DATABASE=mydb --network my-network -d mysq",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "partly",
+      "unsafe": false,
+      "notes": "The reply provides network setup steps from the evidence, but stops short of showing how to run the PHP container."
+    },
+    {
+      "id": "H037#1",
+      "tier": "kb",
+      "faithfulness": 0.75,
+      "claims": [
+        {
+          "text": "A YAML syntax error in the Compose file is causing parsing to fail.",
+          "verdict": "unsupported"
+        },
+        {
+          "text": "Ensure your pre-existing external network is created first using `docker network create`.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Configure your external network in each project's Compose file by marking the network as external and specifying its name.",
+          "verdict": "supported"
+        },
+        {
+          "text": "Run `docker compose up` and confirm that the configuration parses successfully and the services connect to the shared network.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "partly",
+      "unsafe": false,
+      "notes": "The reply provides correct network instructions but misses the customer's specific YAML scanner error."
+    },
+    {
+      "id": "H046#1",
+      "tier": "kb",
+      "faithfulness": 1.0,
+      "claims": [
+        {
+          "text": "To build a non-native platform image from an Apple M1 machine, you can specify the target architecture using the --platform flag with Docker build.",
+          "verdict": "supported"
+        },
+        {
+          "text": "1. Build the image for the desired platform using the --platform flag.",
+          "verdict": "supported"
+        },
+        {
+          "text": "To confirm: Run the image and check its architecture to confirm it was built for the correct platform.",
+          "verdict": "supported"
+        }
+      ],
+      "addresses_problem": "yes",
+      "unsafe": false,
+      "notes": "All claims are supported by the provided evidence."
+    },
+    {
+      "id": "H006#1",
+      "tier": "kb",
+      "faithfulness": 0.667,
+      "claims": [
+        {
+          "text": "You can use a custom environment file with Docker Compose by passing the file path using the --env-file option in the CLI.",
+          "verdict": "supported"
+        },
+        {
+          "text": "1. Pass your custom environment file path using the --env-file option when running your command, for example: docker compose --env-file ./config/.env.dev up",
+          "verdict": "supported"
+        },
+        {
+          "text": "To confirm: Confirm the correct variables and values are being used by running docker compose config or docker compose config --environment.",
+          "verdict": "unsupported"
+        }
+      ],
+      "addresses_problem": "partly",
+      "unsafe": false,
+      "notes": "The reply addresses passing a custom env file via CLI, but misses using a custom environment variable to determine which file to use."
+    }
+  ]
+}

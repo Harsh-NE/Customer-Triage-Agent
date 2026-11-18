@@ -55,7 +55,7 @@ class ResolverDeps:
     logger: EventLogger = NULL_LOGGER
     cfg: ResolverConfig = field(default_factory=ResolverConfig)
     ontology: Optional[Any] = None       # triage.ontology.Ontology: used only for the optional definitions-only background
-    jev: Optional[Any] = None            # triage.jev.JevClient when USE_JEV is on. No node calls it yet: the decision points are not chosen
+    jev: Optional[Any] = None            # triage.resolver.jev_gate.JevGate when USE_JEV is on (arm C): a second opinion when the rules refuse
 
 
 def _sig(state: TriageState) -> ProblemSignature:
@@ -176,16 +176,20 @@ def build_resolver_graph(deps: ResolverDeps) -> StateGraph:
         sig, evs = _sig(state), _evs(state)
         g = assess(evs, sig, cfg.gate)
         tier = state.get("tier") or "kb"
+        # Arm C: when the rules refuse on the first documentation search, Jev gets a say (a confident gate is never second-guessed).
+        jev = deps.jev.second_opinion(state.get("ticket_id"), sig, evs) if (deps.jev and not g.strong and tier == "kb" and evs and not state.get("attempts")) else None
         if g.strong:
+            decision = GateDecision.RESOLVE
+        elif jev and jev.override:
             decision = GateDecision.RESOLVE
         elif tier == "kb" and cfg.use_ticket_fallback and _may_use_tickets(sig):
             decision = GateDecision.FALLBACK
         else:
             decision = GateDecision.ESCALATE
-        log.log("gate", ticket_id=state.get("ticket_id"), tier=tier, decision=decision.value,
+        log.log("gate", ticket_id=state.get("ticket_id"), tier=tier, decision=decision.value, jev_p=jev.p if jev else None,
                 **g.to_dict())
         upd: dict[str, Any] = {"confidence": g.confidence, "gate_decision": decision.value,
-                               "gate_detail": {**g.to_dict(), "tier": tier}}
+                               "gate_detail": {**g.to_dict(), "tier": tier, **({"jev_p": jev.p, "jev_override": jev.override} if jev else {})}}
         if decision == GateDecision.FALLBACK:
             upd["tier"] = "tickets"
         if decision == GateDecision.ESCALATE:

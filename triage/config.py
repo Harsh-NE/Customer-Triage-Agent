@@ -31,7 +31,7 @@ PROVIDER_API_KEY_ENV = {
     "gemini": "GEMINI_API_KEY",
     "anthropic": "ANTHROPIC_API_KEY",
     "openai": "OPENAI_API_KEY",
-    "jev": "TYPESAFE_API_KEY",          # the hosted Jev decision API (triage/jev.py), not a text-generation provider
+    "jev": "OPENROUTER_API_KEY",        # Jev, the decision model (triage/jev.py), reached through OpenRouter; not a text-generation provider
 }
 
 

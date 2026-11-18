@@ -1,0 +1,32 @@
+\begin{table*}[t]
+\caption{Results for arm A (no knowledge graph) and arm B (with it). Rates are percentages with counts. Real questions: cache off. Scenarios: cache on, quality metrics on the first ask. The paraphrase set has no unanswerable question, so escalation recall and precision are undefined.}
+\label{tab:main}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+ & \multicolumn{2}{c}{Real questions (89)} & \multicolumn{2}{c}{Paraphrases (40)} & \multicolumn{2}{c}{Scenarios (29 + 9 repeats)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+Metric & A & B & A & B & A & B \\
+\midrule
+First-attempt correct (\%) & 10.5 (2/19) & 21.1 (4/19) & 57.5 (23/40) & 60.0 (24/40) & 85.0 (17/20) & 90.0 (18/20) \\
+Wrong-fix rate, all questions (\%) & 2.2 (2/89) & 1.1 (1/89) & 5.0 (2/40) & 5.0 (2/40) & 6.9 (2/29) & 3.4 (1/29) \\
+Wrong first fix, answerable (\%) & 10.5 (2/19) & 0.0 (0/19) & 5.0 (2/40) & 5.0 (2/40) & 5.0 (1/20) & 5.0 (1/20) \\
+Escalation recall (\%) & 100.0 (70/70) & 100.0 (70/70) & -- & -- & 100.0 (9/9) & 100.0 (9/9) \\
+Escalation precision (\%) & 80.5 (70/87) & 82.4 (70/85) & -- & -- & 81.8 (9/11) & 81.8 (9/11) \\
+Unnecessary escalation (\%) & 89.5 (17/19) & 78.9 (15/19) & 40.0 (16/40) & 37.5 (15/40) & 10.0 (2/20) & 10.0 (2/20) \\
+Recall@3 (\%) & 52.6 (10/19) & 63.2 (12/19) & 85.0 (34/40) & 90.0 (36/40) & 94.4 (17/18) & 94.4 (17/18) \\
+MRR & 0.393 & 0.393 & 0.771 & 0.798 & 0.944 & 0.944 \\
+Questions per case & 1.75 & 1.69 & 1.60 & 1.40 & 1.38 & 1.24 \\
+Time to first fix p50/p95 (s) & 4.7/8.8 & 4.7/5.8 & 4.3/7.6 & 5.3/8.1 & 5.9/12.4 & 5.6/32.4 \\
+Citation validity (\%) & 100.0 (4/4) & 100.0 (5/5) & 100.0 (27/27) & 100.0 (28/28) & 100.0 (19/19) & 100.0 (17/17) \\
+Retrieval time p50 (ms) & 844 & 891 & 356 & 458 & 347 & 388 \\
+End-to-end p50/p95 (s) & 2.3/7.0 & 2.3/7.2 & 5.6/15.6 & 6.9/15.3 & 6.9/15.9 & 6.5/19.1 \\
+\midrule
+Model calls & 22 & 27 & 72 & 76 & 65 & 60 \\
+Input tokens (thousands) & 20.7 & 36.5 & 97.5 & 106.7 & 81.0 & 70.9 \\
+Cost (USD) & 0.0103 & 0.0154 & 0.0448 & 0.0492 & 0.0374 & 0.0326 \\
+\bottomrule
+\end{tabular}
+\end{table*}

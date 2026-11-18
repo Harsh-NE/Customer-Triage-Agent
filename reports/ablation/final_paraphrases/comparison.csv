@@ -1,0 +1,61 @@
+section,metric,arm,value,k,n
+Core metrics (first ask),1 First-attempt correct,A,0.575,23,40
+Core metrics (first ask),1 First-attempt correct,B,0.6,24,40
+Core metrics (first ask),2 Wrong-fix rate,A,0.05,2,40
+Core metrics (first ask),2 Wrong-fix rate,B,0.05,2,40
+Core metrics (first ask),"2 Wrong first fix, answerable cases",A,0.05,2,40
+Core metrics (first ask),"2 Wrong first fix, answerable cases",B,0.05,2,40
+Core metrics (first ask),3 Escalation recall,A,,0,0
+Core metrics (first ask),3 Escalation recall,B,,0,0
+Core metrics (first ask),4 Escalation precision,A,0.0,0,16
+Core metrics (first ask),4 Escalation precision,B,0.0,0,15
+Core metrics (first ask),4 Unnecessary escalation,A,0.4,16,40
+Core metrics (first ask),4 Unnecessary escalation,B,0.375,15,40
+Core metrics (first ask),5 Recall@3,A,0.85,34,40
+Core metrics (first ask),5 Recall@3,B,0.9,36,40
+Core metrics (first ask),5 MRR,A,0.771,,
+Core metrics (first ask),5 MRR,B,0.798,,
+Core metrics (first ask),6 Questions per case (mean),A,1.6,,
+Core metrics (first ask),6 Questions per case (mean),B,1.4,,
+Core metrics (first ask),7 Time to first fix p50 (ms),A,4350.0,,
+Core metrics (first ask),7 Time to first fix p50 (ms),B,5310.0,,
+Core metrics (first ask),7 Time to first fix p95 (ms),A,7610.0,,
+Core metrics (first ask),7 Time to first fix p95 (ms),B,8130.0,,
+Core metrics (first ask),8 Citation validity,A,1.0,27,27
+Core metrics (first ask),8 Citation validity,B,1.0,28,28
+Core metrics (first ask),9 Retrieval time p50 (ms),A,356.37,,
+Core metrics (first ask),9 Retrieval time p50 (ms),B,457.71,,
+Core metrics (first ask),9 Retrieval time p95 (ms),A,1003.2,,
+Core metrics (first ask),9 Retrieval time p95 (ms),B,913.35,,
+Core metrics (first ask),9 Repeat speed-up (x),A,,,
+Core metrics (first ask),9 Repeat speed-up (x),B,,,
+"Cache, latency and cost (whole stream)",Cache hit rate,A,,0,0
+"Cache, latency and cost (whole stream)",Cache hit rate,B,,0,0
+"Cache, latency and cost (whole stream)",Cache precision,A,,0,0
+"Cache, latency and cost (whole stream)",Cache precision,B,,0,0
+"Cache, latency and cost (whole stream)",Cache false-hit rate,A,,0,0
+"Cache, latency and cost (whole stream)",Cache false-hit rate,B,,0,0
+"Cache, latency and cost (whole stream)",End-to-end latency p50 (ms),A,5560.0,,
+"Cache, latency and cost (whole stream)",End-to-end latency p50 (ms),B,6930.0,,
+"Cache, latency and cost (whole stream)",End-to-end latency p95 (ms),A,15550.0,,
+"Cache, latency and cost (whole stream)",End-to-end latency p95 (ms),B,15260.0,,
+"Cache, latency and cost (whole stream)",Model calls,A,72,,
+"Cache, latency and cost (whole stream)",Model calls,B,76,,
+"Cache, latency and cost (whole stream)",Failed model calls (must be 0),A,0,,
+"Cache, latency and cost (whole stream)",Failed model calls (must be 0),B,0,,
+"Cache, latency and cost (whole stream)",Retried model calls (their cases ran slower),A,0,,
+"Cache, latency and cost (whole stream)",Retried model calls (their cases ran slower),B,0,,
+"Cache, latency and cost (whole stream)",Input tokens (model + Jev),A,97532,,
+"Cache, latency and cost (whole stream)",Input tokens (model + Jev),B,106676,,
+"Cache, latency and cost (whole stream)",Cost (USD),A,0.0448,,
+"Cache, latency and cost (whole stream)",Cost (USD),B,0.0492,,
+"Cache, latency and cost (whole stream)",Calls saved vs baseline arm (%),A,0.0,,
+"Cache, latency and cost (whole stream)",Calls saved vs baseline arm (%),B,-5.6,,
+"Cache, latency and cost (whole stream)",Tokens saved vs baseline arm (%),A,0.0,,
+"Cache, latency and cost (whole stream)",Tokens saved vs baseline arm (%),B,-9.4,,
+"Cache, latency and cost (whole stream)",Cost saved vs baseline arm (%),A,0.0,,
+"Cache, latency and cost (whole stream)",Cost saved vs baseline arm (%),B,-9.8,,
+"Cache, latency and cost (whole stream)",Calls avoided by the cache (est.),A,0.0,,
+"Cache, latency and cost (whole stream)",Calls avoided by the cache (est.),B,0.0,,
+"Cache, latency and cost (whole stream)","Cost avoided by the cache (est., USD)",A,0.0,,
+"Cache, latency and cost (whole stream)","Cost avoided by the cache (est., USD)",B,0.0,,
